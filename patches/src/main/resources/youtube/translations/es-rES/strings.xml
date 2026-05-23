@@ -398,6 +398,10 @@ Los cambios incluyen:
 • Es posible que la sección de música en la descripción del video no funcione.
 • No se pueden ocultar los elementos del menú desplegable del reproductor.
 • Es posible que el botón de cambio de cuenta no aparezca en la pestaña de la Biblioteca."</string>
+    <string name="revanced_disable_settings_layout_updates_summary_off">YouTube puede cargar experimentos de diseño del lado del servidor en Ajustes.</string>
+    <string name="revanced_disable_settings_layout_updates_summary_on">Ajustes de YouTube usa el diseño local y mantiene RVX visible.</string>
+    <string name="revanced_disable_settings_layout_updates_title">Desactivar actualizaciones de diseño de Ajustes</string>
+    <string name="revanced_disable_settings_layout_updates_user_dialog_message">Si desactivas esta opción, no podrás acceder a las opciones RVX a menos que borres los datos de la aplicación.</string>
     <string name="revanced_disable_like_dislike_glow_summary_off">Los botones “me gusta” y “no me gusta” se iluminarán cuando se los mencione.</string>
     <string name="revanced_disable_like_dislike_glow_summary_on">Los botones “me gusta” y “no me gusta” no se iluminarán cuando se los mencione.</string>
     <string name="revanced_disable_like_dislike_glow_title">Desactivar brillo de botones de me gusta y no me gusta</string>

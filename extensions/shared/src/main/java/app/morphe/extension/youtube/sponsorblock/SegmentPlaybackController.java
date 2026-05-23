@@ -153,6 +153,8 @@ public class SegmentPlaybackController {
     private static String timeWithoutSegments;
     private static int sponsorBarAbsoluteLeft;
     private static int sponsorAbsoluteBarRight;
+    private static int sponsorBarAbsoluteTop;
+    private static int sponsorBarAbsoluteBottom;
     private static int sponsorBarThickness;
 
     @Nullable
@@ -994,31 +996,93 @@ public class SegmentPlaybackController {
      * Injection point
      */
     public static void setSponsorBarRect(Object self) {
-        if (Settings.SB_ENABLED.get()) {
-            try {
-                Field field = self.getClass().getDeclaredField("replaceMeWithsetSponsorBarRect");
-                field.setAccessible(true);
-                Rect rect = (Rect) Objects.requireNonNull(field.get(self));
-                setSponsorBarAbsoluteLeft(rect);
-                setSponsorBarAbsoluteRight(rect);
-            } catch (Exception ex) {
-                Logger.printException(() -> "setSponsorBarRect failure", ex);
+        if (!Settings.SB_ENABLED.get() || self == null) {
+            return;
+        }
+
+        try {
+            Rect rect = getBestSponsorBarRect(self);
+            if (rect != null) {
+                setSponsorBarBounds(rect);
             }
+        } catch (Exception ex) {
+            Logger.printException(() -> "setSponsorBarRect failure", ex);
         }
     }
 
-    private static void setSponsorBarAbsoluteLeft(Rect rect) {
-        final int left = rect.left;
-        if (sponsorBarAbsoluteLeft != left) {
-            sponsorBarAbsoluteLeft = left;
+    /**
+     * YouTube 19.16 can use a different private Rect field than the one matched by
+     * the modern fingerprint. Prefer the patched field, but fall back to the
+     * widest plausible timebar Rect so SponsorBlock markers stay aligned.
+     */
+    @Nullable
+    private static Rect getBestSponsorBarRect(Object self) throws IllegalAccessException {
+        Rect bestRect = getPatchedSponsorBarRect(self);
+
+        Class<?> clazz = self.getClass();
+        while (clazz != null) {
+            for (Field field : clazz.getDeclaredFields()) {
+                if (field.getType() != Rect.class) {
+                    continue;
+                }
+
+                field.setAccessible(true);
+                Rect candidate = (Rect) field.get(self);
+                if (isBetterSponsorBarRect(candidate, bestRect)) {
+                    bestRect = candidate;
+                }
+            }
+            clazz = clazz.getSuperclass();
+        }
+
+        return bestRect;
+    }
+
+    @Nullable
+    private static Rect getPatchedSponsorBarRect(Object self) throws IllegalAccessException {
+        try {
+            Field field = self.getClass().getDeclaredField("replaceMeWithsetSponsorBarRect");
+            field.setAccessible(true);
+            return (Rect) field.get(self);
+        } catch (NoSuchFieldException ignored) {
+            return null;
         }
     }
 
-    private static void setSponsorBarAbsoluteRight(Rect rect) {
-        final int right = rect.right;
-        if (sponsorAbsoluteBarRight != right) {
-            sponsorAbsoluteBarRight = right;
+    private static boolean isBetterSponsorBarRect(@Nullable Rect candidate, @Nullable Rect current) {
+        if (!isUsableSponsorBarRect(candidate)) {
+            return false;
         }
+        if (!isUsableSponsorBarRect(current)) {
+            return true;
+        }
+
+        int candidateWidth = candidate.width();
+        int currentWidth = current.width();
+        if (candidateWidth != currentWidth) {
+            return candidateWidth > currentWidth;
+        }
+
+        int candidateHeight = Math.max(1, candidate.height());
+        int currentHeight = Math.max(1, current.height());
+        int targetHeight = Math.max(1, sponsorBarThickness);
+        return Math.abs(candidateHeight - targetHeight) < Math.abs(currentHeight - targetHeight);
+    }
+
+    private static boolean isUsableSponsorBarRect(@Nullable Rect rect) {
+        if (rect == null || rect.right <= rect.left) {
+            return false;
+        }
+
+        int height = rect.height();
+        return height >= 0 && height <= dipToPixels(48);
+    }
+
+    private static void setSponsorBarBounds(Rect rect) {
+        sponsorBarAbsoluteLeft = rect.left;
+        sponsorAbsoluteBarRight = rect.right;
+        sponsorBarAbsoluteTop = rect.top;
+        sponsorBarAbsoluteBottom = rect.bottom;
     }
 
     /**
@@ -1104,11 +1168,32 @@ public class SegmentPlaybackController {
                 return;
             }
 
-            final int thicknessDiv2 = sponsorBarThickness / 2; // rounds down
-            final float top = posY - (sponsorBarThickness - thicknessDiv2);
-            final float bottom = posY + thicknessDiv2;
-            final float videoMillisecondsToPixels = (1f / videoLength) * (sponsorAbsoluteBarRight - sponsorBarAbsoluteLeft);
-            final float leftPadding = sponsorBarAbsoluteLeft;
+            int absoluteLeft = sponsorBarAbsoluteLeft;
+            int absoluteRight = sponsorAbsoluteBarRight;
+            if (absoluteRight <= absoluteLeft) {
+                Rect clipBounds = canvas.getClipBounds();
+                absoluteLeft = clipBounds.left;
+                absoluteRight = clipBounds.right;
+            }
+            if (absoluteRight <= absoluteLeft) {
+                return;
+            }
+
+            final float top;
+            final float bottom;
+            final int rectHeight = sponsorBarAbsoluteBottom - sponsorBarAbsoluteTop;
+            if (rectHeight > 0 && rectHeight <= dipToPixels(48)) {
+                top = sponsorBarAbsoluteTop;
+                bottom = sponsorBarAbsoluteBottom;
+            } else {
+                final int thickness = Math.max(1, sponsorBarThickness);
+                final int thicknessDiv2 = thickness / 2; // rounds down
+                top = posY - (thickness - thicknessDiv2);
+                bottom = posY + thicknessDiv2;
+            }
+
+            final float videoMillisecondsToPixels = (1f / videoLength) * (absoluteRight - absoluteLeft);
+            final float leftPadding = absoluteLeft;
 
             for (SponsorSegment segment : segments) {
                 final float left = leftPadding + segment.start * videoMillisecondsToPixels;

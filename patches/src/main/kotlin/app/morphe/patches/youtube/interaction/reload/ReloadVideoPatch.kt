@@ -90,45 +90,46 @@ val reloadVideoPatch = bytecodePatch(
             "invoke-static/range { p0 .. p0 }, $EXTENSION_CLASS_DESCRIPTOR->setMainActivity(Landroid/app/Activity;)V"
         )
 
-        val dismissPlayerInnerMethod = MiniAppOpenYtContentCommandEndpointFingerprint
-            .instructionMatches[2]
-            .getInstruction<ReferenceInstruction>()
-            .getReference<MethodReference>()!!
+        MiniAppOpenYtContentCommandEndpointFingerprint.instructionMatchesOrNull?.let { instructionMatches ->
+            val dismissPlayerInnerMethod = instructionMatches[2]
+                .getInstruction<ReferenceInstruction>()
+                .getReference<MethodReference>()!!
 
-        mutableClassDefBy(dismissPlayerInnerMethod.definingClass).apply {
-            // Add interface and helper methods to allow extension code to call obfuscated methods.
-            interfaces.add(EXTENSION_PLAYER_INTERFACE)
-            // Add methods to access obfuscated player methods.
-            methods.add(
-                ImmutableMethod(
-                    type,
-                    "patch_dismissPlayer",
-                    listOf(),
-                    "V",
-                    AccessFlags.PUBLIC.value or AccessFlags.FINAL.value,
-                    null,
-                    null,
-                    MutableMethodImplementation(2),
-                ).toMutable().apply {
-                    addInstructions(
-                        0,
-                        """
-                            invoke-virtual { p0 }, $dismissPlayerInnerMethod
-                            return-void
-                        """
+            mutableClassDefBy(dismissPlayerInnerMethod.definingClass).apply {
+                // Add interface and helper methods to allow extension code to call obfuscated methods.
+                interfaces.add(EXTENSION_PLAYER_INTERFACE)
+                // Add methods to access obfuscated player methods.
+                methods.add(
+                    ImmutableMethod(
+                        type,
+                        "patch_dismissPlayer",
+                        listOf(),
+                        "V",
+                        AccessFlags.PUBLIC.value or AccessFlags.FINAL.value,
+                        null,
+                        null,
+                        MutableMethodImplementation(2),
+                    ).toMutable().apply {
+                        addInstructions(
+                            0,
+                            """
+                                invoke-virtual { p0 }, $dismissPlayerInnerMethod
+                                return-void
+                            """
+                        )
+                    }
+                )
+
+                methods.single { method ->
+                    MethodUtil.isConstructor(method)
+                }.apply {
+                    val index = indexOfFirstInstructionReversedOrThrow(Opcode.RETURN_VOID)
+
+                    addInstruction(
+                        index,
+                        "invoke-static/range { p0 .. p0 }, $EXTENSION_CLASS_DESCRIPTOR->initialize($EXTENSION_PLAYER_INTERFACE)V"
                     )
                 }
-            )
-
-            methods.single { method ->
-                MethodUtil.isConstructor(method)
-            }.apply {
-                val index = indexOfFirstInstructionReversedOrThrow(Opcode.RETURN_VOID)
-
-                addInstruction(
-                    index,
-                    "invoke-static/range { p0 .. p0 }, $EXTENSION_CLASS_DESCRIPTOR->initialize($EXTENSION_PLAYER_INTERFACE)V"
-                )
             }
         }
     }

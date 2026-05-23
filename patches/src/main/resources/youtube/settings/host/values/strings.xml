@@ -395,6 +395,10 @@ Changes include:
 • The Library tab is used.
 • The Music section of video description may not work.
 • Account switch button may not appear on the Library tab. Use the 'Enable wide search bar in You tab' setting."</string>
+    <string name="revanced_disable_settings_layout_updates_summary_off">YouTube can load server-side Settings layout experiments.</string>
+    <string name="revanced_disable_settings_layout_updates_summary_on">YouTube Settings uses the local Settings layout with RVX visible.</string>
+    <string name="revanced_disable_settings_layout_updates_title">Disable Settings layout updates</string>
+    <string name="revanced_disable_settings_layout_updates_user_dialog_message">If you disable this setting, you will not be able to access RVX settings unless you clear the app data.</string>
     <string name="revanced_disable_like_dislike_glow_summary_off">Like and Dislike buttons will glow when mentioned.</string>
     <string name="revanced_disable_like_dislike_glow_summary_on">Like and Dislike buttons will not glow when mentioned.</string>
     <string name="revanced_disable_like_dislike_glow_title">Disable Like and Dislike buttons glow</string>

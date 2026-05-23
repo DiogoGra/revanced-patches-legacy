@@ -57,13 +57,13 @@ public final class ReloadVideoPatch {
      */
     public static void reloadVideo() {
         try {
+            String videoId = VideoInformation.getVideoId();
+            String playlistId = VideoInformation.getPlaylistId();
             PlayerInterface playerInterface = playerInterfaceRef.get();
             if (playerInterface == null) {
-                Utils.showToastShort(str("revanced_dismiss_player_not_available_toast"));
+                Logger.printDebug(() -> "Player interface unavailable, reloading video via intent only");
+                openVideo(playlistId, videoId);
             } else {
-                String videoId = VideoInformation.getVideoId();
-                String playlistId = VideoInformation.getPlaylistId();
-
                 // Dismiss the player.
                 playerInterface.patch_dismissPlayer();
 

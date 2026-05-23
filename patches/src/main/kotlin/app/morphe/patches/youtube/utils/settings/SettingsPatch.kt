@@ -461,18 +461,18 @@ val settingsPatch = resourcePatch(
         /**
          * Disable Cairo fragment settings.
          */
+        val xmlDirectory = get("res").resolve("xml")
+        FilesCompat.copy(
+            xmlDirectory.resolve("settings_fragment.xml"),
+            xmlDirectory.resolve("settings_fragment_legacy.xml")
+        )
+
         if (cairoFragmentDisabled) {
             /**
              * If the app version is spoofed to 19.30 or earlier due to the Spoof app version patch,
              * the 'Playback' setting will be broken.
              * If the app version is spoofed, the previous fragment must be used.
              */
-            val xmlDirectory = get("res").resolve("xml")
-            FilesCompat.copy(
-                xmlDirectory.resolve("settings_fragment.xml"),
-                xmlDirectory.resolve("settings_fragment_legacy.xml")
-            )
-
             /**
              * The Preference key for 'Playback' is '@string/playback_key'.
              * Copy the node to add the Preference 'Playback' to the legacy settings fragment.

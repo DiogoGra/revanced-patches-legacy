@@ -223,17 +223,24 @@ internal val seekbarOnDrawFingerprint = legacyFingerprint(
     customFingerprint = { method, _ -> method.name == "onDraw" }
 )
 
+private const val RESOURCES_GET_DRAWABLE_REFERENCE =
+    "Landroid/content/res/Resources;->getDrawable(I)Landroid/graphics/drawable/Drawable;"
+
+private const val MISSING_RESOURCES_GET_DRAWABLE_REFERENCE =
+    "Lapp/morphe/extension/youtube/patches/utils/MissingResourcesPatch;->getDrawable(Landroid/content/res/Resources;I)Landroid/graphics/drawable/Drawable;"
+
 internal fun indexOfGetDrawableInstruction(method: Method) =
     method.indexOfFirstInstruction {
-        opcode == Opcode.INVOKE_VIRTUAL &&
-                getReference<MethodReference>()?.toString() == "Landroid/content/res/Resources;->getDrawable(I)Landroid/graphics/drawable/Drawable;"
+        val reference = getReference<MethodReference>()?.toString()
+
+        opcode == Opcode.INVOKE_VIRTUAL && reference == RESOURCES_GET_DRAWABLE_REFERENCE ||
+                opcode == Opcode.INVOKE_STATIC && reference == MISSING_RESOURCES_GET_DRAWABLE_REFERENCE
     }
 
 internal val settingsFragmentSyntheticFingerprint = legacyFingerprint(
     name = "settingsFragmentSyntheticFingerprint",
     returnType = "V",
     accessFlags = AccessFlags.PUBLIC or AccessFlags.FINAL,
-    opcodes = listOf(Opcode.INVOKE_VIRTUAL_RANGE),
     literals = listOf(settingsFragment, settingsFragmentCairo),
 )
 

@@ -1,6 +1,7 @@
 package app.morphe.patches.shared
 
 import app.morphe.patches.shared.extension.Constants.EXTENSION_SETTING_CLASS_DESCRIPTOR
+import app.morphe.util.containsLiteralInstruction
 import app.morphe.util.fingerprint.legacyFingerprint
 import app.morphe.util.getReference
 import app.morphe.util.indexOfFirstInstruction
@@ -15,6 +16,8 @@ import com.android.tools.smali.dexlib2.iface.reference.StringReference
 internal const val ANDROID_AUTOMOTIVE_STRING = "Android Automotive"
 internal const val CLIENT_INFO_CLASS_DESCRIPTOR =
     "Lcom/google/protos/youtube/api/innertube/InnertubeContext\$ClientInfo;"
+private const val YOUTUBE_PLAYER_RESPONSE_MODEL_CLASS_DESCRIPTOR =
+    "Lcom/google/android/libraries/youtube/innertube/model/player/PlayerResponseModel;"
 
 internal val authenticationChangeListenerFingerprint = legacyFingerprint(
     name = "authenticationChangeListenerFingerprint",
@@ -257,15 +260,31 @@ internal val startVideoInformerFingerprint = legacyFingerprint(
 
 internal val videoLengthFingerprint = legacyFingerprint(
     name = "videoLengthFingerprint",
-    accessFlags = AccessFlags.PUBLIC or AccessFlags.FINAL,
-    parameters = listOf("J", "J"),
-    returnType = "V",
-    literals = listOf(45633940L, 1000L),
     // strings = listOf("Gaplessly transitioning away from an Ad before it ends.")
     customFingerprint = { method, _ ->
-        method.name == "a"
+        val modernTarget =
+            method.name == "a" &&
+                    method.returnType == "V" &&
+                    method.parameterTypes == listOf("J", "J") &&
+                    method.containsLiteralInstruction(45633940L) &&
+                    method.containsLiteralInstruction(1000L)
+
+        val legacyYouTubeTarget =
+            method.parameterTypes.any { it == YOUTUBE_PLAYER_RESPONSE_MODEL_CLASS_DESCRIPTOR } &&
+                    method.indexOfPlayerResponseModelInstruction("J") >= 0 &&
+                    method.indexOfPlayerResponseModelInstruction("[B") >= 0
+
+        modernTarget || legacyYouTubeTarget
     }
 )
+
+private fun Method.indexOfPlayerResponseModelInstruction(returnType: String) =
+    indexOfFirstInstruction {
+        val reference = getReference<MethodReference>()
+        (opcode == Opcode.INVOKE_INTERFACE || opcode == Opcode.INVOKE_INTERFACE_RANGE) &&
+                reference?.definingClass == YOUTUBE_PLAYER_RESPONSE_MODEL_CLASS_DESCRIPTOR &&
+                reference.returnType == returnType
+    }
 
 internal val dislikeFingerprint = legacyFingerprint(
     name = "dislikeFingerprint",

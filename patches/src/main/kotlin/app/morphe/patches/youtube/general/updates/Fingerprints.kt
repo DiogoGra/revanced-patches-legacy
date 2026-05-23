@@ -15,3 +15,23 @@ internal val cronetHeaderFingerprint = legacyFingerprint(
         classDef.fields.find { it.type == "J" } != null
     }
 )
+
+internal val hotConfigPreferenceFingerprint = legacyFingerprint(
+    name = "hotConfigPreferenceFingerprint",
+    accessFlags = AccessFlags.PUBLIC or AccessFlags.FINAL,
+    parameters = emptyList(),
+    returnType = "V",
+    strings = listOf("com.google.android.libraries.youtube.innertube.hot_stored_timestamp")
+)
+
+internal val coldConfigPreferenceFingerprint = legacyFingerprint(
+    name = "coldConfigPreferenceFingerprint",
+    accessFlags = AccessFlags.PUBLIC or AccessFlags.FINAL,
+    parameters = emptyList(),
+    returnType = "V",
+    strings = listOf(
+        "com.google.android.libraries.youtube.innertube.cold_config_group",
+        "com.google.android.libraries.youtube.innertube.cold_stored_timestamp",
+        "com.google.android.libraries.youtube.innertube.cold_hash_data",
+    )
+)

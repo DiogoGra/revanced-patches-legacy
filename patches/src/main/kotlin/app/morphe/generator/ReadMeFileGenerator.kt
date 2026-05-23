@@ -7,12 +7,6 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 internal class ReadMeFileGenerator : PatchesFileGenerator {
-    // For this exception to apply to [README.md],
-    // Supported version of [app.morphe.patches.music.utils.integrations.Constants.COMPATIBLE_PACKAGE] should be empty.
-    private val exception = mapOf(
-        "com.google.android.apps.youtube.music" to "6.29.59"
-    )
-
     private val tableHeader =
         "| \uD83D\uDC8A Patch | \uD83D\uDCDC Description | \uD83C\uDFF9 Target Version |\n" +
                 "|:--------:|:--------------:|:-----------------:|"
@@ -42,22 +36,16 @@ internal class ReadMeFileGenerator : PatchesFileGenerator {
 
         // add a list of supported versions to a temp file
         mapOf(
-            app.morphe.patches.music.utils.compatibility.Constants.COMPATIBLE_PACKAGE to "\"COMPATIBLE_PACKAGE_MUSIC\"",
-            app.morphe.patches.reddit.utils.compatibility.Constants.COMPATIBLE_PACKAGE to "\"COMPATIBLE_PACKAGE_REDDIT\"",
             app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBLE_PACKAGE to "\"COMPATIBLE_PACKAGE_YOUTUBE\""
         ).forEach { (compatiblePackage, replaceString) ->
             compatiblePackage.let { (packageName, versions) ->
                 val supportedVersion =
-                    if (versions == null && exception.containsKey(packageName)) {
-                        exception[packageName] + "+"
-                    } else {
-                        versions
-                            ?.toString()
-                            ?.replace("[", "[\n        \"")
-                            ?.replace("]", "\"\n      ]")
-                            ?.replace(", ", "\",\n        \"")
-                            ?: "\"ALL\""
-                    }
+                    versions
+                        ?.toString()
+                        ?.replace("[", "[\n        \"")
+                        ?.replace("]", "\"\n      ]")
+                        ?.replace(", ", "\",\n        \"")
+                        ?: "\"ALL\""
 
                 StringBuilder(readMeFile.readText())
                     .replace(Regex(replaceString), supportedVersion)
@@ -92,10 +80,9 @@ internal class ReadMeFileGenerator : PatchesFileGenerator {
                                         maxVersion
                                     else
                                         "$minVersion ~ $maxVersion"
-                                } else if (exception.containsKey(pkg))
-                                    exception[pkg] + "+"
-                                else
+                                } else {
                                     "ALL"
+                                }
 
                             appendLine(
                                 "| `${patch.name}` " +

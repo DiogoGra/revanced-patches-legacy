@@ -34,24 +34,6 @@ Example:
       "com.google.android.youtube": "COMPATIBLE_PACKAGE_YOUTUBE"
     },
     "options": []
-  },
-  {
-    "name": "Bitrate default value",
-    "description": "Sets the audio quality to 'Always High' when you first install the app.",
-    "use":true,
-    "compatiblePackages": {
-      "com.google.android.apps.youtube.music": "COMPATIBLE_PACKAGE_MUSIC"
-    },
-    "options": []
-  },
-  {
-    "name": "Hide ads",
-    "description": "Adds options to hide ads.",
-    "use":true,
-    "compatiblePackages": {
-      "com.reddit.frontpage": "COMPATIBLE_PACKAGE_REDDIT"
-    },
-    "options": []
   }
 ]
 ```

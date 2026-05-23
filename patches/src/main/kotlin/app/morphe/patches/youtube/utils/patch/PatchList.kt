@@ -105,6 +105,10 @@ internal enum class PatchList(
         "Enable gradient loading screen",
         "Adds an option to enable the gradient loading screen."
     ),
+    ADD_MISSING_RESOURCES(
+        "Add missing resources",
+        "Adds fallback resources for old YouTube clients and replaces zero drawable ids with a transparent drawable to prevent crashes."
+    ),
     FORCE_HIDE_PLAYER_BUTTONS_BACKGROUND(
         "Force player buttons background",
         "Changes the dark background surrounding the video player controls at compile time."

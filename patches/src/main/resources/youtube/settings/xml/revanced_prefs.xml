@@ -167,6 +167,9 @@
         <!-- SETTINGS: DISABLE_LAYOUT_UPDATES
         <SwitchPreference android:title="@string/revanced_disable_layout_updates_title" android:key="revanced_disable_layout_updates" android:summaryOn="@string/revanced_disable_layout_updates_summary_on" android:summaryOff="@string/revanced_disable_layout_updates_summary_off" />SETTINGS: DISABLE_LAYOUT_UPDATES -->
 
+        <!-- SETTINGS: DISABLE_SETTINGS_LAYOUT_UPDATES
+        <SwitchPreference android:title="@string/revanced_disable_settings_layout_updates_title" android:key="revanced_disable_settings_layout_updates" android:summaryOn="@string/revanced_disable_settings_layout_updates_summary_on" android:summaryOff="@string/revanced_disable_settings_layout_updates_summary_off" />SETTINGS: DISABLE_SETTINGS_LAYOUT_UPDATES -->
+
         <!-- SETTINGS: DISABLE_TRANSLUCENT_STATUS_BAR
         <SwitchPreference android:title="@string/revanced_disable_translucent_status_bar_title" android:key="revanced_disable_translucent_status_bar" android:summaryOn="@string/revanced_disable_translucent_status_bar_summary_on" android:summaryOff="@string/revanced_disable_translucent_status_bar_summary_off" />SETTINGS: DISABLE_TRANSLUCENT_STATUS_BAR -->
 

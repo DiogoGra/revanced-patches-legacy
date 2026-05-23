@@ -10,6 +10,11 @@ public class PatchStatus {
         return false;
     }
 
+    public static boolean AddMissingResources() {
+        // Replace this with true if the 'Add missing resources' patch succeeds
+        return false;
+    }
+
     // Modified by a patch. Do not touch.
     public static boolean OldSeekbarThumbnailsDefaultBoolean() {
         return false;

@@ -8,7 +8,7 @@ import app.morphe.patches.youtube.utils.settings.settingsPatch
 import app.morphe.util.removeStringsElements
 import app.morphe.util.valueOrThrow
 
-private const val APP_NAME = "RVX"
+private const val APP_NAME = "YouTube RVX"
 
 @Suppress("unused")
 val customBrandingNamePatch = resourcePatch(

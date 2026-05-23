@@ -17,6 +17,23 @@ dependencies {
     implementation(libs.gson)
 }
 
+sourceSets {
+    main {
+        kotlin {
+            exclude(
+                "app/morphe/patches/music/**",
+                "app/morphe/patches/reddit/**",
+            )
+        }
+        resources {
+            exclude(
+                "music/**",
+                "reddit/**",
+            )
+        }
+    }
+}
+
 tasks {
     jar {
         exclude("app/morphe/generator")

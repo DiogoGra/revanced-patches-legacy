@@ -63,22 +63,33 @@ public final class CustomActionsPatch {
         if (!isMoreButton(enumString)) {
             return;
         }
-        setToolbarMenuOnLongClickListener((ViewGroup) toolbarView);
+        if (!(toolbarView instanceof ViewGroup parentView)) {
+            return;
+        }
+
+        setToolbarMenuOnLongClickListener(parentView);
     }
 
     private static void setToolbarMenuOnLongClickListener(ViewGroup parentView) {
-        ImageView imageView = Utils.getChildView(parentView, v -> v instanceof ImageView);
-        if (imageView == null) {
-            return;
-        }
-        Context context = imageView.getContext();
-        contextRef = new WeakReference<>(context);
+        try {
+            ImageView imageView = Utils.getChildView(parentView, v -> v instanceof ImageView);
+            if (imageView == null) {
+                return;
+            }
+            Context context = imageView.getContext();
+            if (context == null) {
+                return;
+            }
+            contextRef = new WeakReference<>(context);
 
-        // Overriding is possible only after OnClickListener is assigned to the more button.
-        Utils.runOnMainThreadDelayed(() -> imageView.setOnLongClickListener(button -> {
-            showMoreButtonDialog(context);
-            return true;
-        }), 0);
+            // Overriding is possible only after OnClickListener is assigned to the more button.
+            Utils.runOnMainThreadDelayed(() -> imageView.setOnLongClickListener(button -> {
+                showMoreButtonDialog(context);
+                return true;
+            }), 0);
+        } catch (Exception ex) {
+            Logger.printException(() -> "setToolbarMenuOnLongClickListener failed", ex);
+        }
     }
 
     private static void showMoreButtonDialog(Context mContext) {

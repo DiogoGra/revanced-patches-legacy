@@ -15,6 +15,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,9 +33,11 @@ import com.google.android.apps.youtube.app.settings.SettingsActivity;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
 
 import app.morphe.extension.shared.utils.Logger;
+import app.morphe.extension.shared.utils.PackageUtils;
 import app.morphe.extension.shared.utils.ResourceUtils;
 import app.morphe.extension.shared.utils.Utils;
 import app.morphe.extension.youtube.settings.Settings;
@@ -262,7 +265,12 @@ public class GeneralPatch {
     private static int legacyFragmentId = 0;
 
     public static boolean disableCairoFragment(boolean original) {
-        return !Settings.FIX_SPOOF_APP_VERSION_SIDE_EFFECT.get() && original;
+        return !(Settings.FIX_SPOOF_APP_VERSION_SIDE_EFFECT.get()
+                || Settings.DISABLE_SETTINGS_LAYOUT_UPDATES.get()) && original;
+    }
+
+    public static boolean disableSettingsLayoutUpdates(boolean original) {
+        return !Settings.DISABLE_SETTINGS_LAYOUT_UPDATES.get() && original;
     }
 
     public static String getVersionOverride(String appVersion) {
@@ -271,8 +279,53 @@ public class GeneralPatch {
                 : appVersion;
     }
 
+    public static void spoofAppVersionPlayerRequestHeaders(String url, Map<String, String> requestHeaders) {
+        if (!Settings.SPOOF_APP_VERSION.get()
+                || requestHeaders == null
+                || url == null
+                || !url.contains("/youtubei/v1/player")) {
+            return;
+        }
+
+        String targetVersion = Settings.SPOOF_APP_VERSION_TARGET.get();
+        if (StringUtils.isEmpty(targetVersion)) {
+            return;
+        }
+
+        requestHeaders.put("X-YouTube-Client-Name", "3");
+        requestHeaders.put("X-YouTube-Client-Version", targetVersion);
+
+        String userAgent = requestHeaders.get("User-Agent");
+        if (StringUtils.isEmpty(userAgent)) {
+            userAgent = "com.google.android.youtube/" + targetVersion
+                    + " (Linux; U; Android " + Build.VERSION.RELEASE + ") gzip";
+        } else {
+            String appVersion = PackageUtils.getAppVersionName();
+            if (StringUtils.isNotEmpty(appVersion) && userAgent.contains(appVersion)) {
+                userAgent = userAgent.replace(appVersion, targetVersion);
+            } else if (!userAgent.contains(targetVersion)) {
+                userAgent = userAgent.replaceFirst("/\\d+\\.\\d+\\.\\d+", "/" + targetVersion);
+            }
+        }
+        requestHeaders.put("User-Agent", userAgent);
+
+        Logger.printDebug(() -> "Spoof app version player request headers: " + targetVersion);
+    }
+
+    public static boolean restorePlayerAppVersion() {
+        return false;
+    }
+
+    public static String getPlayerVersionOverride() {
+        String appVersion = PackageUtils.getAppVersionName();
+        return appVersion.isEmpty()
+                ? "19.16.39"
+                : appVersion;
+    }
+
     public static int useLegacyFragment(int original) {
-        if (Settings.FIX_SPOOF_APP_VERSION_SIDE_EFFECT.get()) {
+        if (Settings.FIX_SPOOF_APP_VERSION_SIDE_EFFECT.get()
+                || Settings.DISABLE_SETTINGS_LAYOUT_UPDATES.get()) {
             if (legacyFragmentId == 0) {
                 legacyFragmentId = getXmlIdentifier("settings_fragment_legacy");
             }

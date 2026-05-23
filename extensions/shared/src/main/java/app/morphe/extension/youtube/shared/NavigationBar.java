@@ -3,7 +3,15 @@ package app.morphe.extension.youtube.shared;
 import static app.morphe.extension.youtube.shared.NavigationBar.NavigationButton.CREATE;
 
 import android.app.Activity;
+import android.content.res.Resources;
+import android.content.res.ColorStateList;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
@@ -20,6 +28,8 @@ import app.morphe.extension.youtube.settings.Settings;
 
 @SuppressWarnings("unused")
 public final class NavigationBar {
+    private static final String NAVIGATION_ICON_DIAGNOSTIC_PREFIX = "RVX_NAV_DIAG";
+
 
     /**
      * How long to wait for the set nav button latch to be released.  Maximum wait time must
@@ -141,6 +151,7 @@ public final class NavigationBar {
                 if (buttonType.ytEnumNames.contains(lastEnumName)) {
                     Logger.printDebug(() -> "navigationTabLoaded: " + lastEnumName);
                     viewToButtonMap.put(navigationButtonGroup, buttonType);
+                    logNavigationTabDiagnostic("loaded", buttonType, navigationButtonGroup);
                     navigationTabCreatedCallback(buttonType, navigationButtonGroup);
                     return;
                 }
@@ -196,6 +207,7 @@ public final class NavigationBar {
 
             NavigationButton.selectedNavigationButton = button;
             Logger.printDebug(() -> "Changed to navigation button: " + button);
+            logNavigationTabDiagnostic("selected", button, navButtonImageView);
 
             // Release any threads waiting for the selected nav button.
             releaseNavButtonLatch();
@@ -217,6 +229,126 @@ public final class NavigationBar {
      */
     private static void navigationTabCreatedCallback(NavigationButton button, View tabView) {
         // Code is added during patching.
+    }
+
+    private static void logNavigationTabDiagnostic(String reason, NavigationButton button, View view) {
+        logNavigationTabDiagnosticNow(reason, button, view);
+        view.postDelayed(() -> logNavigationTabDiagnosticNow(reason + "+500ms", button, view), 500);
+        view.postDelayed(() -> logNavigationTabDiagnosticNow(reason + "+2000ms", button, view), 2000);
+        view.postDelayed(() -> logNavigationTabDiagnosticNow(reason + "+5000ms", button, view), 5000);
+    }
+
+    private static void logNavigationTabDiagnosticNow(String reason, NavigationButton button, View view) {
+        try {
+            Logger.printInfo(() -> NAVIGATION_ICON_DIAGNOSTIC_PREFIX
+                    + " reason=" + reason
+                    + " button=" + button
+                    + " lastEnum=" + lastYTNavigationEnumName
+                    + " root=" + describeView(view)
+                    + "\n" + describeViewTree(view, 0));
+        } catch (Exception ex) {
+            Logger.printException(() -> NAVIGATION_ICON_DIAGNOSTIC_PREFIX + " failure", ex);
+        }
+    }
+
+    private static String describeViewTree(View view, int depth) {
+        if (view == null || depth > 5) {
+            return "";
+        }
+
+        StringBuilder builder = new StringBuilder();
+        appendIndent(builder, depth);
+        builder.append(describeView(view));
+
+        if (view instanceof ImageView) {
+            builder.append(" image={").append(describeImageView((ImageView) view)).append("}");
+        } else if (view instanceof TextView) {
+            builder.append(" text=\"").append(((TextView) view).getText()).append("\"");
+        }
+        builder.append('\n');
+
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                builder.append(describeViewTree(group.getChildAt(i), depth + 1));
+            }
+        }
+
+        return builder.toString();
+    }
+
+    private static void appendIndent(StringBuilder builder, int depth) {
+        for (int i = 0; i < depth; i++) {
+            builder.append("  ");
+        }
+    }
+
+    private static String describeView(View view) {
+        if (view == null) {
+            return "null";
+        }
+
+        return view.getClass().getName()
+                + " id=" + getResourceName(view, view.getId())
+                + " visibility=" + visibilityToString(view.getVisibility())
+                + " alpha=" + view.getAlpha()
+                + " selected=" + view.isSelected()
+                + " enabled=" + view.isEnabled()
+                + " size=" + view.getWidth() + "x" + view.getHeight()
+                + " contentDescription=\"" + view.getContentDescription() + "\"";
+    }
+
+    private static String describeImageView(ImageView imageView) {
+        Drawable drawable = imageView.getDrawable();
+        ColorStateList tintList = imageView.getImageTintList();
+        PorterDuff.Mode tintMode = imageView.getImageTintMode();
+
+        return "drawable=" + describeDrawable(drawable)
+                + ", imageAlpha=" + imageView.getImageAlpha()
+                + ", tintList=" + tintList
+                + ", tintMode=" + tintMode
+                + ", scaleType=" + imageView.getScaleType();
+    }
+
+    private static String describeDrawable(@Nullable Drawable drawable) {
+        if (drawable == null) {
+            return "null";
+        }
+
+        String description = drawable.getClass().getName()
+                + " alpha=" + drawable.getAlpha()
+                + " bounds=" + drawable.getBounds();
+
+        if (drawable instanceof ColorDrawable) {
+            description += " color=#" + Integer.toHexString(((ColorDrawable) drawable).getColor());
+        }
+
+        return description;
+    }
+
+    private static String getResourceName(View view, int id) {
+        if (id == View.NO_ID) {
+            return "NO_ID";
+        }
+
+        try {
+            return view.getResources().getResourceEntryName(id) + "(" + id + ")";
+        } catch (Resources.NotFoundException ex) {
+            return "unknown(" + id + ")";
+        }
+    }
+
+    private static String visibilityToString(int visibility) {
+        switch (visibility) {
+            case View.VISIBLE:
+                return "VISIBLE";
+            case View.INVISIBLE:
+                return "INVISIBLE";
+            case View.GONE:
+                return "GONE";
+            default:
+                return String.valueOf(visibility);
+        }
     }
 
     public enum NavigationButton {

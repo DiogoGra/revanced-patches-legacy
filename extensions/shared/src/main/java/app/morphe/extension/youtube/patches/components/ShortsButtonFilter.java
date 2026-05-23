@@ -1,5 +1,7 @@
 package app.morphe.extension.youtube.patches.components;
 
+import static app.morphe.extension.youtube.utils.ExtendedUtils.IS_19_34_OR_GREATER;
+
 import org.apache.commons.lang3.StringUtils;
 
 import app.morphe.extension.shared.patches.components.ByteArrayFilterGroup;
@@ -18,6 +20,7 @@ public final class ShortsButtonFilter extends Filter {
     private static final String REEL_METAPANEL_PATH = "reel_metapanel.";
 
     private static final String SHORTS_PAUSED_STATE_BUTTON_PATH = "|ScrollableContainerType|ContainerType|button.";
+    private static final boolean HIDE_UNSAFE_LEGACY_SHORTS_SUGGESTED_ACTIONS = !IS_19_34_OR_GREATER;
 
     private final StringFilterGroup autoDubbedLabel;
     private final StringFilterGroup subscribeButton;
@@ -284,6 +287,9 @@ public final class ShortsButtonFilter extends Filter {
         }
 
         if (matchedGroup == suggestedAction) {
+            if (HIDE_UNSAFE_LEGACY_SHORTS_SUGGESTED_ACTIONS) {
+                return true;
+            }
             if (isEverySuggestedActionFilterEnabled()) {
                 return true;
             }
