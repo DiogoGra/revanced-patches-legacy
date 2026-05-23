@@ -87,3 +87,6 @@ node_modules/
 local.properties
 __pycache__
 venv
+
+.gradle-user/
+local.properties
