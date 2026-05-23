@@ -3,9 +3,11 @@ package app.morphe.extension.youtube.shared;
 import static app.morphe.extension.youtube.shared.NavigationBar.NavigationButton.CREATE;
 
 import android.app.Activity;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.ColorStateList;
 import android.graphics.PorterDuff;
+import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.view.View;
@@ -16,8 +18,11 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -29,6 +34,68 @@ import app.morphe.extension.youtube.settings.Settings;
 @SuppressWarnings("unused")
 public final class NavigationBar {
     private static final String NAVIGATION_ICON_DIAGNOSTIC_PREFIX = "RVX_NAV_DIAG";
+    private static final long[] LEGACY_NAVIGATION_ICON_RESTORE_DELAYS_MS = {
+            250,
+            1000,
+            2500,
+            5000,
+            10000
+    };
+
+    private static final String[] HOME_OUTLINE_DRAWABLES = {
+            "yt_outline_home_black_24",
+            "ic_tab_home",
+            "quantum_ic_home_grey600_24"
+    };
+    private static final String[] HOME_SELECTED_DRAWABLES = {
+            "yt_fill_home_black_24",
+            "ic_tab_home",
+            "quantum_ic_home_grey600_24"
+    };
+    private static final String[] SHORTS_OUTLINE_DRAWABLES = {
+            "yt_outline_youtube_shorts_black_24",
+            "ic_youtube_shorts_24",
+            "ic_shortcut_shorts"
+    };
+    private static final String[] SHORTS_SELECTED_DRAWABLES = {
+            "yt_fill_youtube_shorts_black_24",
+            "yt_fill_youtube_shorts_no_triangle_black_18",
+            "ic_youtube_shorts_24"
+    };
+    private static final String[] SUBSCRIPTIONS_OUTLINE_DRAWABLES = {
+            "yt_outline_subscriptions_black_24",
+            "ic_tab_subscriptions",
+            "ic_shortcut_subscriptions"
+    };
+    private static final String[] SUBSCRIPTIONS_SELECTED_DRAWABLES = {
+            "yt_fill_subscriptions_black_24",
+            "yt_fill_subscriptions_grey600_24",
+            "ic_tab_subscriptions"
+    };
+    private static final String[] NOTIFICATIONS_OUTLINE_DRAWABLES = {
+            "yt_outline_bell_black_24",
+            "yt_outline_bell_off_black_24",
+            "quantum_ic_notifications_grey600_24",
+            "quantum_gm_ic_notifications_grey600_24",
+            "ic_drawer_notifications_inbox_normal"
+    };
+    private static final String[] NOTIFICATIONS_SELECTED_DRAWABLES = {
+            "yt_fill_bell_black_24",
+            "yt_fill_bell_on_black_24",
+            "quantum_ic_notifications_active_grey600_24",
+            "quantum_gm_ic_notifications_active_grey600_24",
+            "ic_drawer_notifications_inbox_normal"
+    };
+    private static final Set<String> loggedLegacyIconRestores =
+            Collections.synchronizedSet(new HashSet<>());
+    private static final Set<View> hookedBottomBarContainers =
+            Collections.newSetFromMap(new WeakHashMap<>());
+    private static final Set<View> pendingBottomBarIconRestores =
+            Collections.newSetFromMap(new WeakHashMap<>());
+    private static final Map<ImageView, Integer> restoredNavigationIconIds =
+            new WeakHashMap<>();
+    private static final Map<ImageView, Drawable> restoredNavigationIconDrawables =
+            new WeakHashMap<>();
 
 
     /**
@@ -153,6 +220,7 @@ public final class NavigationBar {
                     viewToButtonMap.put(navigationButtonGroup, buttonType);
                     logNavigationTabDiagnostic("loaded", buttonType, navigationButtonGroup);
                     navigationTabCreatedCallback(buttonType, navigationButtonGroup);
+                    scheduleLegacyNavigationIconRestore(buttonType, navigationButtonGroup);
                     return;
                 }
             }
@@ -208,6 +276,7 @@ public final class NavigationBar {
             NavigationButton.selectedNavigationButton = button;
             Logger.printDebug(() -> "Changed to navigation button: " + button);
             logNavigationTabDiagnostic("selected", button, navButtonImageView);
+            scheduleLegacyNavigationIconRestore(button, navButtonImageView);
 
             // Release any threads waiting for the selected nav button.
             releaseNavButtonLatch();
@@ -231,7 +300,277 @@ public final class NavigationBar {
         // Code is added during patching.
     }
 
+    public static void fixServerSideNavigationIcons(View bottomBarContainer) {
+        try {
+            addServerSideNavigationIconListener(bottomBarContainer);
+            scheduleServerSideNavigationIconRestore(bottomBarContainer);
+        } catch (Exception ex) {
+            Logger.printException(() -> "fixServerSideNavigationIcons failure", ex);
+        }
+    }
+
+    private static void addServerSideNavigationIconListener(View bottomBarContainer) {
+        if (!hookedBottomBarContainers.add(bottomBarContainer)) {
+            return;
+        }
+
+        bottomBarContainer.getViewTreeObserver().addOnGlobalLayoutListener(
+                () -> requestServerSideNavigationIconRestore(bottomBarContainer, "bottomBarContainer+globalLayout")
+        );
+        bottomBarContainer.getViewTreeObserver().addOnPreDrawListener(() -> {
+            restoreServerSideNavigationIcons(bottomBarContainer, "bottomBarContainer+preDraw");
+            return true;
+        });
+        bottomBarContainer.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
+                requestServerSideNavigationIconRestore(view, "bottomBarContainer+layoutChange")
+        );
+    }
+
+    private static void requestServerSideNavigationIconRestore(View bottomBarContainer, String reason) {
+        if (!pendingBottomBarIconRestores.add(bottomBarContainer)) {
+            return;
+        }
+
+        bottomBarContainer.postDelayed(() -> {
+            pendingBottomBarIconRestores.remove(bottomBarContainer);
+            restoreServerSideNavigationIcons(bottomBarContainer, reason);
+        }, 50);
+    }
+
+    private static void scheduleServerSideNavigationIconRestore(View bottomBarContainer) {
+        restoreServerSideNavigationIcons(bottomBarContainer, "bottomBarContainer");
+        bottomBarContainer.post(() -> restoreServerSideNavigationIcons(bottomBarContainer, "bottomBarContainer+post"));
+
+        for (long delay : LEGACY_NAVIGATION_ICON_RESTORE_DELAYS_MS) {
+            bottomBarContainer.postDelayed(
+                    () -> restoreServerSideNavigationIcons(bottomBarContainer, "bottomBarContainer+" + delay + "ms"),
+                    delay
+            );
+        }
+    }
+
+    private static void restoreServerSideNavigationIcons(View view, String reason) {
+        int restored = restoreServerSideNavigationIconsRecursive(view);
+        if (restored > 0 && Settings.DEBUG.get()) {
+            Logger.printInfo(() -> NAVIGATION_ICON_DIAGNOSTIC_PREFIX
+                    + " reason=" + reason
+                    + " restoredServerSideIcons=" + restored
+                    + " root=" + describeView(view));
+        }
+    }
+
+    private static int restoreServerSideNavigationIconsRecursive(View view) {
+        if (!(view instanceof ViewGroup)) {
+            return 0;
+        }
+
+        ViewGroup group = (ViewGroup) view;
+        int restored = 0;
+
+        NavigationButton button = getNavigationButtonFromViewGroup(group);
+        if (button != null) {
+            ImageView imageView = findNavigationIconView(group);
+            int drawableId = getLegacyNavigationDrawableId(group, button);
+
+            if (imageView != null && drawableId != 0) {
+                Drawable currentDrawable = imageView.getDrawable();
+                Integer restoredDrawableId = restoredNavigationIconIds.get(imageView);
+                Drawable restoredDrawable = restoredNavigationIconDrawables.get(imageView);
+                boolean alreadyRestored = restoredDrawableId != null
+                        && restoredDrawableId == drawableId
+                        && restoredDrawable == currentDrawable
+                        && currentDrawable != null
+                        && !(currentDrawable instanceof ColorDrawable)
+                        && imageView.getImageAlpha() == 255
+                        && imageView.getColorFilter() != null
+                        && imageView.getVisibility() == View.VISIBLE;
+
+                if (!alreadyRestored) {
+                    imageView.setImageResource(drawableId);
+                    imageView.setImageAlpha(255);
+                    imageView.setAlpha(1.0f);
+                    imageView.setColorFilter(getLegacyNavigationIconColor(group), PorterDuff.Mode.SRC_IN);
+                    imageView.setVisibility(View.VISIBLE);
+                    restoredNavigationIconIds.put(imageView, drawableId);
+                    restoredNavigationIconDrawables.put(imageView, imageView.getDrawable());
+                    restored++;
+                }
+            }
+        }
+
+        for (int i = 0; i < group.getChildCount(); i++) {
+            restored += restoreServerSideNavigationIconsRecursive(group.getChildAt(i));
+        }
+
+        return restored;
+    }
+
+    @Nullable
+    private static NavigationButton getNavigationButtonFromViewGroup(ViewGroup group) {
+        CharSequence contentDescription = group.getContentDescription();
+        NavigationButton button = getNavigationButtonFromText(contentDescription);
+        if (button != null) {
+            return button;
+        }
+
+        TextView textView = findNavigationLabelView(group);
+        return textView == null
+                ? null
+                : getNavigationButtonFromText(textView.getText());
+    }
+
+    @Nullable
+    private static TextView findNavigationLabelView(View view) {
+        if (view instanceof TextView) {
+            CharSequence text = ((TextView) view).getText();
+            if (getNavigationButtonFromText(text) != null) {
+                return (TextView) view;
+            }
+        }
+
+        if (!(view instanceof ViewGroup)) {
+            return null;
+        }
+
+        ViewGroup group = (ViewGroup) view;
+        for (int i = 0; i < group.getChildCount(); i++) {
+            TextView textView = findNavigationLabelView(group.getChildAt(i));
+            if (textView != null) {
+                return textView;
+            }
+        }
+
+        return null;
+    }
+
+    @Nullable
+    private static NavigationButton getNavigationButtonFromText(@Nullable CharSequence text) {
+        if (text == null) {
+            return null;
+        }
+
+        String normalized = text.toString().toLowerCase();
+        if (normalized.contains("principal") || normalized.contains("home")) {
+            return NavigationButton.HOME;
+        }
+        if (normalized.contains("shorts")) {
+            return NavigationButton.SHORTS;
+        }
+        if (normalized.contains("suscripciones") || normalized.contains("subscriptions")) {
+            return NavigationButton.SUBSCRIPTIONS;
+        }
+        if (normalized.contains("notificaciones") || normalized.contains("notifications")) {
+            return NavigationButton.NOTIFICATIONS;
+        }
+
+        return null;
+    }
+
+    private static void scheduleLegacyNavigationIconRestore(NavigationButton button, View tabView) {
+        restoreLegacyNavigationIcon(button, tabView);
+        tabView.post(() -> restoreLegacyNavigationIcon(button, tabView));
+
+        for (long delay : LEGACY_NAVIGATION_ICON_RESTORE_DELAYS_MS) {
+            tabView.postDelayed(() -> restoreLegacyNavigationIcon(button, tabView), delay);
+        }
+    }
+
+    private static void restoreLegacyNavigationIcon(NavigationButton button, View tabView) {
+        try {
+            ImageView imageView = findNavigationIconView(tabView);
+            if (imageView == null) {
+                return;
+            }
+
+            int drawableId = getLegacyNavigationDrawableId(tabView, button);
+            if (drawableId == 0) {
+                return;
+            }
+
+            imageView.setImageResource(drawableId);
+            imageView.setImageAlpha(255);
+            imageView.setAlpha(1.0f);
+            imageView.setColorFilter(getLegacyNavigationIconColor(tabView), PorterDuff.Mode.SRC_IN);
+            imageView.setVisibility(View.VISIBLE);
+
+            String logKey = button + "|" + drawableId;
+            if (loggedLegacyIconRestores.add(logKey)) {
+                Logger.printInfo(() -> "Restored legacy navigation icon: " + button
+                        + ", drawable=" + getResourceName(tabView, drawableId));
+            }
+        } catch (Exception ex) {
+            Logger.printException(() -> "Failed to restore legacy navigation icon: " + button, ex);
+        }
+    }
+
+    @Nullable
+    private static ImageView findNavigationIconView(View view) {
+        if (view instanceof ImageView) {
+            return (ImageView) view;
+        }
+
+        if (!(view instanceof ViewGroup)) {
+            return null;
+        }
+
+        ViewGroup group = (ViewGroup) view;
+        for (int i = 0; i < group.getChildCount(); i++) {
+            ImageView imageView = findNavigationIconView(group.getChildAt(i));
+            if (imageView != null) {
+                return imageView;
+            }
+        }
+
+        return null;
+    }
+
+    private static int getLegacyNavigationDrawableId(View tabView, NavigationButton button) {
+        boolean selected = tabView.isSelected();
+
+        switch (button) {
+            case HOME:
+                return findDrawableId(tabView, selected ? HOME_SELECTED_DRAWABLES : HOME_OUTLINE_DRAWABLES);
+            case SHORTS:
+                return findDrawableId(tabView, selected ? SHORTS_SELECTED_DRAWABLES : SHORTS_OUTLINE_DRAWABLES);
+            case SUBSCRIPTIONS:
+                return findDrawableId(tabView, selected
+                        ? SUBSCRIPTIONS_SELECTED_DRAWABLES
+                        : SUBSCRIPTIONS_OUTLINE_DRAWABLES);
+            case NOTIFICATIONS:
+                return findDrawableId(tabView, selected
+                        ? NOTIFICATIONS_SELECTED_DRAWABLES
+                        : NOTIFICATIONS_OUTLINE_DRAWABLES);
+            default:
+                return 0;
+        }
+    }
+
+    private static int findDrawableId(View view, String[] drawableNames) {
+        Resources resources = view.getResources();
+        String packageName = view.getContext().getPackageName();
+
+        for (String drawableName : drawableNames) {
+            int id = resources.getIdentifier(drawableName, "drawable", packageName);
+            if (id != 0) {
+                return id;
+            }
+        }
+
+        return 0;
+    }
+
+    private static int getLegacyNavigationIconColor(View view) {
+        int uiMode = view.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        return uiMode == Configuration.UI_MODE_NIGHT_YES
+                ? Color.WHITE
+                : Color.BLACK;
+    }
+
     private static void logNavigationTabDiagnostic(String reason, NavigationButton button, View view) {
+        if (!Settings.DEBUG.get()) {
+            return;
+        }
+
         logNavigationTabDiagnosticNow(reason, button, view);
         view.postDelayed(() -> logNavigationTabDiagnosticNow(reason + "+500ms", button, view), 500);
         view.postDelayed(() -> logNavigationTabDiagnosticNow(reason + "+2000ms", button, view), 2000);
@@ -307,6 +646,7 @@ public final class NavigationBar {
                 + ", imageAlpha=" + imageView.getImageAlpha()
                 + ", tintList=" + tintList
                 + ", tintMode=" + tintMode
+                + ", colorFilter=" + imageView.getColorFilter()
                 + ", scaleType=" + imageView.getScaleType();
     }
 

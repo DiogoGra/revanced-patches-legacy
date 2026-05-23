@@ -297,6 +297,7 @@ public final class NavigationButtonsPatch {
      * Injection point.
      */
     public static void hideNavigationBar(View view) {
+        NavigationBar.fixServerSideNavigationIcons(view);
         hideViewUnderCondition(HIDE_NAVIGATION_BAR, view);
     }
 

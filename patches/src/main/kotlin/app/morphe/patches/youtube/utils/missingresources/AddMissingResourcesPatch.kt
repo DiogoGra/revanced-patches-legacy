@@ -197,6 +197,30 @@ val addMissingResourcesPatch = resourcePatch(
         }
 
         if (is_19_16_or_greater) {
+            val (addedAliases, skippedAliases) = addDrawableAliases(
+                mapOf(
+                    // Server-side Cairo navigation icons introduced after YouTube 19.16.39.
+                    "yt_fill_home_cairo_black_24" to "@drawable/yt_fill_home_black_24",
+                    "yt_outline_home_cairo_black_24" to "@drawable/yt_outline_home_black_24",
+                    "yt_fill_subscriptions_cairo_black_24" to "@drawable/yt_fill_subscriptions_black_24",
+                    "yt_outline_subscriptions_cairo_black_24" to "@drawable/yt_outline_subscriptions_black_24",
+                    "yt_fill_youtube_shorts_cairo_black_24" to "@drawable/yt_fill_youtube_shorts_black_24",
+                    "yt_outline_youtube_shorts_cairo_black_24" to "@drawable/yt_outline_youtube_shorts_black_24",
+                    "yt_fill_bell_cairo_black_24" to "@drawable/yt_fill_bell_black_24",
+                    "yt_outline_bell_cairo_black_24" to "@drawable/yt_outline_bell_black_24",
+
+                    // Toolbar Cairo icons used by modern guide/home layouts.
+                    "yt_outline_search_cairo_black_24" to "@drawable/yt_outline_search_black_24",
+                    "yt_outline_overflow_vertical_cairo_black_24" to "@drawable/yt_outline_overflow_vertical_black_24",
+                    "yt_fill_chromecast_cairo_black_24" to "@drawable/yt_fill_chromecast_black_24",
+                    "yt_outline_chromecast_cairo_black_24" to "@drawable/yt_outline_chromecast_black_24",
+                    "yt_fill_compass_cairo_black_24" to "@drawable/yt_fill_compass_black_24",
+                    "yt_outline_compass_cairo_black_24" to "@drawable/yt_outline_compass_black_24",
+                    "yt_outline_gear_cairo_black_24" to "@drawable/yt_outline_gear_black_24",
+                    "yt_outline_share_cairo_black_24" to "@drawable/yt_outline_share_black_24",
+                    "yt_outline_arrow_left_cairo_black_24" to "@drawable/yt_outline_arrow_left_black_24",
+                )
+            )
             val replacedColors = replaceColorValues(
                 mapOf(
                     "yt_light_red_cairo" to "@color/yt_light_red",
@@ -207,7 +231,8 @@ val addMissingResourcesPatch = resourcePatch(
             )
             printInfo(
                 "Add missing resources: YouTube 19.16+ detected, " +
-                        "skipped drawable alias injection to preserve local navigation resources, " +
+                        "added $addedAliases surgical Cairo drawable aliases, " +
+                        "skipped $skippedAliases existing aliases, " +
                         "replaced $replacedColors Cairo red colors, using fallback hooks."
             )
             return@execute
