@@ -21,13 +21,13 @@ internal val rectangleFieldInvalidatorFingerprint = legacyFingerprint(
 
 internal val segmentPlaybackControllerFingerprint = legacyFingerprint(
     name = "segmentPlaybackControllerFingerprint",
-    returnType = "V",
-    accessFlags = AccessFlags.PUBLIC or AccessFlags.STATIC,
+    returnType = "Landroid/graphics/Rect;",
+    accessFlags = AccessFlags.PRIVATE or AccessFlags.STATIC,
     parameters = listOf("Ljava/lang/Object;"),
     opcodes = listOf(Opcode.CONST_STRING),
     customFingerprint = { method, _ ->
         method.definingClass == "$EXTENSION_PATH/sponsorblock/SegmentPlaybackController;"
-                && method.name == "setSponsorBarRect"
+                && method.name == "getPatchedSponsorBarRect"
     }
 )
 
