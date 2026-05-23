@@ -12,9 +12,7 @@
 
 Check the [wiki](https://github.com/anddea/revanced-patches/wiki) for resources on patching, customization, and debugging.
 
-Report issues [here](https://github.com/inotia00/ReVanced_Extended).
-
-[Credits](https://github.com/anddea/revanced-patches/wiki/Credits)
+Report issues [here](https://github.com/DiogoGra/revanced-patches-legacy).
 
 ## 📋 List of patches in this repository
 
@@ -115,3 +113,11 @@ Example:
   }
 ]
 ```
+
+## 🫂 Credits
+
+Thanks to:
+Anddea (anddea/revanced-patches)
+Morphe (MorpheApp/morphe-patches, MorpheApp/morphe-manager)
+kitadai31 (kitadai31/revanced-patches-android6-7)
+for making this project possible.
