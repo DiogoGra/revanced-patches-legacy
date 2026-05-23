@@ -118,6 +118,9 @@ Example:
 
 Thanks to:
 Anddea (anddea/revanced-patches)
+
 Morphe (MorpheApp/morphe-patches, MorpheApp/morphe-manager)
+
 kitadai31 (kitadai31/revanced-patches-android6-7)
+
 for making this project possible.
