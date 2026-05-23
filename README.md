@@ -12,7 +12,9 @@
 
 Check the [wiki](https://github.com/anddea/revanced-patches/wiki) for resources on patching, customization, and debugging.
 
-Report issues [here](https://github.com/DiogoGra/revanced-patches-legacy).
+Report issues [here](https://github.com/inotia00/ReVanced_Extended).
+
+[Credits](https://github.com/anddea/revanced-patches/wiki/Credits)
 
 ## 📋 List of patches in this repository
 
@@ -40,7 +42,6 @@ Report issues [here](https://github.com/DiogoGra/revanced-patches-legacy).
 | `Disable forced auto audio tracks` | Adds an option to disable audio tracks from being automatically enabled. | 19.16.39 |
 | `Disable forced auto captions` | Adds an option to disable captions from being automatically enabled. | 19.16.39 |
 | `Disable haptic feedback` | Adds options to disable haptic feedback when swiping in the video player. | 19.16.39 |
-| `Disable layout updates` | Adds an option to disable layout updates by server. | 19.16.39 |
 | `Disable resuming Miniplayer on startup` | Adds an option to disable the Miniplayer 'Continue watching' from resuming on app startup. | 19.16.39 |
 | `Disable resuming Shorts on startup` | Adds an option to disable the Shorts player from resuming on app startup when Shorts were last being watched. | 19.16.39 |
 | `Disable sign in to TV popup` | Adds an option to disable the popup asking to sign into a TV on the same local network. | 19.16.39 |
@@ -113,14 +114,3 @@ Example:
   }
 ]
 ```
-
-## 🫂 Credits
-
-Thanks to:
-Anddea (anddea/revanced-patches)
-
-Morphe (MorpheApp/morphe-patches, MorpheApp/morphe-manager)
-
-kitadai31 (kitadai31/revanced-patches-android6-7)
-
-for making this project possible.

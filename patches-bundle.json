@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-23T00:00:00",
+  "created_at": "2026-05-23T18:00:45",
   "description": "# 1.0.0\n\nInitial ReVanced Patches Legacy release for Morphe.\n\nHighlights:\n\n- Supports YouTube 19.16.39 only.\n- Spoofs YouTube app version to 20.05.46 for modern server compatibility.\n- Adds player request header spoofing to avoid playback error 400.\n- Adds missing resource fallbacks to prevent Resource ID #0x0 crashes.\n- Disables server-side settings layout updates by default so RVX settings remain accessible.\n- Keeps the package focused on YouTube patches for legacy 19.16.39 builds.\n\nCredits:\n\n- anddea/revanced-patches\n- MorpheApp/morphe-patches and MorpheApp/morphe-manager\n- kitadai31/revanced-patches-android6-7",
   "download_url": "https://github.com/DiogoGra/revanced-patches-legacy/releases/download/1.0.0/patches-1.0.0.mpp",
   "signature_download_url": null,
