@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-05-23T18:55:00",
-  "description": "# 1.0.3\n\nBug fix release for YouTube 19.16.39.\n\nBug Fixes:\n\n- YouTube - Navigation bar components: Restore server-side navigation icons after layout updates.\n- YouTube - Add missing resources: Add surgical Cairo drawable aliases for YouTube 19.16.39.\n\nCredits:\n\n- anddea/revanced-patches\n- MorpheApp/morphe-patches and MorpheApp/morphe-manager\n- kitadai31/revanced-patches-android6-7",
-  "download_url": "https://github.com/DiogoGra/revanced-patches-legacy/releases/download/1.0.3/patches-1.0.3.mpp",
+  "created_at": "2026-05-25T22:20:00",
+  "description": "# 1.1.0\n\nFeature and alignment release for YouTube 19.16.39.\n\nFeatures:\n\n- YouTube - Add missing resources: Add aliases for modern server-side Shorts action button resources while preserving the original YouTube 19.16.39 white shadowed icons.\n- YouTube - SponsorBlock: Align with Anddea 4.1.0-dev.1 highlight submission and saved time fixes.\n- YouTube - Change share sheet: Align with Anddea 4.1.0-dev.1 system share sheet fix.\n- YouTube - Gemini: Align model list with Anddea 4.1.0-dev.1.\n\nBug Fixes:\n\n- YouTube - Add missing resources: Avoid transparent fallback for original Shorts action buttons when spoofed layouts request newer resource names.\n- YouTube - Theme/Splash: Align dark mode splash screen fix with Anddea 4.1.0-dev.1.\n\nCredits:\n\n- anddea/revanced-patches\n- MorpheApp/morphe-patches and MorpheApp/morphe-manager\n- kitadai31/revanced-patches-android6-7",
+  "download_url": "https://github.com/DiogoGra/revanced-patches-legacy/releases/download/1.1.0/patches-1.1.0.mpp",
   "signature_download_url": null,
-  "version": "1.0.3"
+  "version": "1.1.0"
 }
