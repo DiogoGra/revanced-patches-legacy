@@ -18,10 +18,35 @@ import app.morphe.patches.youtube.utils.playservice.versionCheckPatch
 import app.morphe.util.ResourceGroup
 import app.morphe.util.copyResources
 import app.morphe.util.fingerprint.methodOrThrow
+import app.morphe.util.fingerprint.legacyFingerprint
+import app.morphe.util.getReference
+import app.morphe.util.indexOfFirstInstructionOrThrow
 import app.morphe.util.updatePatchStatus
 import app.morphe.util.Utils.printInfo
+import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.reference.TypeReference
 
 private const val EXTENSION_CLASS_DESCRIPTOR = "$UTILS_PATH/MissingResourcesPatch;"
+
+private val legacyShortsMenuItemFingerprint = legacyFingerprint(
+    name = "legacyShortsMenuItemFingerprint",
+    returnType = "Ltpl;",
+    parameters = listOf("I"),
+    opcodes = listOf(
+        Opcode.IGET_OBJECT,
+        Opcode.INVOKE_INTERFACE,
+        Opcode.MOVE_RESULT_OBJECT,
+        Opcode.CHECK_CAST,
+        Opcode.RETURN_OBJECT,
+    ),
+    customFingerprint = { method, classDef ->
+        classDef.superclass == "Ltpj;" &&
+                method.implementation?.instructions?.any { instruction ->
+                    instruction.opcode == Opcode.CHECK_CAST &&
+                            instruction.getReference<TypeReference>()?.type == "Ltpl;"
+                } == true
+    },
+)
 
 /*
  * Derived from / inspired by kitadai31's revanced-patches-android6-7
@@ -67,6 +92,25 @@ private val addMissingResourcesBytecodePatch = bytecodePatch(
                     return-object p0
                 """,
                 ExternalLabel("original", getInstruction(0)),
+            )
+        }
+
+        legacyShortsMenuItemFingerprint.methodOrThrow().apply {
+            val checkCastIndex = indexOfFirstInstructionOrThrow {
+                opcode == Opcode.CHECK_CAST &&
+                        getReference<TypeReference>()?.type == "Ltpl;"
+            }
+
+            addInstructionsWithLabels(
+                checkCastIndex,
+                """
+                    instance-of v0, v2, Ltpl;
+                    if-nez v0, :legacy_menu_item
+                    new-instance v2, Ltpn;
+                    invoke-direct {v2}, Ltpn;-><init>()V
+                    return-object v2
+                """,
+                ExternalLabel("legacy_menu_item", getInstruction(checkCastIndex)),
             )
         }
     }
@@ -267,7 +311,7 @@ val addMissingResourcesPatch = resourcePatch(
                 "Add missing resources: YouTube 19.16+ detected, " +
                         "added $addedAliases surgical Cairo drawable aliases, " +
                         "skipped $skippedAliases existing aliases, " +
-                        "replaced $replacedColors Cairo red colors, using fallback hooks."
+                        "replaced $replacedColors Cairo red colors, using fallback hooks and Shorts menu guard."
             )
             return@execute
         }
