@@ -1,5 +1,6 @@
 package app.morphe.patches.youtube.utils.missingresources
 
+import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.patch.bytecodePatch
@@ -24,6 +25,8 @@ import app.morphe.util.indexOfFirstInstructionOrThrow
 import app.morphe.util.updatePatchStatus
 import app.morphe.util.Utils.printInfo
 import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 import com.android.tools.smali.dexlib2.iface.reference.TypeReference
 
 private const val EXTENSION_CLASS_DESCRIPTOR = "$UTILS_PATH/MissingResourcesPatch;"
@@ -46,6 +49,45 @@ private val legacyShortsMenuItemFingerprint = legacyFingerprint(
                             instruction.getReference<TypeReference>()?.type == "Ltpl;"
                 } == true
     },
+)
+
+private fun legacyBottomSheetMenuItemTextFallbackFingerprint(
+    name: String,
+    classDescriptor: String,
+) = legacyFingerprint(
+    name = name,
+    returnType = "Lakid;",
+    parameters = listOf("Lasna;"),
+    strings = listOf("Text missing for BottomSheetMenuItem."),
+    customFingerprint = { method, classDef ->
+        classDef.type == classDescriptor &&
+                method.implementation?.instructions?.any { instruction ->
+                    val reference = instruction.getReference<MethodReference>()
+                    instruction.opcode == Opcode.INVOKE_STATIC &&
+                            reference?.definingClass == "Laclx;" &&
+                            reference.name == "dc" &&
+                            reference.returnType == "Ljava/lang/CharSequence;" &&
+                            reference.parameterTypes.size == 1 &&
+                            reference.parameterTypes[0] == "Lasna;"
+                } == true &&
+                method.implementation?.instructions?.any { instruction ->
+                    val reference = instruction.getReference<MethodReference>()
+                    instruction.opcode == Opcode.INVOKE_DIRECT &&
+                            reference?.definingClass == "Lahpv;" &&
+                            reference.name == "<init>"
+                } == true
+    },
+)
+
+private val legacyBottomSheetMenuItemTextFallbackFingerprints = listOf(
+    legacyBottomSheetMenuItemTextFallbackFingerprint(
+        "legacyBottomSheetMenuItemTextFallbackFingerprint",
+        "Lahqc;",
+    ),
+    legacyBottomSheetMenuItemTextFallbackFingerprint(
+        "legacyBottomSheetMenuItemTextFallbackWithToggleFingerprint",
+        "Lahqa;",
+    ),
 )
 
 /*
@@ -112,6 +154,41 @@ private val addMissingResourcesBytecodePatch = bytecodePatch(
                 """,
                 ExternalLabel("legacy_menu_item", getInstruction(checkCastIndex)),
             )
+        }
+
+        legacyBottomSheetMenuItemTextFallbackFingerprints.forEach { fingerprint ->
+            fingerprint.methodOrThrow().apply {
+                val iconMetadataIndex = indexOfFirstInstructionOrThrow {
+                    val reference = getReference<MethodReference>()
+                    opcode == Opcode.INVOKE_STATIC &&
+                            reference?.definingClass == "Laclx;" &&
+                            reference.name == "da" &&
+                            reference.returnType == "Laqcb;" &&
+                            reference.parameterTypes.size == 1 &&
+                            reference.parameterTypes[0] == "Lasna;"
+                }
+                val iconMetadataRegister =
+                    getInstruction<OneRegisterInstruction>(iconMetadataIndex + 1).registerA
+
+                val textIndex = indexOfFirstInstructionOrThrow(iconMetadataIndex + 1) {
+                    val reference = getReference<MethodReference>()
+                    opcode == Opcode.INVOKE_STATIC &&
+                            reference?.definingClass == "Laclx;" &&
+                            reference.name == "dc" &&
+                            reference.returnType == "Ljava/lang/CharSequence;" &&
+                            reference.parameterTypes.size == 1 &&
+                            reference.parameterTypes[0] == "Lasna;"
+                }
+                val textRegister = getInstruction<OneRegisterInstruction>(textIndex + 1).registerA
+
+                addInstructions(
+                    textIndex + 2,
+                    """
+                        invoke-static {p0, v$iconMetadataRegister, v$textRegister}, $EXTENSION_CLASS_DESCRIPTOR->getBottomSheetMenuItemTextFallback(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/CharSequence;)Ljava/lang/CharSequence;
+                        move-result-object v$textRegister
+                    """
+                )
+            }
         }
     }
 }

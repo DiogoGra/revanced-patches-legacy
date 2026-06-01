@@ -6,6 +6,9 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -30,6 +33,14 @@ public final class MissingResourcesPatch {
             "anddea.youtube",
             null
     };
+    private static final Set<Integer> CAPTIONS_ICON_TYPES = Collections.unmodifiableSet(
+            new HashSet<>(Arrays.asList(
+                    50,  // CAPTIONS
+                    180, // CLOSED_CAPTION
+                    290, // SUBTITLES
+                    765  // CLOSED_CAPTION_SELECTED
+            ))
+    );
     private static final Set<String> loggedFallbacks =
             Collections.synchronizedSet(new HashSet<>());
 
@@ -95,6 +106,32 @@ public final class MissingResourcesPatch {
         } catch (Resources.NotFoundException ex) {
             return getFallbackDrawableForDensity(resources, density, theme, "Resources.getDrawableForDensity missing id=" + id + ", theme", isToolbarMenuStack(), ex);
         }
+    }
+
+    public static CharSequence getBottomSheetMenuItemTextFallback(Object host, Object iconMetadata, CharSequence text) {
+        if (text != null) {
+            return text;
+        }
+
+        int iconType = getIconType(iconMetadata);
+        if (!CAPTIONS_ICON_TYPES.contains(iconType)) {
+            return null;
+        }
+
+        Context context = getContext(host);
+        CharSequence fallbackText = getString(context, "overflow_captions", "captions_key");
+        if (fallbackText == null || fallbackText.length() == 0) {
+            fallbackText = "Subtitles";
+        }
+
+        String key = "bottom_sheet_text|" + iconType + "|" + getCaller();
+        if (loggedFallbacks.add(key)) {
+            CharSequence finalFallbackText = fallbackText;
+            Logger.printInfo(() -> "Missing bottom sheet menu text fallback: iconType="
+                    + iconType + ", text=" + finalFallbackText + ", caller=" + getCaller());
+        }
+
+        return fallbackText;
     }
 
     private static Drawable getFallbackDrawable(Resources resources, String reason, boolean preferToolbarIcon) {
@@ -182,6 +219,126 @@ public final class MissingResourcesPatch {
         }
 
         return false;
+    }
+
+    private static int getIconType(Object iconMetadata) {
+        if (iconMetadata == null) {
+            return -1;
+        }
+
+        try {
+            Field bitField = findField(iconMetadata.getClass(), "b");
+            Field iconTypeField = findField(iconMetadata.getClass(), "c");
+            if (bitField == null || iconTypeField == null) {
+                return -1;
+            }
+
+            bitField.setAccessible(true);
+            iconTypeField.setAccessible(true);
+
+            int flags = bitField.getInt(iconMetadata);
+            if ((flags & 1) == 0) {
+                return -1;
+            }
+
+            return iconTypeField.getInt(iconMetadata);
+        } catch (Exception ex) {
+            String key = "bottom_sheet_icon_type|" + iconMetadata.getClass().getName();
+            if (loggedFallbacks.add(key)) {
+                Logger.printInfo(() -> "Failed to read bottom sheet menu icon type: "
+                        + iconMetadata.getClass().getName(), ex);
+            }
+            return -1;
+        }
+    }
+
+    private static Context getContext(Object host) {
+        if (host instanceof Context) {
+            return (Context) host;
+        }
+
+        if (host == null) {
+            return null;
+        }
+
+        Method method = findMethod(host.getClass(), "oy");
+        if (method == null) {
+            return null;
+        }
+
+        try {
+            method.setAccessible(true);
+            Object context = method.invoke(host);
+            return context instanceof Context
+                    ? (Context) context
+                    : null;
+        } catch (Exception ex) {
+            String key = "bottom_sheet_context|" + host.getClass().getName();
+            if (loggedFallbacks.add(key)) {
+                Logger.printInfo(() -> "Failed to resolve bottom sheet menu context: "
+                        + host.getClass().getName(), ex);
+            }
+            return null;
+        }
+    }
+
+    private static CharSequence getString(Context context, String... names) {
+        if (context == null) {
+            return null;
+        }
+
+        Resources resources = context.getResources();
+        String packageName = context.getPackageName();
+
+        for (String name : names) {
+            int id = resources.getIdentifier(name, "string", packageName);
+            if (id == 0) {
+                for (String resourcePackage : RESOURCE_PACKAGES) {
+                    id = resources.getIdentifier(name, "string", resourcePackage);
+                    if (id != 0) {
+                        break;
+                    }
+                }
+            }
+
+            if (id == 0) {
+                continue;
+            }
+
+            try {
+                return resources.getString(id);
+            } catch (Resources.NotFoundException ignored) {
+                // Try the next fallback string.
+            }
+        }
+
+        return null;
+    }
+
+    private static Field findField(Class<?> type, String name) {
+        Class<?> current = type;
+        while (current != null) {
+            try {
+                return current.getDeclaredField(name);
+            } catch (NoSuchFieldException ignored) {
+                current = current.getSuperclass();
+            }
+        }
+
+        return null;
+    }
+
+    private static Method findMethod(Class<?> type, String name) {
+        Class<?> current = type;
+        while (current != null) {
+            try {
+                return current.getDeclaredMethod(name);
+            } catch (NoSuchMethodException ignored) {
+                current = current.getSuperclass();
+            }
+        }
+
+        return null;
     }
 
     private static void logFallback(String reason, Exception ex) {
