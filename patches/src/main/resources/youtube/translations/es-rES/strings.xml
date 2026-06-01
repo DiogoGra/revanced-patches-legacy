@@ -2443,8 +2443,10 @@ Limitación: el título de vídeo desaparece cuando se pulsa."</string>
 • Si más tarde se desactiva, la antigua interfaz de usuario puede permanecer hasta que se borren los datos de la app."</string>
     <string name="revanced_spoof_app_version_summary_off">Versión no falsificada</string>
     <string name="revanced_spoof_app_version_summary_on">Versión falsificada</string>
-    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - Restaurar funcionalidad de transcripción</string>
-    <string name="revanced_spoof_app_version_target_entry_20_13_41">20.13.41 - Restaurar la barra de acción de vídeo no contraída</string>
+    <string name="revanced_spoof_app_version_target_entry_20_02_34">20.02.34 - Recomendado</string>
+    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - Recomendado</string>
+    <string name="revanced_spoof_app_version_target_entry_20_14_43">20.14.43 - Los Shorts pueden estar rotos</string>
+    <string name="revanced_spoof_app_version_target_entry_20_24_39">20.24.39 - La interfaz de usuario está rota</string>
     <string name="revanced_spoof_app_version_target_entry_title">Versión a falsificar de la app</string>
     <string name="revanced_spoof_app_version_target_invalid_toast">Versión de aplicación falsa no válida: %s.</string>
     <string name="revanced_spoof_app_version_target_summary">Escribe la versión a falsificar de la app.</string>
