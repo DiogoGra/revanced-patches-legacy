@@ -330,16 +330,17 @@ val addMissingResourcesPatch = resourcePatch(
                     "yt_fill_bell_cairo_black_24" to "@drawable/yt_fill_bell_black_24",
                     "yt_outline_bell_cairo_black_24" to "@drawable/yt_outline_bell_black_24",
 
-                    // Toolbar Cairo icons used by modern guide/home layouts.
-                    "yt_outline_search_cairo_black_24" to "@drawable/yt_outline_search_black_24",
-                    "yt_outline_overflow_vertical_cairo_black_24" to "@drawable/yt_outline_overflow_vertical_black_24",
+                    // Modern Shorts top-bar Cairo icon names. Keep 19.16.39's
+                    // original white legacy Shorts glyphs instead of the 20.xx look.
+                    "yt_outline_search_cairo_black_24" to "@drawable/reel_search_bold_24dp",
+                    "yt_outline_overflow_vertical_cairo_black_24" to "@drawable/reel_more_vertical_bold_24dp",
                     "yt_fill_chromecast_cairo_black_24" to "@drawable/yt_fill_chromecast_black_24",
                     "yt_outline_chromecast_cairo_black_24" to "@drawable/yt_outline_chromecast_black_24",
                     "yt_fill_compass_cairo_black_24" to "@drawable/yt_fill_compass_black_24",
                     "yt_outline_compass_cairo_black_24" to "@drawable/yt_outline_compass_black_24",
                     "yt_outline_gear_cairo_black_24" to "@drawable/yt_outline_gear_black_24",
                     "yt_outline_share_cairo_black_24" to "@drawable/yt_outline_share_black_24",
-                    "yt_outline_arrow_left_cairo_black_24" to "@drawable/yt_outline_arrow_left_black_24",
+                    "yt_outline_arrow_left_cairo_black_24" to "@drawable/yt_outline_arrow_left_white_24",
 
                     // Modern Shorts action button names requested by server-side layouts.
                     // YouTube 19.16.39 already has the original white shadowed buttons, so
