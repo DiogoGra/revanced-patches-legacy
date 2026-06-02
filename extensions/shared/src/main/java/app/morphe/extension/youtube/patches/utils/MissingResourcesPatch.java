@@ -109,7 +109,7 @@ public final class MissingResourcesPatch {
     }
 
     public static CharSequence getBottomSheetMenuItemTextFallback(Object host, Object iconMetadata, CharSequence text) {
-        if (text != null) {
+        if (text != null && text.length() > 0) {
             return text;
         }
 

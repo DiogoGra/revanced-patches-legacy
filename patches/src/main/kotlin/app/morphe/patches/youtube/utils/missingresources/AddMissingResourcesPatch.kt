@@ -90,6 +90,33 @@ private val legacyBottomSheetMenuItemTextFallbackFingerprints = listOf(
     ),
 )
 
+private val legacyBottomSheetMenuServerItemFallbackFingerprint = legacyFingerprint(
+    name = "legacyBottomSheetMenuServerItemFallbackFingerprint",
+    returnType = "Lakid;",
+    parameters = listOf("Lasna;"),
+    customFingerprint = { method, classDef ->
+        classDef.type == "Lahqa;" &&
+                method.implementation?.instructions?.any { instruction ->
+                    val reference = instruction.getReference<MethodReference>()
+                    instruction.opcode == Opcode.INVOKE_VIRTUAL &&
+                            reference?.definingClass == "Lagyy;" &&
+                            reference.name == "d" &&
+                            reference.returnType == "Lagyb;" &&
+                            reference.parameterTypes.size == 1 &&
+                            reference.parameterTypes[0] == "Lapjb;"
+                } == true &&
+                method.implementation?.instructions?.any { instruction ->
+                    val reference = instruction.getReference<MethodReference>()
+                    instruction.opcode == Opcode.INVOKE_STATIC &&
+                            reference?.definingClass == "Laclx;" &&
+                            reference.name == "dd" &&
+                            reference.returnType == "Ljava/lang/String;" &&
+                            reference.parameterTypes.size == 1 &&
+                            reference.parameterTypes[0] == "Lasna;"
+                } == true
+    },
+)
+
 /*
  * Derived from / inspired by kitadai31's revanced-patches-android6-7
  * "Add missing resources" patch (GPL-3.0), then adapted for Morphe/RVX and
@@ -155,6 +182,26 @@ private val addMissingResourcesBytecodePatch = bytecodePatch(
                 ExternalLabel("legacy_menu_item", getInstruction(checkCastIndex)),
             )
         }
+
+        legacyBottomSheetMenuServerItemFallbackFingerprint.methodOrThrow().apply {
+            val legacyMenuPathIndex = indexOfFirstInstructionOrThrow {
+                val reference = getReference<MethodReference>()
+                opcode == Opcode.INVOKE_STATIC &&
+                        reference?.definingClass == "Laclx;" &&
+                        reference.name == "dd" &&
+                        reference.returnType == "Ljava/lang/String;" &&
+                        reference.parameterTypes.size == 1 &&
+                        reference.parameterTypes[0] == "Lasna;"
+            }
+
+            addInstructionsWithLabels(
+                0,
+                "goto :legacy_menu_item_builder",
+                ExternalLabel("legacy_menu_item_builder", getInstruction(legacyMenuPathIndex)),
+            )
+        }
+
+        // Keep this guard as a last-resort fallback for unexpected modern menu rows.
 
         legacyBottomSheetMenuItemTextFallbackFingerprints.forEach { fingerprint ->
             fingerprint.methodOrThrow().apply {

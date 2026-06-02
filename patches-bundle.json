@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-06-01T10:24:17",
-  "description": "# 1.2.0\n\nBug fix release for YouTube 19.16.39.\n\nBug Fixes:\n\n- YouTube - Add missing resources: Restore missing Shorts bottom sheet captions/subtitles text in phone/high-DPI layouts without replacing the original menu command.\n- YouTube - Add missing resources: Map modern Shorts search, overflow, and back Cairo icon names back to 19.16.39's legacy white Shorts top-bar glyphs.\n- YouTube - Add missing resources: Keep the legacy Shorts menu crash guard for unsupported modern menu rows.\n\nChanges:\n\n- YouTube - Spoof app version: Update the preset list to 20.02.34, 20.05.46, 20.14.43, and 20.24.39 with English and Spanish labels.\n\nCredits:\n\n- anddea/revanced-patches\n- MorpheApp/morphe-patches and MorpheApp/morphe-manager\n- kitadai31/revanced-patches-android6-7",
-  "download_url": "https://github.com/DiogoGra/revanced-patches-legacy/releases/download/1.2.0/patches-1.2.0.mpp",
+  "created_at": "2026-06-01T21:51:58",
+  "description": "# 1.2.1-dev.1\n\nBug Fixes:\n\n- Critical bugs fixed.\n\nCredits:\n\n- anddea/revanced-patches\n- MorpheApp/morphe-patches and MorpheApp/morphe-manager\n- kitadai31/revanced-patches-android6-7",
+  "download_url": "https://github.com/DiogoGra/revanced-patches-legacy/releases/download/1.2.1-dev.1/patches-1.2.1-dev.1.mpp",
   "signature_download_url": null,
-  "version": "1.2.0"
+  "version": "1.2.1-dev.1"
 }

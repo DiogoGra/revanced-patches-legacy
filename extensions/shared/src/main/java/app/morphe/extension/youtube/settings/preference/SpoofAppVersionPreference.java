@@ -1,6 +1,5 @@
 package app.morphe.extension.youtube.settings.preference;
 
-import static app.morphe.extension.shared.utils.PackageUtils.isVersionOrGreater;
 import static app.morphe.extension.shared.utils.StringRef.sf;
 import static app.morphe.extension.shared.utils.StringRef.str;
 import static app.morphe.extension.shared.utils.Utils.dipToPixels;
@@ -76,7 +75,9 @@ public class SpoofAppVersionPreference extends CustomDialogListPreference {
         }
 
         public boolean isAvailable() {
-            return this == OTHER || isVersionOrGreater(this.versionName);
+            // Legacy YouTube 19.16.39 needs presets that are newer than the
+            // installed app version. Do not hide 20.xx spoof targets here.
+            return true;
         }
     }
 
