@@ -114,3 +114,11 @@ Example:
   }
 ]
 ```
+
+## Credits 🤝
+
+[kitadai31](https://github.com/kitadai31/revanced-patches-android6-7)
+
+[anddea](https://github.com/anddea/revanced-patches)
+
+[MorpheApp](https://github.com/MorpheApp/morphe-patches)
