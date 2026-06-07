@@ -14,8 +14,6 @@ Check the [wiki](https://github.com/anddea/revanced-patches/wiki) for resources 
 
 Report issues [here](https://github.com/inotia00/ReVanced_Extended).
 
-[Credits](https://github.com/anddea/revanced-patches/wiki/Credits)
-
 ## 📋 List of patches in this repository
 
 {{ table }}
@@ -37,3 +35,11 @@ Example:
   }
 ]
 ```
+
+## Credits 🤝
+
+[kitadai31](https://github.com/kitadai31/revanced-patches-android6-7)
+
+[anddea](https://github.com/anddea/revanced-patches)
+
+[MorpheApp](https://github.com/MorpheApp/morphe-patches)
