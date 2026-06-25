@@ -4,9 +4,9 @@ patches {
     about {
         name = "RVX Patches"
         description = "Patches for RVX"
-        source = "git@github.com:anddea/revanced-patches.git"
-        author = "Aaron Veil (anddea)"
-        contact = "https://github.com/anddea/revanced-patches/issues"
+        source = "https://github.com/DiogoGra/revanced-patches-legacy"
+        author = "DiogoGra"
+        contact = "https://github.com/DiogoGra/revanced-patches-legacy/issues"
         website = "https://rvxtranslate.vercel.app/"
         license = "GNU General Public License v3.0"
     }
@@ -62,7 +62,7 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/anddea/revanced-patches")
+            url = uri("https://maven.pkg.github.com/DiogoGra/revanced-patches-legacy")
             credentials {
                 username = System.getenv("GITHUB_ACTOR")
                 password = System.getenv("GITHUB_TOKEN")
