@@ -200,6 +200,11 @@ public class Settings extends SharedYouTubeSettings {
 
     public static final EnumSetting<FormFactor> CHANGE_FORM_FACTOR = new EnumSetting<>("revanced_change_form_factor", FormFactor.DEFAULT, true, "revanced_change_form_factor_user_dialog_message");
     public static final BooleanSetting DISABLE_LAYOUT_UPDATES = new BooleanSetting("revanced_disable_layout_updates", TRUE, true, "revanced_disable_layout_updates_user_dialog_message");
+    public static final BooleanSetting FREEZE_LAYOUT_UPDATES = new BooleanSetting("revanced_freeze_layout_updates", FALSE, true);
+    public static final StringSetting FROZEN_HOT_HASH_DATA = new StringSetting("revanced_frozen_hot_hash_data", "", false, false);
+    public static final StringSetting FROZEN_HOT_CONFIG_GROUP = new StringSetting("revanced_frozen_hot_config_group", "", false, false);
+    public static final StringSetting FROZEN_COLD_HASH_DATA = new StringSetting("revanced_frozen_cold_hash_data", "", false, false);
+    public static final StringSetting FROZEN_COLD_CONFIG_GROUP = new StringSetting("revanced_frozen_cold_config_group", "", false, false);
     public static final BooleanSetting DISABLE_SETTINGS_LAYOUT_UPDATES = new BooleanSetting("revanced_disable_settings_layout_updates", TRUE, true, "revanced_disable_settings_layout_updates_user_dialog_message");
     public static final BooleanSetting DISABLE_TRANSLUCENT_STATUS_BAR = new BooleanSetting("revanced_disable_translucent_status_bar", FALSE, true);
     public static final BooleanSetting FIX_HYPE_BUTTON_ICON = new BooleanSetting("revanced_fix_hype_button_icon", FALSE, true, "revanced_fix_hype_button_icon_user_dialog_message");

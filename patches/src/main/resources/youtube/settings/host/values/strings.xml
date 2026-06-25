@@ -396,6 +396,9 @@ Changes include:
 • The Music section of video description may not work.
 • Account switch button may not appear on the Library tab. Use the 'Enable wide search bar in You tab' setting."</string>
     <string name="revanced_disable_settings_layout_updates_summary_off">YouTube can load server-side Settings layout experiments.</string>
+    <string name="revanced_freeze_layout_updates_summary_off">YouTube can refresh layout update configuration.</string>
+    <string name="revanced_freeze_layout_updates_summary_on">Layout update configuration is frozen at the values saved when this setting was enabled.</string>
+    <string name="revanced_freeze_layout_updates_title">Freeze layout updates</string>
     <string name="revanced_disable_settings_layout_updates_summary_on">YouTube Settings uses the local Settings layout with RVX visible.</string>
     <string name="revanced_disable_settings_layout_updates_title">Disable Settings layout updates</string>
     <string name="revanced_disable_settings_layout_updates_user_dialog_message">If you disable this setting, you will not be able to access RVX settings unless you clear the app data.</string>

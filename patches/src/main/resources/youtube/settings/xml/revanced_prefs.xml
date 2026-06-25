@@ -167,6 +167,9 @@
         <!-- SETTINGS: DISABLE_LAYOUT_UPDATES
         <SwitchPreference android:title="@string/revanced_disable_layout_updates_title" android:key="revanced_disable_layout_updates" android:summaryOn="@string/revanced_disable_layout_updates_summary_on" android:summaryOff="@string/revanced_disable_layout_updates_summary_off" />SETTINGS: DISABLE_LAYOUT_UPDATES -->
 
+        <!-- SETTINGS: FREEZE_LAYOUT_UPDATES
+        <app.morphe.extension.youtube.settings.preference.FreezeLayoutUpdatesPreference android:title="@string/revanced_freeze_layout_updates_title" android:key="revanced_freeze_layout_updates" android:summaryOn="@string/revanced_freeze_layout_updates_summary_on" android:summaryOff="@string/revanced_freeze_layout_updates_summary_off" />SETTINGS: FREEZE_LAYOUT_UPDATES -->
+
         <!-- SETTINGS: DISABLE_SETTINGS_LAYOUT_UPDATES
         <SwitchPreference android:title="@string/revanced_disable_settings_layout_updates_title" android:key="revanced_disable_settings_layout_updates" android:summaryOn="@string/revanced_disable_settings_layout_updates_summary_on" android:summaryOff="@string/revanced_disable_settings_layout_updates_summary_off" />SETTINGS: DISABLE_SETTINGS_LAYOUT_UPDATES -->
 

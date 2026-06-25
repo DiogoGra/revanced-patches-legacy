@@ -2808,4 +2808,7 @@ Descargo de responsabilidad: las cookies emitidas sin iniciar sesión pueden no 
     <string name="revanced_yandex_transcribe_subtitles_language_title">Idioma de Yandex</string>
     <string name="revanced_yandex_transcribe_subtitles_summary">Usar transcripción de Yandex en lugar de Gemini. Yandex es más rápido y confiable. No se requiere clave de API.</string>
     <string name="revanced_yandex_transcribe_subtitles_title">Transcripción de Yandex</string>
+    <string name="revanced_freeze_layout_updates_summary_off">YouTube puede actualizar la configuración de diseño.</string>
+    <string name="revanced_freeze_layout_updates_summary_on">La configuración de diseño queda congelada en los valores guardados al activar esta opción.</string>
+    <string name="revanced_freeze_layout_updates_title">Congelar actualizaciones de diseño</string>
 </resources>
