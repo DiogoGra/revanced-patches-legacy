@@ -209,35 +209,57 @@ public final class CustomActionsPatch {
                     return;
                 }
                 recyclerViewRef = new WeakReference<>(recyclerView);
-                int childCount = recyclerView.getChildCount();
                 int enabledCustomActionsCount = getEnabledCustomActionsCount();
-                if (childCount < enabledCustomActionsCount + 1) {
+                int childCount = recyclerView.getChildCount();
+                if (childCount < enabledCustomActionsCount) {
                     return;
                 }
-                for (int i = 0; i < enabledCustomActionsCount; i++) {
-                    if (recyclerView.getChildAt(childCount - i - 1) instanceof ViewGroup parentViewGroup) {
-                        childCount = recyclerView.getChildCount();
-                        if (childCount > 3 && parentViewGroup.getChildAt(1) instanceof TextView textView) {
-                            String menuTitle = textView.getText().toString();
-                            for (CustomAction customAction : CustomAction.values()) {
-                                if (customAction.getLabel().equals(menuTitle)) {
-                                    View.OnClickListener onClick = customAction.getOnClickListener();
-                                    View.OnLongClickListener onLongClick = customAction.getOnLongClickListener();
-                                    recyclerViewRef = new WeakReference<>(recyclerView);
-                                    parentViewGroup.setOnClickListener(onClick);
-                                    if (onLongClick != null) {
-                                        parentViewGroup.setOnLongClickListener(onLongClick);
-                                    }
-                                }
-                            }
-                        }
+
+                int boundCustomActions = 0;
+                for (int i = 0; i < childCount; i++) {
+                    if (recyclerView.getChildAt(i) instanceof ViewGroup menuItem &&
+                            bindCustomAction(menuItem)) {
+                        boundCustomActions++;
                     }
                 }
-                isShortsFlyoutMenuVisible = false;
+
+                // YouTube 19.16.39 nests the menu label deeper than newer versions.
+                // Keep observing until every enabled custom action has its inherited
+                // source-item click listener replaced.
+                if (boundCustomActions >= enabledCustomActionsCount) {
+                    isShortsFlyoutMenuVisible = false;
+                }
             } catch (Exception ex) {
                 Logger.printException(() -> "onFlyoutMenuCreate failure", ex);
             }
         });
+    }
+
+    private static boolean bindCustomAction(ViewGroup menuItem) {
+        for (CustomAction customAction : CustomAction.values()) {
+            if (!customAction.settings.get()) {
+                continue;
+            }
+
+            TextView labelView = Utils.getChildView(
+                    menuItem,
+                    true,
+                    view -> view instanceof TextView textView &&
+                            customAction.getLabel().contentEquals(textView.getText())
+            );
+            if (labelView == null) {
+                continue;
+            }
+
+            menuItem.setOnClickListener(customAction.getOnClickListener());
+            View.OnLongClickListener onLongClick = customAction.getOnLongClickListener();
+            if (onLongClick != null) {
+                menuItem.setOnLongClickListener(onLongClick);
+            }
+            return true;
+        }
+
+        return false;
     }
 
     private static int getEnabledCustomActionsCount() {
