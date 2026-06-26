@@ -8,6 +8,8 @@ import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.removeInstructions
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
+import app.morphe.patcher.patch.resourcePatch
+import app.morphe.patcher.util.proxy.mutableTypes.MutableClass
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
 import app.morphe.patcher.util.smali.ExternalLabel
 import app.morphe.patches.shared.litho.addLithoFilter
@@ -21,6 +23,7 @@ import app.morphe.patches.youtube.utils.bottomSheetMenuItemBuilderFingerprint
 import app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBLE_PACKAGE
 import app.morphe.patches.youtube.utils.engagement.engagementPanelHookPatch
 import app.morphe.patches.youtube.utils.extension.Constants.COMPONENTS_PATH
+import app.morphe.patches.youtube.utils.extension.Constants.EXTENSION_PATH
 import app.morphe.patches.youtube.utils.extension.Constants.SHORTS_CLASS_DESCRIPTOR
 import app.morphe.patches.youtube.utils.extension.Constants.SHORTS_PATH
 import app.morphe.patches.youtube.utils.extension.Constants.UTILS_PATH
@@ -108,6 +111,57 @@ import org.w3c.dom.Element
 
 private const val EXTENSION_ANIMATION_FEEDBACK_CLASS_DESCRIPTOR =
     "$SHORTS_PATH/AnimationFeedbackPatch;"
+private const val EXTENSION_VOT_CLASS_DESCRIPTOR =
+    "$EXTENSION_PATH/patches/voiceovertranslation/VoiceOverTranslationPatch;"
+
+private fun MutableMethod.findFeedbackViewFieldReference(literal: Long): FieldReference {
+    val literalIndex = indexOfFirstLiteralInstructionOrThrow(literal)
+    val fieldIndex = indexOfFirstInstructionOrThrow(literalIndex) {
+        opcode == Opcode.IPUT_OBJECT &&
+                getReference<FieldReference>()?.definingClass == definingClass
+    }
+
+    return getInstruction<ReferenceInstruction>(fieldIndex).reference as FieldReference
+}
+
+private fun Method.containsLottieAnimationViewReference() =
+    implementation?.instructions?.any { instruction ->
+        val reference = (instruction as? ReferenceInstruction)?.reference ?: return@any false
+
+        reference.toString() == LOTTIE_ANIMATION_VIEW_CLASS_DESCRIPTOR ||
+                (reference as? MethodReference)?.parameterTypes?.any {
+                    it == LOTTIE_ANIMATION_VIEW_CLASS_DESCRIPTOR
+                } == true
+    } == true
+
+private fun MutableClass.injectShortsPlaybackStateHook(
+    feedbackViewFields: Set<String>,
+    feedbackViewField: FieldReference,
+    methodName: String
+) {
+    val feedbackViewFieldString = feedbackViewField.toString()
+    val targetMethod = methods.firstOrNull { method ->
+        method.returnType == "V" &&
+                method.parameterTypes.isEmpty() &&
+                method.indexOfFirstInstruction {
+                    opcode == Opcode.IGET_OBJECT &&
+                            getReference<FieldReference>()?.toString() == feedbackViewFieldString
+                } >= 0 &&
+                method.implementation?.instructions?.count { instruction ->
+                    val reference = instruction.getReference<FieldReference>()?.toString()
+
+                    instruction.opcode == Opcode.IGET_OBJECT &&
+                            reference != null &&
+                            feedbackViewFields.contains(reference)
+                } == 1 &&
+                method.containsLottieAnimationViewReference()
+    } ?: throw PatchException("Could not find Shorts feedback method for $feedbackViewField")
+
+    targetMethod.addInstruction(
+        0,
+        "invoke-static {}, $EXTENSION_VOT_CLASS_DESCRIPTOR->$methodName()V"
+    )
+}
 
 private val shortsAnimationPatch = bytecodePatch(
     description = "shortsAnimationPatch"
@@ -149,6 +203,27 @@ private val shortsAnimationPatch = bytecodePatch(
                 )
             }
 
+            val playFeedbackViewField = findFeedbackViewFieldReference(reelFeedbackPlay)
+            val pauseFeedbackViewField = findFeedbackViewFieldReference(reelFeedbackPause)
+            val feedbackViewFields = setOf(
+                playFeedbackViewField,
+                pauseFeedbackViewField,
+                findFeedbackViewFieldReference(reelFeedbackLike),
+            ).map { it.toString() }.toSet()
+
+            mutableClassDefBy(definingClass).apply {
+                injectShortsPlaybackStateHook(
+                    feedbackViewFields,
+                    playFeedbackViewField,
+                    "onShortsPlaybackStarted"
+                )
+                injectShortsPlaybackStateHook(
+                    feedbackViewFields,
+                    pauseFeedbackViewField,
+                    "onShortsPlaybackPaused"
+                )
+            }
+
             if (likeTapFeedbackCairo != -1L) {
                 val literalIndex = indexOfFirstLiteralInstruction(likeTapFeedbackCairo)
                 if (literalIndex > -1) {
@@ -184,6 +259,22 @@ private const val SHORTS_PLAYER_FLYOUT_MENU_FILTER_CLASS_DESCRIPTOR =
     "$COMPONENTS_PATH/ShortsCustomActionsFilter;"
 private const val EXTENSION_CUSTOM_ACTIONS_CLASS_DESCRIPTOR =
     "$SHORTS_PATH/CustomActionsPatch;"
+
+private val shortsCustomActionsResourcesPatch = resourcePatch {
+    compatibleWith(COMPATIBLE_PACKAGE)
+
+    dependsOn(geminiButton)
+
+    execute {
+        copyResources(
+            "youtube/overlaybuttons/rounded",
+            ResourceGroup(
+                "drawable",
+                "revanced_vot_button_icon.xml",
+            )
+        )
+    }
+}
 
 private val shortsCustomActionsPatch = bytecodePatch(
     description = "shortsCustomActionsPatch"
@@ -354,6 +445,28 @@ private val shortsCustomActionsPatch = bytecodePatch(
                                 insertIndex, """
                                     invoke-virtual {p2}, $customActionClass->getLabel()Ljava/lang/String;
                                     move-result-object v$charSequenceRegister
+                                    """
+                            )
+
+                            val clickActionIndex = indexOfFirstInstructionOrThrow {
+                                opcode == Opcode.IPUT_OBJECT &&
+                                        getReference<FieldReference>()?.let { fieldReference ->
+                                            fieldReference.name == "j" &&
+                                                    fieldReference.type == "Ljava/lang/Runnable;"
+                                        } == true
+                            }
+                            val clickActionInstruction =
+                                getInstruction<TwoRegisterInstruction>(clickActionIndex)
+                            val clickActionRegister = clickActionInstruction.registerA
+                            val flyoutMenuItemRegister = clickActionInstruction.registerB
+                            val clickActionReference =
+                                getInstruction<ReferenceInstruction>(clickActionIndex).reference
+
+                            addInstructions(
+                                clickActionIndex + 1, """
+                                    invoke-virtual {p2}, $customActionClass->getOnClickActionWithFlyoutMenuDismiss()Ljava/lang/Runnable;
+                                    move-result-object v$clickActionRegister
+                                    iput-object v$clickActionRegister, v$flyoutMenuItemRegister, $clickActionReference
                                     """
                             )
                         }
@@ -731,7 +844,7 @@ val shortsComponentPatch = bytecodePatch(
     dependsOn(
         settingsPatch,
 
-        geminiButton,
+        shortsCustomActionsResourcesPatch,
 
         shortsAnimationPatch,
         shortsCustomActionsPatch,

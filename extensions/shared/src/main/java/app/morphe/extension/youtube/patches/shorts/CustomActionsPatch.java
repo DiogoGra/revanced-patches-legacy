@@ -32,6 +32,8 @@ import app.morphe.extension.shared.utils.Logger;
 import app.morphe.extension.shared.utils.ResourceUtils;
 import app.morphe.extension.shared.utils.Utils;
 import app.morphe.extension.youtube.patches.components.ShortsCustomActionsFilter;
+import app.morphe.extension.youtube.patches.utils.PatchStatus;
+import app.morphe.extension.youtube.patches.voiceovertranslation.VoiceOverTranslationPatch;
 import app.morphe.extension.youtube.settings.Settings;
 import app.morphe.extension.youtube.utils.ExtendedUtils;
 import app.morphe.extension.youtube.utils.VideoUtils;
@@ -177,7 +179,7 @@ public final class CustomActionsPatch {
                             if (onLongClick != null) {
                                 view.setOnLongClickListener(onLongClick);
                             }
-                            customAction.getOnClickAction().run();
+                            customAction.getOnClickActionWithFlyoutMenuDismiss().run();
                             return true;
                         }
                     }
@@ -206,11 +208,13 @@ public final class CustomActionsPatch {
                 if (!isShortsFlyoutMenuVisible) {
                     return;
                 }
+                recyclerViewRef = new WeakReference<>(recyclerView);
                 int childCount = recyclerView.getChildCount();
-                if (childCount < arrSize + 1) {
+                int enabledCustomActionsCount = getEnabledCustomActionsCount();
+                if (childCount < enabledCustomActionsCount + 1) {
                     return;
                 }
-                for (int i = 0; i < arrSize; i++) {
+                for (int i = 0; i < enabledCustomActionsCount; i++) {
                     if (recyclerView.getChildAt(childCount - i - 1) instanceof ViewGroup parentViewGroup) {
                         childCount = recyclerView.getChildCount();
                         if (childCount > 3 && parentViewGroup.getChildAt(1) instanceof TextView textView) {
@@ -234,6 +238,16 @@ public final class CustomActionsPatch {
                 Logger.printException(() -> "onFlyoutMenuCreate failure", ex);
             }
         });
+    }
+
+    private static int getEnabledCustomActionsCount() {
+        int count = 0;
+        for (CustomAction customAction : CustomAction.values()) {
+            if (customAction.settings.get()) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /**
@@ -261,6 +275,19 @@ public final class CustomActionsPatch {
         RecyclerView recyclerView = recyclerViewRef.get();
         if (recyclerView == null) {
             return;
+        }
+
+        final int touchOutsideId = ResourceUtils.getIdentifier(
+                "touch_outside",
+                ResourceUtils.ResourceType.ID,
+                recyclerView.getContext()
+        );
+        if (touchOutsideId != 0) {
+            View touchOutsideView = recyclerView.getRootView().findViewById(touchOutsideId);
+            if (touchOutsideView != null) {
+                Utils.clickView(touchOutsideView);
+                return;
+            }
         }
 
         if (!(Utils.getParentView(recyclerView, 3) instanceof ViewGroup parentView3rd)) {
@@ -361,6 +388,25 @@ public final class CustomActionsPatch {
                     GeminiManager.getInstance().startSummarization(context, videoUrl);
                 }
         ),
+        VOICE_OVER_TRANSLATION(
+                Settings.SHORTS_CUSTOM_ACTIONS_VOICE_OVER_TRANSLATION,
+                "revanced_vot_button_icon",
+                () -> {
+                    if (!PatchStatus.VoiceOverTranslation()) {
+                        return;
+                    }
+                    Utils.runOnMainThreadDelayed(VoiceOverTranslationPatch::toggleTranslation, 300);
+                },
+                () -> {
+                    if (!PatchStatus.VoiceOverTranslation()) {
+                        return;
+                    }
+                    Context context = contextRef.get();
+                    if (context != null) {
+                        VideoUtils.showVotBottomSheetDialog(context);
+                    }
+                }
+        ),
         REPEAT_STATE(
                 Settings.SHORTS_CUSTOM_ACTIONS_REPEAT_STATE,
                 "yt_outline_arrow_repeat_1_black_24",
@@ -424,11 +470,16 @@ public final class CustomActionsPatch {
         }
 
         @NonNull
-        public View.OnClickListener getOnClickListener() {
-            return v -> {
+        public Runnable getOnClickActionWithFlyoutMenuDismiss() {
+            return () -> {
                 hideFlyoutMenu();
                 onClickAction.run();
             };
+        }
+
+        @NonNull
+        public View.OnClickListener getOnClickListener() {
+            return v -> getOnClickActionWithFlyoutMenuDismiss().run();
         }
 
         @Nullable
