@@ -1,7 +1,7 @@
 {
-    "created_at":  "2026-06-25T22:21:08",
-    "description":  "### Features\n\n- **YouTube - Spoof video streams**: Add Android Reel Auth and Android Reel No Auth clients. (https://github.com/DiogoGra/revanced-patches-legacy/commit/5ead59c33)",
+    "created_at":  "2026-06-26T00:00:00",
+    "description":  "### Features\n\n- **YouTube - Shorts components**: Add Yandex VOT to custom flyout actions and fix custom actions flyout menu. (https://github.com/DiogoGra/revanced-patches-legacy/commit/b1f42c1a9)",
     "signature_download_url":  null,
-    "download_url":  "https://github.com/DiogoGra/revanced-patches-legacy/releases/download/1.2.1-dev.4/patches-1.2.1-dev.4.mpp",
-    "version":  "1.2.1-dev.4"
+    "download_url":  "https://github.com/DiogoGra/revanced-patches-legacy/releases/download/1.2.1-dev.5/patches-1.2.1-dev.5.mpp",
+    "version":  "1.2.1-dev.5"
 }
