@@ -29,7 +29,7 @@ public enum ClientType {
      * Uses non-adaptive bitrate.
      * AV1 codec available.
      */
-    ANDROID_REEL(
+    ANDROID_REEL_AUTH(
             3,
             "ANDROID",
             "com.google.android.youtube",
@@ -39,19 +39,58 @@ public enum ClientType {
             Build.VERSION.RELEASE,
             String.valueOf(Build.VERSION.SDK_INT),
             Build.ID,
-            // A hardcoded client version is used for YouTube Music.
-            IS_YOUTUBE ? Utils.getAppVersionName() : "20.26.46",
+            "20.26.46",
             null,
-            // This client has been used by most open-source YouTube stream extraction tools since 2024, including NewPipe Extractor, SmartTube, and Grayjay.
-            // This client can log in, but if an access token is used in the request, GVS can more easily identify the request as coming from Morphe.
-            // This means that the GVS server can strengthen its validation of the ANDROID_REEL client.
-            // For this reason, ANDROID_REEL is used as a logout client.
-            false,
-            false,
+            IS_YOUTUBE,
+            IS_YOUTUBE,
             true,
             false,
             false,
             false,
+            "Android Reel Auth"
+    ),
+    ANDROID_REEL_NO_AUTH(
+            ANDROID_REEL_AUTH.id,
+            ANDROID_REEL_AUTH.clientName,
+            Objects.requireNonNull(ANDROID_REEL_AUTH.packageName),
+            ANDROID_REEL_AUTH.deviceMake,
+            ANDROID_REEL_AUTH.deviceModel,
+            ANDROID_REEL_AUTH.osName,
+            ANDROID_REEL_AUTH.osVersion,
+            Objects.requireNonNull(ANDROID_REEL_AUTH.androidSdkVersion),
+            Build.ID,
+            ANDROID_REEL_AUTH.clientVersion,
+            ANDROID_REEL_AUTH.clientPlatform,
+            false,
+            false,
+            ANDROID_REEL_AUTH.supportsMultiAudioTracks,
+            ANDROID_REEL_AUTH.supportsOAuth2,
+            ANDROID_REEL_AUTH.requireJS,
+            ANDROID_REEL_AUTH.usePlayerEndpoint,
+            "Android Reel No Auth"
+    ),
+    /**
+     * Kept only so existing saved settings using the old enum name can still load.
+     */
+    @Deprecated
+    ANDROID_REEL(
+            ANDROID_REEL_NO_AUTH.id,
+            ANDROID_REEL_NO_AUTH.clientName,
+            Objects.requireNonNull(ANDROID_REEL_NO_AUTH.packageName),
+            ANDROID_REEL_NO_AUTH.deviceMake,
+            ANDROID_REEL_NO_AUTH.deviceModel,
+            ANDROID_REEL_NO_AUTH.osName,
+            ANDROID_REEL_NO_AUTH.osVersion,
+            Objects.requireNonNull(ANDROID_REEL_NO_AUTH.androidSdkVersion),
+            Build.ID,
+            ANDROID_REEL_NO_AUTH.clientVersion,
+            ANDROID_REEL_NO_AUTH.clientPlatform,
+            ANDROID_REEL_NO_AUTH.canLogin,
+            ANDROID_REEL_NO_AUTH.requireLogin,
+            ANDROID_REEL_NO_AUTH.supportsMultiAudioTracks,
+            ANDROID_REEL_NO_AUTH.supportsOAuth2,
+            ANDROID_REEL_NO_AUTH.requireJS,
+            ANDROID_REEL_NO_AUTH.usePlayerEndpoint,
             "Android Reel"
     ),
     /**
@@ -62,10 +101,10 @@ public enum ClientType {
     ANDROID_MUSIC_NO_SDK(
             21,
             "ANDROID_MUSIC",
-            ANDROID_REEL.deviceMake,
-            ANDROID_REEL.deviceModel,
-            ANDROID_REEL.osName,
-            ANDROID_REEL.osVersion,
+            ANDROID_REEL_AUTH.deviceMake,
+            ANDROID_REEL_AUTH.deviceModel,
+            ANDROID_REEL_AUTH.osName,
+            ANDROID_REEL_AUTH.osVersion,
             "7.12.52",
             null,
             "com.google.android.apps.youtube.music/7.12.52 (Linux; U; Android " + Build.VERSION.RELEASE + ") gzip",
