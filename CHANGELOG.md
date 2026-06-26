@@ -1,7 +1,6 @@
-# [1.2.1-dev.3](https://github.com/DiogoGra/revanced-patches-legacy/releases/tag/1.2.1-dev.3) (2026-06-25)
+# [1.2.1-dev.4](https://github.com/DiogoGra/revanced-patches-legacy/releases/tag/1.2.1-dev.4) (2026-06-25)
 
-### Bug Fixes
+### Features
 
-- **YouTube**: Crash when opening the app. (https://github.com/DiogoGra/revanced-patches-legacy/commit/ad5b3666a)
+- **YouTube - Spoof video streams**: Add Android Reel Auth and Android Reel No Auth clients. (https://github.com/DiogoGra/revanced-patches-legacy/commit/5ead59c33)
 
-- **Morphe Manager**: The versions of Anddea were shown. (https://github.com/DiogoGra/revanced-patches-legacy/commit/405140be2)
