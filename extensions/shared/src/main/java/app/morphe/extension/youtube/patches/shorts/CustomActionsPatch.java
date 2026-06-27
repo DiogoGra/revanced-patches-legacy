@@ -170,18 +170,20 @@ public final class CustomActionsPatch {
     public static boolean onBottomSheetMenuItemClick(View view) {
         try {
             if (view instanceof ViewGroup viewGroup) {
-                TextView textView = Utils.getChildView(viewGroup, v -> v instanceof TextView);
-                if (textView != null) {
-                    String menuTitle = textView.getText().toString();
-                    for (CustomAction customAction : CustomAction.values()) {
-                        if (customAction.getLabel().equals(menuTitle)) {
-                            View.OnLongClickListener onLongClick = customAction.getOnLongClickListener();
-                            if (onLongClick != null) {
-                                view.setOnLongClickListener(onLongClick);
-                            }
-                            customAction.getOnClickActionWithFlyoutMenuDismiss().run();
-                            return true;
+                for (CustomAction customAction : CustomAction.values()) {
+                    TextView labelView = Utils.getChildView(
+                            viewGroup,
+                            true,
+                            child -> child instanceof TextView textView &&
+                                    customAction.getLabel().contentEquals(textView.getText())
+                    );
+                    if (labelView != null) {
+                        View.OnLongClickListener onLongClick = customAction.getOnLongClickListener();
+                        if (onLongClick != null) {
+                            view.setOnLongClickListener(onLongClick);
                         }
+                        customAction.getOnClickActionWithFlyoutMenuDismiss().run();
+                        return true;
                     }
                 }
             }
