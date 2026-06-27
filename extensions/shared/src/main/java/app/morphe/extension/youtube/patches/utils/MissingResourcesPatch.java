@@ -17,6 +17,9 @@ import app.morphe.extension.shared.utils.Logger;
 
 @SuppressWarnings("unused")
 public final class MissingResourcesPatch {
+    private static final int SETTINGS_ICON_TYPE = 44;
+    private static final int SETTINGS_CAIRO_ICON_TYPE = 1162;
+
     /*
      * Runtime fallback companion for the Add missing resources patch.
      * Inspired by kitadai31's transparent-resource crash workaround, with
@@ -106,6 +109,12 @@ public final class MissingResourcesPatch {
         } catch (Resources.NotFoundException ex) {
             return getFallbackDrawableForDensity(resources, density, theme, "Resources.getDrawableForDensity missing id=" + id + ", theme", isToolbarMenuStack(), ex);
         }
+    }
+
+    public static int getLegacyIconType(int iconType) {
+        return iconType == SETTINGS_CAIRO_ICON_TYPE
+                ? SETTINGS_ICON_TYPE
+                : iconType;
     }
 
     public static CharSequence getBottomSheetMenuItemTextFallback(Object host, Object iconMetadata, CharSequence text) {
