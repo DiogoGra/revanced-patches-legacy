@@ -1,7 +1,7 @@
 {
-    "created_at":  "2026-06-26T00:00:00",
-    "description":  "### Bug Fixes\n\n- **YouTube - Shorts components**: Custom flyout actions opened the description. (https://github.com/DiogoGra/revanced-patches-legacy/commit/8d25efc93b78b3e68aebc39d33af8267ade1de26)",
+    "created_at":  "2026-06-27T00:00:00",
+    "description":  "### Features\n\n- **YouTube - Add missing resources**: Add missing Settings icon in the account menu. (https://github.com/DiogoGra/revanced-patches-legacy/commit/d30b216b0c7b6626ca1dbc7d7979528520ff5773)",
     "signature_download_url":  null,
-    "download_url":  "https://github.com/DiogoGra/revanced-patches-legacy/releases/download/1.2.1-dev.7/patches-1.2.1-dev.7.mpp",
-    "version":  "1.2.1-dev.7"
+    "download_url":  "https://github.com/DiogoGra/revanced-patches-legacy/releases/download/1.3.0-dev.1/patches-1.3.0-dev.1.mpp",
+    "version":  "1.3.0-dev.1"
 }
