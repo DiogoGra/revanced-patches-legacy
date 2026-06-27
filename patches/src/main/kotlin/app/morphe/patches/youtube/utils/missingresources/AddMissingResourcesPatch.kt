@@ -26,8 +26,6 @@ import app.morphe.util.updatePatchStatus
 import app.morphe.util.Utils.printInfo
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
-import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
-import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 import com.android.tools.smali.dexlib2.iface.reference.TypeReference
 
@@ -119,27 +117,12 @@ private val legacyBottomSheetMenuServerItemFallbackFingerprint = legacyFingerpri
     },
 )
 
-private val legacyComponentIconRendererFingerprint = legacyFingerprint(
-    name = "legacyComponentIconRendererFingerprint",
-    returnType = "Lazpi;",
-    parameters = listOf("Laqcb;", "Laoiz;", "Laryy;", "Lamwy;"),
-    customFingerprint = { method, _ ->
-        method.implementation?.instructions?.any { instruction ->
-            val reference = instruction.getReference<MethodReference>()
-            instruction.opcode == Opcode.INVOKE_STATIC &&
-                    reference?.definingClass == "Laqca;" &&
-                    reference.name == "a" &&
-                    reference.parameterTypes == listOf("I") &&
-                    reference.returnType == "Laqca;"
-        } == true &&
-                method.implementation?.instructions?.any { instruction ->
-                    val reference = instruction.getReference<MethodReference>()
-                    instruction.opcode == Opcode.INVOKE_VIRTUAL &&
-                            reference?.definingClass == "Lhqf;" &&
-                            reference.name == "a" &&
-                            reference.parameterTypes == listOf("Laqca;") &&
-                            reference.returnType == "I"
-                } == true
+private val legacyIconEnumConverterFingerprint = legacyFingerprint(
+    name = "legacyIconEnumConverterFingerprint",
+    returnType = "Laqca;",
+    parameters = listOf("I"),
+    customFingerprint = { method, classDef ->
+        classDef.type == "Laqca;" && method.name == "a"
     },
 )
 
@@ -227,22 +210,12 @@ private val addMissingResourcesBytecodePatch = bytecodePatch(
             )
         }
 
-        legacyComponentIconRendererFingerprint.methodOrThrow().apply {
-            val iconTypeIndex = indexOfFirstInstructionOrThrow {
-                val reference = getReference<FieldReference>()
-                opcode == Opcode.IGET &&
-                        reference?.definingClass == "Laqcb;" &&
-                        reference.name == "c" &&
-                        reference.type == "I"
-            }
-            val iconTypeRegister =
-                getInstruction<TwoRegisterInstruction>(iconTypeIndex).registerA
-
+        legacyIconEnumConverterFingerprint.methodOrThrow().apply {
             addInstructions(
-                iconTypeIndex + 1,
+                0,
                 """
-                    invoke-static {v$iconTypeRegister}, $EXTENSION_CLASS_DESCRIPTOR->getLegacyIconType(I)I
-                    move-result v$iconTypeRegister
+                    invoke-static {p0}, $EXTENSION_CLASS_DESCRIPTOR->getLegacyIconType(I)I
+                    move-result p0
                 """
             )
         }
