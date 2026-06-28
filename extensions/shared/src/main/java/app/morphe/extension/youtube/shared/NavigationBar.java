@@ -407,6 +407,18 @@ public final class NavigationBar {
 
     @Nullable
     private static NavigationButton getNavigationButtonFromViewGroup(ViewGroup group) {
+        NavigationButton mappedButton = viewToButtonMap.get(group);
+        if (mappedButton != null) {
+            return mappedButton;
+        }
+
+        // A bottom bar contains multiple tab icons. Classifying that parent from the first
+        // recognized descendant label can apply one tab's icon to a different tab, especially
+        // when most labels are localized but "Shorts" is not.
+        if (countNavigationIconViews(group, 2) != 1) {
+            return null;
+        }
+
         CharSequence contentDescription = group.getContentDescription();
         NavigationButton button = getNavigationButtonFromText(contentDescription);
         if (button != null) {
@@ -417,6 +429,22 @@ public final class NavigationBar {
         return textView == null
                 ? null
                 : getNavigationButtonFromText(textView.getText());
+    }
+
+    private static int countNavigationIconViews(View view, int limit) {
+        if (view instanceof ImageView) {
+            return 1;
+        }
+        if (!(view instanceof ViewGroup)) {
+            return 0;
+        }
+
+        ViewGroup group = (ViewGroup) view;
+        int count = 0;
+        for (int i = 0; i < group.getChildCount() && count < limit; i++) {
+            count += countNavigationIconViews(group.getChildAt(i), limit - count);
+        }
+        return count;
     }
 
     @Nullable
