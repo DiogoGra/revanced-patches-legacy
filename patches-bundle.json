@@ -1,6 +1,6 @@
 {
-    "created_at":  "2026-06-28T00:00:00",
-    "description":  "### Bug Fixes\n\n- **YouTube - Navigation bar components**: Navigation icons were missing or incorrect in some languages. (https://github.com/DiogoGra/revanced-patches-legacy/commit/b444b32180db855ac96f349141c251590aacf894)",
+    "created_at":  "2026-06-28T06:24:09",
+    "description":  "### Bug Fixes\n\n- **YouTube - Navigation bar components**: Navigation icons were missing or incorrect in some languages. (https://github.com/DiogoGra/revanced-patches-legacy/commit/167d1abe58d0c8dbdfc514f4bff97521c3a5cbc2)",
     "signature_download_url":  null,
     "download_url":  "https://github.com/DiogoGra/revanced-patches-legacy/releases/download/1.3.0-dev.3/patches-1.3.0-dev.3.mpp",
     "version":  "1.3.0-dev.3"
