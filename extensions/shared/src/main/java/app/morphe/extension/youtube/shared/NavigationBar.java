@@ -17,6 +17,7 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -350,13 +351,152 @@ public final class NavigationBar {
     }
 
     private static void restoreServerSideNavigationIcons(View view, String reason) {
-        int restored = restoreServerSideNavigationIconsRecursive(view);
+        int restored = restoreServerSideNavigationIconsByPosition(view)
+                + restoreServerSideNavigationIconsRecursive(view);
         if (restored > 0 && Settings.DEBUG.get()) {
             Logger.printInfo(() -> NAVIGATION_ICON_DIAGNOSTIC_PREFIX
                     + " reason=" + reason
                     + " restoredServerSideIcons=" + restored
                     + " root=" + describeView(view));
         }
+    }
+
+    /**
+     * Server-delivered layouts can replace the tab views after the enum hooks ran. In that
+     * case the replacement views are not present in {@link #viewToButtonMap}. Use the stable
+     * bottom-bar order as a language-independent fallback instead of matching localized labels.
+     */
+    private static int restoreServerSideNavigationIconsByPosition(View bottomBarContainer) {
+        if (!(bottomBarContainer instanceof ViewGroup)) {
+            return 0;
+        }
+
+        List<ViewGroup> tabGroups = new ArrayList<>();
+        collectNavigationTabGroups(bottomBarContainer, bottomBarContainer, tabGroups);
+        int tabCount = tabGroups.size();
+        if (tabCount < 4 || tabCount > 5) {
+            return 0;
+        }
+
+        tabGroups.sort((left, right) -> Integer.compare(getViewScreenX(left), getViewScreenX(right)));
+        if (bottomBarContainer.getLayoutDirection() == View.LAYOUT_DIRECTION_RTL) {
+            Collections.reverse(tabGroups);
+        }
+
+        NavigationButton[] buttons;
+        if (tabCount == 4) {
+            buttons = new NavigationButton[] {
+                    NavigationButton.HOME,
+                    NavigationButton.SHORTS,
+                    NavigationButton.SUBSCRIPTIONS,
+                    NavigationButton.LIBRARY
+            };
+        } else if (Settings.SWITCH_CREATE_WITH_NOTIFICATIONS_BUTTON.get()) {
+            buttons = new NavigationButton[] {
+                    NavigationButton.HOME,
+                    NavigationButton.SHORTS,
+                    NavigationButton.SUBSCRIPTIONS,
+                    NavigationButton.NOTIFICATIONS,
+                    NavigationButton.LIBRARY
+            };
+        } else {
+            buttons = new NavigationButton[] {
+                    NavigationButton.HOME,
+                    NavigationButton.SHORTS,
+                    NavigationButton.CREATE,
+                    NavigationButton.SUBSCRIPTIONS,
+                    NavigationButton.LIBRARY
+            };
+        }
+
+        int restored = 0;
+        for (int i = 0; i < buttons.length; i++) {
+            NavigationButton button = buttons[i];
+            if (button == NavigationButton.CREATE || button == NavigationButton.LIBRARY) {
+                continue;
+            }
+            restored += restoreServerSideNavigationIcon(tabGroups.get(i), button);
+        }
+        return restored;
+    }
+
+    private static void collectNavigationTabGroups(
+            View root,
+            View view,
+            List<ViewGroup> tabGroups
+    ) {
+        if (!(view instanceof ViewGroup)) {
+            return;
+        }
+
+        ViewGroup group = (ViewGroup) view;
+        if (view != root
+                && countNavigationIconViews(group, 2) == 1
+                && containsNonEmptyTextView(group)) {
+            tabGroups.add(group);
+            return;
+        }
+
+        for (int i = 0; i < group.getChildCount(); i++) {
+            collectNavigationTabGroups(root, group.getChildAt(i), tabGroups);
+        }
+    }
+
+    private static boolean containsNonEmptyTextView(View view) {
+        if (view instanceof TextView) {
+            CharSequence text = ((TextView) view).getText();
+            return text != null && text.length() > 0;
+        }
+        if (!(view instanceof ViewGroup)) {
+            return false;
+        }
+
+        ViewGroup group = (ViewGroup) view;
+        for (int i = 0; i < group.getChildCount(); i++) {
+            if (containsNonEmptyTextView(group.getChildAt(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static int getViewScreenX(View view) {
+        int[] location = new int[2];
+        view.getLocationOnScreen(location);
+        return location[0];
+    }
+
+    private static int restoreServerSideNavigationIcon(ViewGroup group, NavigationButton button) {
+        ImageView imageView = findNavigationIconView(group);
+        int drawableId = getLegacyNavigationDrawableId(group, button);
+        if (imageView == null || drawableId == 0) {
+            return 0;
+        }
+
+        Drawable currentDrawable = imageView.getDrawable();
+        Integer restoredDrawableId = restoredNavigationIconIds.get(imageView);
+        Drawable restoredDrawable = restoredNavigationIconDrawables.get(imageView);
+        boolean alreadyRestored = restoredDrawableId != null
+                && restoredDrawableId == drawableId
+                && restoredDrawable == currentDrawable
+                && currentDrawable != null
+                && !(currentDrawable instanceof ColorDrawable)
+                && imageView.getImageAlpha() == 255
+                && imageView.getColorFilter() != null
+                && imageView.getVisibility() == View.VISIBLE;
+
+        if (alreadyRestored) {
+            return 0;
+        }
+
+        imageView.setImageResource(drawableId);
+        imageView.setImageAlpha(255);
+        imageView.setAlpha(1.0f);
+        imageView.setColorFilter(getLegacyNavigationIconColor(group), PorterDuff.Mode.SRC_IN);
+        imageView.setVisibility(View.VISIBLE);
+        restoredNavigationIconIds.put(imageView, drawableId);
+        restoredNavigationIconDrawables.put(imageView, imageView.getDrawable());
+        return 1;
     }
 
     private static int restoreServerSideNavigationIconsRecursive(View view) {
@@ -369,33 +509,7 @@ public final class NavigationBar {
 
         NavigationButton button = getNavigationButtonFromViewGroup(group);
         if (button != null) {
-            ImageView imageView = findNavigationIconView(group);
-            int drawableId = getLegacyNavigationDrawableId(group, button);
-
-            if (imageView != null && drawableId != 0) {
-                Drawable currentDrawable = imageView.getDrawable();
-                Integer restoredDrawableId = restoredNavigationIconIds.get(imageView);
-                Drawable restoredDrawable = restoredNavigationIconDrawables.get(imageView);
-                boolean alreadyRestored = restoredDrawableId != null
-                        && restoredDrawableId == drawableId
-                        && restoredDrawable == currentDrawable
-                        && currentDrawable != null
-                        && !(currentDrawable instanceof ColorDrawable)
-                        && imageView.getImageAlpha() == 255
-                        && imageView.getColorFilter() != null
-                        && imageView.getVisibility() == View.VISIBLE;
-
-                if (!alreadyRestored) {
-                    imageView.setImageResource(drawableId);
-                    imageView.setImageAlpha(255);
-                    imageView.setAlpha(1.0f);
-                    imageView.setColorFilter(getLegacyNavigationIconColor(group), PorterDuff.Mode.SRC_IN);
-                    imageView.setVisibility(View.VISIBLE);
-                    restoredNavigationIconIds.put(imageView, drawableId);
-                    restoredNavigationIconDrawables.put(imageView, imageView.getDrawable());
-                    restored++;
-                }
-            }
+            restored += restoreServerSideNavigationIcon(group, button);
         }
 
         for (int i = 0; i < group.getChildCount(); i++) {
