@@ -26,7 +26,7 @@
     <string name="morphe_disable_quic_protocol_summary_off">已啟用 QUIC 協定</string>
     <string name="morphe_disable_quic_protocol_summary_on">已停用 QUIC 協定</string>
     <string name="morphe_disable_quic_protocol_title">停用 QUIC 協定</string>
-    <string name="morphe_force_original_audio_not_available">若要使用此功能，請將「偽造視訊串流」變更為 Android Reel 或 TV</string>
+    <string name="morphe_force_original_audio_not_available">若要使用此功能，請將「偽造視訊串流」變更為 Android Studio 以外的任何用戶端</string>
     <string name="morphe_force_original_audio_summary_off">使用預設音訊</string>
     <string name="morphe_force_original_audio_summary_on">正在使用原始音訊語言</string>
     <string name="morphe_force_original_audio_title">強制使用原始音訊語言</string>
@@ -2821,4 +2821,44 @@ YouTube 伺服器上的 n-sig 模式變化頻繁，如果正規表示式無法�
     <string name="revanced_yandex_transcribe_subtitles_language_title">Yandex 語言</string>
     <string name="revanced_yandex_transcribe_subtitles_summary">使用 Yandex 轉錄取代 Gemini。Yandex 更快且更可靠，無需 API 金鑰。</string>
     <string name="revanced_yandex_transcribe_subtitles_title">Yandex 轉錄</string>
+    <string name="morphe_expand_livestream_dvr_duration_not_available">"'加锯疢子颛水好要' 可能不可痟訪
+
+者方神错材或要通过此到此到、努多'Spoof video streams' 和已'Default client' 變放'TV Simply' 或'visionOS'"</string>
+    <string name="morphe_expand_livestream_dvr_duration_summary">可讓您將即時廣播倒退最多 7 天</string>
+    <string name="morphe_expand_livestream_dvr_duration_title">擴展直播 DVR 錄製時長</string>
+    <string name="morphe_explore_menu_screen_summary">選擇要在探索選單中顯示哪些元件</string>
+    <string name="morphe_explore_menu_screen_title">探索選單</string>
+    <string name="morphe_hide_courses_menu_title">隱藏「課程」選單</string>
+    <string name="morphe_hide_explore_button_title">隱藏「探索」按鈕</string>
+    <string name="morphe_hide_fashion_menu_title">隱藏「時尚&amp;美妝」選單</string>
+    <string name="morphe_hide_gaming_menu_title">隱藏「遊戲」選單</string>
+    <string name="morphe_hide_hype_menu_title">隱藏「Hype」選單</string>
+    <string name="morphe_hide_learning_menu_title">隱藏「學習」選單</string>
+    <string name="morphe_hide_live_menu_title">隱藏「直播」選單</string>
+    <string name="morphe_hide_memberships_menu_title">隱藏「會員資格」選單</string>
+    <string name="morphe_hide_movies_menu_title">隱藏「電影」選單</string>
+    <string name="morphe_hide_music_menu_title">隱藏「音樂與電視」選單</string>
+    <string name="morphe_hide_news_menu_title">隱藏「新聞」選單</string>
+    <string name="morphe_hide_playables_menu_title">隱藏「遊戲角落」</string>
+    <string name="morphe_hide_podcasts_menu_title">隱藏「播客」選單</string>
+    <string name="morphe_hide_privacy_tos_footer_title">隱藏法律和隱私權頁尾</string>
+    <string name="morphe_hide_shopping_menu_title">隱藏「購物」選單</string>
+    <string name="morphe_hide_sports_menu_title">隱藏「體育」選單</string>
+    <string name="morphe_hide_youtube_create_menu_title">隱藏 YouTube Create 選單</string>
+    <string name="morphe_hide_youtube_kids_menu_title">隱藏 YouTube Kids 選單</string>
+    <string name="morphe_hide_youtube_music_menu_title">隱藏 YouTube Music 選單</string>
+    <string name="morphe_hide_youtube_premium_menu_title">隱藏 YouTube Premium 選單</string>
+    <string name="morphe_hide_youtube_studio_menu_title">隱藏 YouTube Studio 選單</string>
+    <string name="morphe_hide_youtube_works_menu_title">隱藏「YouTube 運作方式」選單</string>
+    <string name="morphe_livestream_dvr_not_available">"'勺生疢子颛水好要' 可能不可痟訪
+
+者方神错材或要通过此到此到、努多'Spoof video streams' 和已'Default client' 變放'TV Simply' 或'visionOS'"</string>
+    <string name="morphe_livestream_dvr_summary">允許在所有直播上尋找，即使那些通常限制此功能的直播也能尋找</string>
+    <string name="morphe_livestream_dvr_title">啟用直播 DVR</string>
+    <string name="morphe_playback_in_feeds_entry_always_on">持續開啟</string>
+    <string name="morphe_playback_in_feeds_entry_off">關閉</string>
+    <string name="morphe_playback_in_feeds_entry_wifi_only">僅 Wi-Fi</string>
+    <string name="morphe_playback_in_feeds_title">feeds 中的播放</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_title">使用水平拖曳暫停播放</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_title">記住拖曳狀態位置</string>
 </resources>

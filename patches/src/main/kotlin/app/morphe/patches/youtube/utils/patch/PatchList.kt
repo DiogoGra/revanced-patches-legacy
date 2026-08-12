@@ -53,6 +53,10 @@ internal enum class PatchList(
         "Custom double tap length",
         "Adds Double-tap to seek values that are specified in patch options."
     ),
+    CUSTOM_DPI(
+        "Custom DPI",
+        "Forces a higher display density for this app only, so the whole UI scales up without changing system density."
+    ),
     CUSTOM_HEADER_FOR_YOUTUBE(
         "Custom header for YouTube",
         "Applies a custom header in the top left corner within the app."
@@ -65,8 +69,8 @@ internal enum class PatchList(
         "Disable QUIC protocol",
         "Adds an option to disable CronetEngine's QUIC protocol."
     ),
-    DISABLE_FORCED_AUTO_AUDIO_TRACKS(
-        "Disable forced auto audio tracks",
+    FORCE_ORIGINAL_AUDIO(
+        "Force original audio",
         "Adds an option to disable audio tracks from being automatically enabled."
     ),
     DISABLE_FORCED_AUTO_CAPTIONS(

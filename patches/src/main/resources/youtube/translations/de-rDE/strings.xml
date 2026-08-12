@@ -26,10 +26,10 @@ Tippen Sie auf die Schaltfläche \"Fortfahren\" und erlauben Sie die Optimierung
     <string name="morphe_disable_quic_protocol_summary_off">QUIC-Protokoll ist aktiviert</string>
     <string name="morphe_disable_quic_protocol_summary_on">QUIC-Protokoll ist deaktiviert</string>
     <string name="morphe_disable_quic_protocol_title">Deaktivieren Sie das QUIC-Protokoll</string>
-    <string name="morphe_force_original_audio_not_available">Um diese Funktion zu nutzen, ändere \'Spoof-Videostreams\' auf Android Reel oder TV</string>
-    <string name="morphe_force_original_audio_summary_off">Standardaudio verwenden</string>
-    <string name="morphe_force_original_audio_summary_on">Original-Audiosprache verwenden</string>
-    <string name="morphe_force_original_audio_title">Original Audio erzwingen</string>
+    <string name="morphe_force_original_audio_not_available">Um diese Funktion zu nutzen, ändere \"Video-Streams fälschen\" auf einen beliebigen Client außer Android Studio\'</string>
+    <string name="morphe_force_original_audio_summary_off">Standardaudio wird verwendet</string>
+    <string name="morphe_force_original_audio_summary_on">Original Audio wird verwendet</string>
+    <string name="morphe_force_original_audio_title">Original-Audiotrack erzwingen</string>
     <string name="morphe_oauth2_connection_failure_auth_error">Kann nicht in VR anmelden: %s</string>
     <string name="morphe_oauth2_connection_failure_auth_not_approved">Kann sich nicht bei VR anmelden, Website-Authentifizierung wurde nicht genehmigt.</string>
     <string name="morphe_oauth2_connection_failure_generic">OAuth2 ist vorübergehend nicht verfügbar</string>
@@ -2611,4 +2611,44 @@ Haftungsausschluss: Cookies, die ohne Anmeldung ausgestellt werden, können ung�
     <string name="revanced_whitelist_sponsor_block">Sponsorenblock</string>
     <string name="revanced_yandex_error_no_subs_returned">Keine Untertitel-Spuren verfügbar</string>
     <string name="revanced_yandex_status_subs_found">Untertitel gefunden, abfragen...</string>
+    <string name="morphe_expand_livestream_dvr_duration_not_available">"'Livestream-DVR-Dauer erweitern' ist möglicherweise nicht verfügbar
+
+Um dies zu beheben, aktivieren Sie 'Videostreams fälschen' und ändern Sie 'Standard-Client' in 'TV Simply' oder 'visionOS'"</string>
+    <string name="morphe_expand_livestream_dvr_duration_summary">Ermöglicht das Zurückspulen von Live-Sendungen um bis zu 7 Tage in der Vergangenheit</string>
+    <string name="morphe_expand_livestream_dvr_duration_title">Livestream DVR-Dauer erweitern</string>
+    <string name="morphe_explore_menu_screen_summary">Wähle aus, welche Einträge im Entdecken-Menü angezeigt werden sollen</string>
+    <string name="morphe_explore_menu_screen_title">Entdecken-Menü</string>
+    <string name="morphe_hide_courses_menu_title">Eintrag „Kurse“ ausblenden</string>
+    <string name="morphe_hide_explore_button_title">Schaltfläche „Entdecken“ ausblenden</string>
+    <string name="morphe_hide_fashion_menu_title">Eintrag „Mode &amp; Beauty“ ausblenden</string>
+    <string name="morphe_hide_gaming_menu_title">Eintrag „Gaming“ ausblenden</string>
+    <string name="morphe_hide_hype_menu_title">Eintrag „Hype“ ausblenden</string>
+    <string name="morphe_hide_learning_menu_title">Lernmenü ausblenden</string>
+    <string name="morphe_hide_live_menu_title">Eintrag „Live“ ausblenden</string>
+    <string name="morphe_hide_memberships_menu_title">Eintrag „Mitgliedschaften“ ausblenden</string>
+    <string name="morphe_hide_movies_menu_title">Eintrag „Filme“ ausblenden</string>
+    <string name="morphe_hide_music_menu_title">Eintrag „Musik &amp; TV“ ausblenden</string>
+    <string name="morphe_hide_news_menu_title">Eintrag „Nachrichten“ ausblenden</string>
+    <string name="morphe_hide_playables_menu_title">Eintrag „Playables“ ausblenden</string>
+    <string name="morphe_hide_podcasts_menu_title">Eintrag „Podcasts“ ausblenden</string>
+    <string name="morphe_hide_privacy_tos_footer_title">Rechtliche Hinweise und Datenschutz-Footer ausblenden</string>
+    <string name="morphe_hide_shopping_menu_title">Eintrag „Shopping“ ausblenden</string>
+    <string name="morphe_hide_sports_menu_title">Eintrag „Sport“ ausblenden</string>
+    <string name="morphe_hide_youtube_create_menu_title">Eintrag „YouTube Create“ ausblenden</string>
+    <string name="morphe_hide_youtube_kids_menu_title">Eintrag „Youtube Kids“ ausblenden</string>
+    <string name="morphe_hide_youtube_music_menu_title">Eintrag „YouTube Music“ ausblenden</string>
+    <string name="morphe_hide_youtube_premium_menu_title">Eintrag „YouTube Premium“ ausblenden</string>
+    <string name="morphe_hide_youtube_studio_menu_title">Eintrag „YouTube Studio“ ausblenden</string>
+    <string name="morphe_hide_youtube_works_menu_title">Menü „Wie YouTube funktioniert“ ausblenden</string>
+    <string name="morphe_livestream_dvr_not_available">"'Livestream-DVR aktivieren' ist möglicherweise nicht verfügbar
+
+Um dies zu beheben, aktivieren Sie 'Videostreams fälschen' und ändern Sie 'Standard-Client' in 'TV Simply' oder 'visionOS'"</string>
+    <string name="morphe_livestream_dvr_summary">Ermöglicht das Vorspulen bei allen Livestreams, auch bei solchen, die dies normalerweise nicht zulassen</string>
+    <string name="morphe_livestream_dvr_title">Livestream-DVR aktivieren</string>
+    <string name="morphe_playback_in_feeds_entry_always_on">Immer an</string>
+    <string name="morphe_playback_in_feeds_entry_off">Aus</string>
+    <string name="morphe_playback_in_feeds_entry_wifi_only">Nur über WLAN</string>
+    <string name="morphe_playback_in_feeds_title">Wiedergabe in Feeds</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_title">Pausiere die Wiedergabe mit horizontaler Geste</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_title">Merke dir die Position der Geste</string>
 </resources>

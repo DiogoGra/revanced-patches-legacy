@@ -26,7 +26,7 @@
     <string name="morphe_disable_quic_protocol_summary_off">QUIC协议已启用</string>
     <string name="morphe_disable_quic_protocol_summary_on">QUIC协议已禁用</string>
     <string name="morphe_disable_quic_protocol_title">禁用QUIC协议</string>
-    <string name="morphe_force_original_audio_not_available">要使用此功能，请将“伪造视频流”更改为 Android Reel 或 TV</string>
+    <string name="morphe_force_original_audio_not_available">要使用此功能，请将“伪造视频流”更改为除 Android Studio 之外的任何客户端</string>
     <string name="morphe_force_original_audio_summary_off">正在使用默认音频</string>
     <string name="morphe_force_original_audio_summary_on">使用原始音频语言</string>
     <string name="morphe_force_original_audio_title">强制使用原始音频语言</string>
@@ -2781,4 +2781,44 @@ uBlock Origin 已找到此问题的解决方法，可通过“绕过假缓冲”
     <string name="revanced_yandex_transcribe_subtitles_language_title">Yandex语言</string>
     <string name="revanced_yandex_transcribe_subtitles_summary">使用Yandex转录代替Gemini。Yandex更快更可靠。不需要API密钥。</string>
     <string name="revanced_yandex_transcribe_subtitles_title">Yandex转录</string>
+    <string name="morphe_expand_livestream_dvr_duration_not_available">"“扩展直播 DVR 时长”可能不可用
+
+要解决此问题，请打开“伪装视频流”，并将“默认客户端”更改为“TV Simply”或“visionOS”"</string>
+    <string name="morphe_expand_livestream_dvr_duration_summary">允许您将直播回放最多回放 7 天</string>
+    <string name="morphe_expand_livestream_dvr_duration_title">扩展直播 DVR 时长</string>
+    <string name="morphe_explore_menu_screen_summary">选择在探索菜单中显示哪些组件</string>
+    <string name="morphe_explore_menu_screen_title">探索菜单</string>
+    <string name="morphe_hide_courses_menu_title">隐藏课程菜单</string>
+    <string name="morphe_hide_explore_button_title">隐藏探索按钮</string>
+    <string name="morphe_hide_fashion_menu_title">隐藏“时尚与美妆”菜单</string>
+    <string name="morphe_hide_gaming_menu_title">隐藏游戏菜单</string>
+    <string name="morphe_hide_hype_menu_title">隐藏Hype菜单</string>
+    <string name="morphe_hide_learning_menu_title">隐藏学习菜单</string>
+    <string name="morphe_hide_live_menu_title">隐藏直播菜单</string>
+    <string name="morphe_hide_memberships_menu_title">隐藏会员菜单</string>
+    <string name="morphe_hide_movies_menu_title">隐藏电影菜单</string>
+    <string name="morphe_hide_music_menu_title">隐藏“音乐与电视”菜单</string>
+    <string name="morphe_hide_news_menu_title">隐藏新闻菜单</string>
+    <string name="morphe_hide_playables_menu_title">隐藏Playables</string>
+    <string name="morphe_hide_podcasts_menu_title">隐藏播客菜单</string>
+    <string name="morphe_hide_privacy_tos_footer_title">隐藏法律和隐私页脚</string>
+    <string name="morphe_hide_shopping_menu_title">隐藏购物菜单</string>
+    <string name="morphe_hide_sports_menu_title">隐藏体育菜单</string>
+    <string name="morphe_hide_youtube_create_menu_title">隐藏YouTube Create菜单</string>
+    <string name="morphe_hide_youtube_kids_menu_title">隐藏YouTube Kids菜单</string>
+    <string name="morphe_hide_youtube_music_menu_title">隐藏YouTube Music菜单</string>
+    <string name="morphe_hide_youtube_premium_menu_title">隐藏YouTube Premium菜单</string>
+    <string name="morphe_hide_youtube_studio_menu_title">隐藏YouTube Studio菜单</string>
+    <string name="morphe_hide_youtube_works_menu_title">隐藏“YouTube 运作方式”菜单</string>
+    <string name="morphe_livestream_dvr_not_available">"“启用直播 DVR”可能不可用
+
+要修复此问题，请开启“伪装视频流”，并将“默认客户端”更改为“TV Simply”或“visionOS”"</string>
+    <string name="morphe_livestream_dvr_summary">允许在所有直播中寻求，即使那些通常限制它的直播</string>
+    <string name="morphe_livestream_dvr_title">启用直播 DVR 功能</string>
+    <string name="morphe_playback_in_feeds_entry_always_on">始终开启</string>
+    <string name="morphe_playback_in_feeds_entry_off">关闭</string>
+    <string name="morphe_playback_in_feeds_entry_wifi_only">仅限 Wi-Fi</string>
+    <string name="morphe_playback_in_feeds_title">在信息流中播放</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_title">使用水平拖动暂停播放</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_title">记住拖动状态的位置</string>
 </resources>

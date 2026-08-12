@@ -26,7 +26,7 @@ Nhấn tiếp tục để thay đổi lựa chọn tối ưu hóa."</string>
     <string name="morphe_disable_quic_protocol_summary_off">Giao thức QUIC đã bật</string>
     <string name="morphe_disable_quic_protocol_summary_on">Giao thức QUIC đã tắt</string>
     <string name="morphe_disable_quic_protocol_title">Tắt giao thức QUIC</string>
-    <string name="morphe_force_original_audio_not_available">Để dùng tính năng này, hãy đổi \'Giả mạo luồng phát video\' thành Android Reel hoặc TV</string>
+    <string name="morphe_force_original_audio_not_available">Để dùng tính năng này, hãy đổi \'Giả mạo luồng phát video\' thành bất kỳ client nào ngoại trừ Android Studio\'</string>
     <string name="morphe_force_original_audio_summary_off">Đang dùng âm thanh mặc định</string>
     <string name="morphe_force_original_audio_summary_on">Đang dùng ngôn ngữ âm thanh gốc</string>
     <string name="morphe_force_original_audio_title">Buộc ngôn ngữ âm thanh gốc</string>
@@ -2775,4 +2775,44 @@ Miễn trừ trách nhiệm: Cookie tạo ra khi không đăng nhập có thể 
     <string name="revanced_yandex_transcribe_subtitles_language_title">Ngôn ngữ Yandex</string>
     <string name="revanced_yandex_transcribe_subtitles_summary">Dùng Yandex để chép lời thay cho Gemini, Yandex có tốc độ nhanh, độ ổn định cao, và đặc biệt không yêu cầu khoá API.</string>
     <string name="revanced_yandex_transcribe_subtitles_title">Bản chép lời Yandex</string>
+    <string name="morphe_expand_livestream_dvr_duration_not_available">"'Mở rộng thời lượng DVR phát trực tiếp' có thể không khả dụng
+
+Để khắc phục, hãy bật 'Giả lập luồng video' và thay đổi 'Máy khách mặc định' thành 'TV Simply' hoặc 'visionOS'"</string>
+    <string name="morphe_expand_livestream_dvr_duration_summary">Cho phép tua lại các buổi phát trực tiếp tối đa 7 ngày trước</string>
+    <string name="morphe_expand_livestream_dvr_duration_title">Tăng thời lượng DVR phát trực tiếp</string>
+    <string name="morphe_explore_menu_screen_summary">Chọn những thành phần sẽ xuất hiện trong menu khám phá</string>
+    <string name="morphe_explore_menu_screen_title">Khám phá menu</string>
+    <string name="morphe_hide_courses_menu_title">Ẩn menu Khóa học</string>
+    <string name="morphe_hide_explore_button_title">Ẩn nút Khám phá</string>
+    <string name="morphe_hide_fashion_menu_title">Ẩn menu \'Thời trang &amp; Làm đẹp\'</string>
+    <string name="morphe_hide_gaming_menu_title">Ẩn menu Game</string>
+    <string name="morphe_hide_hype_menu_title">Ẩn menu Hype</string>
+    <string name="morphe_hide_learning_menu_title">Ẩn menu Học tập</string>
+    <string name="morphe_hide_live_menu_title">Ẩn menu Trực tiếp</string>
+    <string name="morphe_hide_memberships_menu_title">Ẩn menu Thành viên</string>
+    <string name="morphe_hide_movies_menu_title">Ẩn menu Phim</string>
+    <string name="morphe_hide_music_menu_title">Ẩn menu \'Âm nhạc &amp; TV\'</string>
+    <string name="morphe_hide_news_menu_title">Ẩn menu Tin tức</string>
+    <string name="morphe_hide_playables_menu_title">Ẩn menu Playables</string>
+    <string name="morphe_hide_podcasts_menu_title">Ẩn menu Podcast</string>
+    <string name="morphe_hide_privacy_tos_footer_title">Ẩn chân trang pháp lý và quyền riêng tư</string>
+    <string name="morphe_hide_shopping_menu_title">Ẩn menu Mua sắm</string>
+    <string name="morphe_hide_sports_menu_title">Ẩn menu Thể thao</string>
+    <string name="morphe_hide_youtube_create_menu_title">Ẩn menu YouTube Create</string>
+    <string name="morphe_hide_youtube_kids_menu_title">Ẩn menu YouTube Kids</string>
+    <string name="morphe_hide_youtube_music_menu_title">Ẩn menu YouTube Music</string>
+    <string name="morphe_hide_youtube_premium_menu_title">Ẩn menu YouTube Premium</string>
+    <string name="morphe_hide_youtube_studio_menu_title">Ẩn menu YouTube Studio</string>
+    <string name="morphe_hide_youtube_works_menu_title">Ẩn menu \'Cách YouTube hoạt động\'</string>
+    <string name="morphe_livestream_dvr_not_available">"'Bật DVR phát trực tiếp' có thể không khả dụng
+
+Để khắc phục, hãy bật 'Giả lập luồng video' và thay đổi 'Máy khách mặc định' thành 'TV Simply' hoặc 'visionOS'"</string>
+    <string name="morphe_livestream_dvr_summary">Cho phép tua trên mọi các buổi phát trực tiếp, kể cả khi bình thường không được phép</string>
+    <string name="morphe_livestream_dvr_title">Bật DVR phát trực tiếp</string>
+    <string name="morphe_playback_in_feeds_entry_always_on">Luôn bật</string>
+    <string name="morphe_playback_in_feeds_entry_off">Tắt</string>
+    <string name="morphe_playback_in_feeds_entry_wifi_only">Chỉ Wi-Fi</string>
+    <string name="morphe_playback_in_feeds_title">Phát lại trong nguồn cấp dữ liệu</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_title">Dừng phát khi vuốt ngang</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_title">Nhớ trạng thái trình phát thu nhỏ</string>
 </resources>

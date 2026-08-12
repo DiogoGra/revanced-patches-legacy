@@ -26,9 +26,9 @@ GmsCore の電池の最適化を無効にしても、バッテリーの使用に
     <string name="morphe_disable_quic_protocol_summary_off">QUIC プロトコルは有効です</string>
     <string name="morphe_disable_quic_protocol_summary_on">QUIC プロトコルは無効です</string>
     <string name="morphe_disable_quic_protocol_title">QUIC プロトコルを無効化</string>
-    <string name="morphe_force_original_audio_not_available">この機能を使用するには、[動画ストリームを偽装] のクライアントを Android Reel または TV に変更してください</string>
-    <string name="morphe_force_original_audio_summary_off">アプリが選択した音声トラック (言語) を使用します\n\nオートダビングを含む吹き替えの音声トラックが使用される場合があります</string>
-    <string name="morphe_force_original_audio_summary_on">オリジナルの音声トラック (言語) を使用します\n\nオートダビングを含む吹き替えの音声トラックは使用されません</string>
+    <string name="morphe_force_original_audio_not_available">この機能を利用するには、「動画ストリームを偽装」の設定で「偽装するクライアント」を「Android Studio」以外に変更してください。</string>
+    <string name="morphe_force_original_audio_summary_off">オリジナルの音声トラック (言語) を使用します。\n\nオートダビングを含む吹き替えの音声トラックは使用されません。</string>
+    <string name="morphe_force_original_audio_summary_on">オリジナルの音声トラック (言語) を使用します。\n\nオートダビングを含む吹き替えの音声トラックは使用されません。</string>
     <string name="morphe_force_original_audio_title">オリジナルの音声を強制的に使用</string>
     <string name="morphe_oauth2_connection_failure_auth_error">VR にログインできません: %s</string>
     <string name="morphe_oauth2_connection_failure_auth_not_approved">VR にログインできません。ウェブサイトの認証が承認されませんでした</string>
@@ -2790,4 +2790,55 @@ JavaScript クライアントの中では、「TV Simply」が推奨されます
     <string name="revanced_yandex_transcribe_subtitles_language_title">Yandex 文字起こしの言語</string>
     <string name="revanced_yandex_transcribe_subtitles_summary">Gemini の代わりに Yandex の文字起こしを使用します。Yandex はより高速で信頼性が高く、API キーは不要です。</string>
     <string name="revanced_yandex_transcribe_subtitles_title">Yandex 文字起こし</string>
+    <string name="revanced_shorts_custom_actions_voice_over_translation_label">音声翻訳</string>
+    <string name="revanced_shorts_custom_actions_voice_over_translation_summary_off">ショート動画で音声翻訳メニューを表示します。ショート動画の設定でカスタムアクションを有効にする必要があります。</string>
+    <string name="revanced_shorts_custom_actions_voice_over_translation_summary_on">ショート動画で音声翻訳メニューを表示します。ショート動画の設定でカスタムアクションを有効にする必要があります。</string>
+    <string name="revanced_shorts_custom_actions_voice_over_translation_title">ショート動画で音声翻訳メニューを表示</string>
+    <string name="morphe_expand_livestream_dvr_duration_not_available">"[ライブ配信の DVR の制限を拡張] をオンにしても、正常に動作しない場合があります。
+
+この問題を解決するには、[動画ストリームを偽装] をオンにし、 [偽装するクライアント] を「TV」に変更してください。"</string>
+    <string name="morphe_expand_livestream_dvr_duration_summary">ライブ配信を最大 7 日前まで巻き戻し可能にします</string>
+    <string name="morphe_expand_livestream_dvr_duration_title">ライブ配信の DVR の制限を拡張</string>
+    <string name="morphe_explore_menu_screen_summary">方位磁針アイコンボタンから呼び出されるメニューに表示するコンポーネントを設定します</string>
+    <string name="morphe_explore_menu_screen_title">探索メニュー</string>
+    <string name="morphe_hide_courses_menu_title">「コース」を非表示</string>
+    <string name="morphe_hide_explore_button_title">探索ボタンを非表示</string>
+    <string name="morphe_hide_fashion_menu_title">「ファッションと美容」を非表示</string>
+    <string name="morphe_hide_gaming_menu_title">「ゲーム」を非表示</string>
+    <string name="morphe_hide_hype_menu_title">「ハイプ」を非表示</string>
+    <string name="morphe_hide_learning_menu_title">「学び」を非表示</string>
+    <string name="morphe_hide_live_menu_title">「ライブ」を非表示</string>
+    <string name="morphe_hide_memberships_menu_title">「メンバーシップ」を非表示</string>
+    <string name="morphe_hide_movies_menu_title">「映画とテレビ番組」を非表示</string>
+    <string name="morphe_hide_music_menu_title">「音楽」を非表示</string>
+    <string name="morphe_hide_news_menu_title">「ニュース」を非表示</string>
+    <string name="morphe_hide_playables_menu_title">「ゲームルーム」を非表示</string>
+    <string name="morphe_hide_podcasts_menu_title">「ポッドキャスト」を非表示</string>
+    <string name="morphe_hide_privacy_tos_footer_title">最下部の規約とプライバシーに関する項目を非表示</string>
+    <string name="morphe_hide_shopping_menu_title">「ショッピング」を非表示</string>
+    <string name="morphe_hide_sports_menu_title">「スポーツ」を非表示</string>
+    <string name="morphe_hide_youtube_create_menu_title">「YouTube Create」を非表示</string>
+    <string name="morphe_hide_youtube_kids_menu_title">「YouTube Kids」を非表示</string>
+    <string name="morphe_hide_youtube_music_menu_title">「YouTube Music」を非表示</string>
+    <string name="morphe_hide_youtube_premium_menu_title">「YouTube Premium」を非表示</string>
+    <string name="morphe_hide_youtube_studio_menu_title">「YouTube Studio」を非表示</string>
+    <string name="morphe_hide_youtube_works_menu_title">「YouTube の取り組み」を非表示</string>
+    <string name="morphe_livestream_dvr_not_available">"[ライブ配信のDVRを有効化] をオンにしても、正常に動作しない場合があります。
+
+これを解決するには、[動画ストリームを偽装] を有効にし、[偽装するクライアント] を「TV」に変更してください。"</string>
+    <string name="morphe_livestream_dvr_summary">本来はシーク機能が制限される場合も含め、すべてのライブ配信でシーク機能が利用可能になります</string>
+    <string name="morphe_livestream_dvr_title">すべてのライブ配信で DVR を有効化</string>
+    <string name="morphe_playback_in_feeds_entry_always_on">常に有効</string>
+    <string name="morphe_playback_in_feeds_entry_off">オフ</string>
+    <string name="morphe_playback_in_feeds_entry_wifi_only">Wi-Fi のみ</string>
+    <string name="morphe_playback_in_feeds_title">フィードで再生</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_summary_off">ミニプレーヤーを画面外にドラッグすると、再生を一時停止します。</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_summary_on">ミニプレーヤーを画面外にドラッグすると、再生を一時停止します。</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_title">横へのドラッグによる再生を無効化</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_summary_off">ミニプレーヤーを画面外へドラッグしても、その UI 状態を保持します。</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_summary_on">ミニプレーヤーを画面外へドラッグしても、その UI 状態を保持します。</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_title">横へのドラッグによる自動再配置を防止</string>
+    <string name="revanced_override_play_next_in_queue_summary_off">Play next in queue uses YouTube\'s native queue</string>
+    <string name="revanced_override_play_next_in_queue_summary_on">Play next in queue opens the RVX queue manager</string>
+    <string name="revanced_override_play_next_in_queue_title">Override Play next in queue</string>
 </resources>

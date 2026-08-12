@@ -26,10 +26,39 @@ Tap the continue button and allow optimization changes."</string>
     <string name="morphe_disable_quic_protocol_summary_off">QUIC protocol is enabled</string>
     <string name="morphe_disable_quic_protocol_summary_on">QUIC protocol is disabled</string>
     <string name="morphe_disable_quic_protocol_title">Disable QUIC protocol</string>
-    <string name="morphe_force_original_audio_not_available">To use this feature, change \'Spoof video streams\' to Android Reel or TV</string>
+    <string name="morphe_force_original_audio_not_available">To use this feature, change \'Spoof video streams\' to any client except \'Android Studio\'</string>
     <string name="morphe_force_original_audio_summary_off">Using default audio</string>
     <string name="morphe_force_original_audio_summary_on">Using original audio language</string>
     <string name="morphe_force_original_audio_title">Force original audio language</string>
+    <string name="morphe_explore_menu_screen_summary">Choose which components appear in the explore menu</string>
+    <string name="morphe_explore_menu_screen_title">Explore menu</string>
+    <string name="morphe_hide_courses_menu_title">Hide Courses menu</string>
+    <string name="morphe_hide_explore_button_title">Hide Explore button</string>
+    <string name="morphe_hide_fashion_menu_title">Hide \'Fashion &amp; Beauty\' menu</string>
+    <string name="morphe_hide_gaming_menu_title">Hide Gaming menu</string>
+    <string name="morphe_hide_hype_menu_title">Hide Hype menu</string>
+    <string name="morphe_hide_learning_menu_title">Hide Learning menu</string>
+    <string name="morphe_hide_live_menu_title">Hide Live menu</string>
+    <string name="morphe_hide_memberships_menu_title">Hide Memberships menu</string>
+    <string name="morphe_hide_movies_menu_title">Hide Movies menu</string>
+    <string name="morphe_hide_music_menu_title">Hide \'Music &amp; TV\' menu</string>
+    <string name="morphe_hide_news_menu_title">Hide News menu</string>
+    <string name="morphe_hide_playables_menu_title">Hide Playables menu</string>
+    <string name="morphe_hide_podcasts_menu_title">Hide Podcasts menu</string>
+    <string name="morphe_hide_privacy_tos_footer_title">Hide legal and privacy footers</string>
+    <string name="morphe_hide_shopping_menu_title">Hide Shopping menu</string>
+    <string name="morphe_hide_sports_menu_title">Hide Sports menu</string>
+    <string name="morphe_hide_youtube_create_menu_title">Hide YouTube Create menu</string>
+    <string name="morphe_hide_youtube_kids_menu_title">Hide YouTube Kids menu</string>
+    <string name="morphe_hide_youtube_music_menu_title">Hide YouTube Music menu</string>
+    <string name="morphe_hide_youtube_premium_menu_title">Hide YouTube Premium menu</string>
+    <string name="morphe_hide_youtube_studio_menu_title">Hide YouTube Studio menu</string>
+    <string name="morphe_hide_youtube_works_menu_title">Hide \'How YouTube works\' menu</string>
+    <string name="morphe_hide_sync_button_title">Hide \'Sync to video\' button</string>
+    <string name="morphe_playback_in_feeds_title">Playback in feeds</string>
+    <string name="morphe_playback_in_feeds_entry_always_on">Always on</string>
+    <string name="morphe_playback_in_feeds_entry_wifi_only">Wi-Fi only</string>
+    <string name="morphe_playback_in_feeds_entry_off">Off</string>
     <string name="morphe_oauth2_connection_failure_auth_error">Cannot sign in to VR: %s</string>
     <string name="morphe_oauth2_connection_failure_auth_not_approved">Cannot sign in to VR, website authentication was not approved</string>
     <string name="morphe_oauth2_connection_failure_generic">OAuth2 is temporarily not available</string>
@@ -47,7 +76,16 @@ Tap the continue button and allow optimization changes."</string>
     <string name="morphe_sanitize_sharing_links_summary_off">Tracking query parameter is not removed from shared links</string>
     <string name="morphe_sanitize_sharing_links_summary_on">Tracking query parameter is removed from shared links</string>
     <string name="morphe_sanitize_sharing_links_title">Sanitize sharing links</string>
-    <string name="morphe_spoof_video_streams_about_experimental">• Experimental client and may stop working anytime</string>
+    <string name="morphe_livestream_dvr_title">Enable livestream DVR</string>
+    <string name="morphe_livestream_dvr_summary">Allows seeking on all livestreams, even those that normally restrict it</string>
+    <string name="morphe_livestream_dvr_not_available">"\'Enable livestream DVR\' may not be available
+
+To fix this, turn on \'Spoof video streams\' and change the \'Default client\' to \'TV\'"</string>
+    <string name="morphe_expand_livestream_dvr_duration_title">Expand livestream DVR duration</string>
+    <string name="morphe_expand_livestream_dvr_duration_summary">Allows you to rewind live broadcasts up to 7 days into the past</string>
+    <string name="morphe_expand_livestream_dvr_duration_not_available">"\'Expand livestream DVR duration\' may not be available
+
+To fix this, turn on \'Spoof video streams\' and change the \'Default client\' to \'TV\'"</string>
     <string name="morphe_spoof_video_streams_about_js">• If deobfuscation fails, playback may fail</string>
     <string name="morphe_spoof_video_streams_about_no_audio_tracks">• Audio track menu is missing</string>
     <string name="morphe_spoof_video_streams_about_no_av1">• No AV1 video codec</string>
@@ -190,6 +228,8 @@ Tap and hold to toggle the appended information type."</string>
     <string name="revanced_change_form_factor_entry_5">Tablet (Min 600 dp)</string>
     <string name="revanced_change_form_factor_entry_6">Automotive</string>
     <string name="revanced_change_form_factor_title">Layout form factor</string>
+    <string name="revanced_custom_dpi_title">Custom DPI</string>
+    <string name="revanced_custom_dpi_summary">Forced display density in dots-per-inch for this app only (0 = system default)</string>
     <string name="revanced_change_form_factor_user_dialog_message">"Changes include:
 
 Tablet layout
@@ -1694,6 +1734,12 @@ Known issue: When this setting is enabled, YouTube Doodles are not clickable."</
 • Double tap to increase Miniplayer size.
 • Double tap again to restore original size."</string>
     <string name="revanced_miniplayer_double_tap_action_title">Enable double-tap and pinch to resize</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_summary_off">Playback continues when the miniplayer is dragged off-screen.</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_summary_on">Playback will pause when the miniplayer is dragged off-screen.</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_title">Disable playback with horizontal drag</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_summary_off">Dragging the miniplayer off-screen uses the original automatic reposition behavior.</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_summary_on">Dragging the miniplayer off-screen will preserve its UI state.</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_title">Prevent horizontal drag automatic reposition</string>
     <string name="revanced_miniplayer_drag_and_drop_summary_off">Drag and drop is disabled.</string>
     <string name="revanced_miniplayer_drag_and_drop_summary_on">"Drag and drop is enabled.
 
@@ -1800,6 +1846,9 @@ Tap and hold to reset playback speed to 1.0x. Tap and hold again to reset back t
     <string name="revanced_overlay_button_whitelist_summary">"Tap to open whitelist dialog.
 Tap and hold to open whitelist setting dialog.</string>
     <string name="revanced_overlay_button_whitelist_title">Show whitelist button</string>
+    <string name="revanced_override_play_next_in_queue_summary_off">Play next in queue uses YouTube's native queue.</string>
+    <string name="revanced_override_play_next_in_queue_summary_on">Play next in queue opens the RVX queue manager.</string>
+    <string name="revanced_override_play_next_in_queue_title">Override Play next in queue</string>
     <string name="revanced_override_playlist_download_button_summary_off">Native playlist download button, if shown, opens the native in-app downloader.</string>
     <string name="revanced_override_playlist_download_button_summary_on">Native playlist download button is always shown, and in public playlists, it opens your external downloader.</string>
     <string name="revanced_override_playlist_download_button_summary_on_disclaimer">"Native playlist download button, if shown, opens your external downloader.

@@ -26,7 +26,7 @@ MicroG 앱 배터리 최적화를 비활성화(제한 없음)하더라도, 배�
     <string name="morphe_disable_quic_protocol_summary_off">QUIC 프로토콜을 활성화합니다</string>
     <string name="morphe_disable_quic_protocol_summary_on">QUIC 프로토콜을 비활성화합니다</string>
     <string name="morphe_disable_quic_protocol_title">QUIC 프로토콜 비활성화하기</string>
-    <string name="morphe_force_original_audio_not_available">이 기능을 사용하려면, \'동영상 스트림 속이기\'에서 \'기본 클라이언트\'를 \'Android Reel\'이나 \'TV\'로 변경하세요</string>
+    <string name="morphe_force_original_audio_not_available">이 기능을 사용하려면, \'동영상 스트림 속이기\'에서 \'기본 클라이언트\'를 \'Android Reel\' 또는 \'TV\'로 변경하세요</string>
     <string name="morphe_force_original_audio_summary_off">기본 오디오 언어를 활성화합니다</string>
     <string name="morphe_force_original_audio_summary_on">원본 오디오 언어를 활성화합니다</string>
     <string name="morphe_force_original_audio_title">원본 오디오 언어 강제로 활성화하기</string>
@@ -2844,4 +2844,57 @@ JavaScript 클라이언트 중에서 권장되는 클라이언트는 TV Simply�
     <string name="revanced_yandex_transcribe_subtitles_language_title">Yandex 언어</string>
     <string name="revanced_yandex_transcribe_subtitles_summary">Gemini 대신에 Yandex 기록기를 사용할 수 있습니다. Yandex는 더 빠르고 안정적일 수 있습니다. API Key가 필요하지 않습니다.</string>
     <string name="revanced_yandex_transcribe_subtitles_title">Yandex 기록기</string>
+    <string name="revanced_shorts_custom_actions_voice_over_translation_label">음성 번역</string>
+    <string name="revanced_shorts_custom_actions_voice_over_translation_summary_off">음성 번역 메뉴가 숨겨집니다.\n이 기능을 사용하려면, Shorts 설정에서 사용자 정의 작업이 활성화되어 있어야 합니다</string>
+    <string name="revanced_shorts_custom_actions_voice_over_translation_summary_on">음성 번역 메뉴가 표시됩니다.\n이 기능을 사용하려면, Shorts 설정에서 사용자 정의 작업이 활성화되어 있어야 합니다</string>
+    <string name="revanced_shorts_custom_actions_voice_over_translation_title">Shorts 음성 번역</string>
+    <string name="morphe_expand_livestream_dvr_duration_not_available">"'실시간 스트림 DVR 탐색 구간 확장하기'를 사용할 수 없을 수 있습니다
+
+이 문제를 해결하려면, '동영상 스트림 속이기'에서 '기본 클라이언트'를 'TV Simply' 또는 'visionOS'로 변경하세요"</string>
+    <string name="morphe_expand_livestream_dvr_duration_summary">실시간 스트림을 최대 7일 전까지 되감아 볼 수 있습니다</string>
+    <string name="morphe_expand_livestream_dvr_duration_title">실시간 스트림 DVR 탐색 구간 확장하기</string>
+    <string name="morphe_explore_menu_screen_summary">탐색 메뉴에 표시할 구성 요소를 선택하세요</string>
+    <string name="morphe_explore_menu_screen_title">탐색 메뉴</string>
+    <string name="morphe_hide_courses_menu_title">학습 프로그램 메뉴 숨기기</string>
+    <string name="morphe_hide_explore_button_title">탐색 버튼 숨기기</string>
+    <string name="morphe_hide_fashion_menu_title">패션 및 뷰티 메뉴 숨기기</string>
+    <string name="morphe_hide_gaming_menu_title">게임 메뉴 숨기기</string>
+    <string name="morphe_hide_hype_menu_title">하이프 메뉴 숨기기</string>
+    <string name="morphe_hide_learning_menu_title">학습 메뉴 숨기기</string>
+    <string name="morphe_hide_live_menu_title">라이브 메뉴 숨기기</string>
+    <string name="morphe_hide_memberships_menu_title">멤버십 메뉴 숨기기</string>
+    <string name="morphe_hide_movies_menu_title">'영화' / '영화 및 TV' 메뉴 숨기기</string>
+    <string name="morphe_hide_music_menu_title">음악 메뉴 숨기기</string>
+    <string name="morphe_hide_news_menu_title">뉴스 메뉴 숨기기</string>
+    <string name="morphe_hide_playables_menu_title">게임 룸 메뉴 숨기기</string>
+    <string name="morphe_hide_podcasts_menu_title">팟캐스트 메뉴 숨기기</string>
+    <string name="morphe_hide_privacy_tos_footer_title">\'법률 및 개인정보 보호\' 하단 설명 숨기기</string>
+    <string name="morphe_hide_shopping_menu_title">쇼핑 메뉴 숨기기</string>
+    <string name="morphe_hide_sports_menu_title">스포츠 메뉴 숨기기</string>
+    <string name="morphe_hide_youtube_create_menu_title">YouTube Create 메뉴 숨기기</string>
+    <string name="morphe_hide_youtube_kids_menu_title">YouTube Kids 메뉴 숨기기</string>
+    <string name="morphe_hide_youtube_music_menu_title">YouTube Music 메뉴 숨기기</string>
+    <string name="morphe_hide_youtube_premium_menu_title">YouTube Premium 메뉴 숨기기</string>
+    <string name="morphe_hide_youtube_studio_menu_title">YouTube 스튜디오 메뉴 숨기기</string>
+    <string name="morphe_hide_youtube_works_menu_title">\'YouTube 작동의 원리\' 메뉴 숨기기</string>
+    <string name="morphe_livestream_dvr_not_available">"'실시간 스트림 DVR 활성화하기'를 사용할 수 없을 수 있습니다
+
+이 문제를 해결하려면, '동영상 스트림 속이기'에서 '기본 클라이언트'를 'TV Simply' 또는 'visionOS'로 변경하세요"</string>
+    <string name="morphe_livestream_dvr_summary">재생바 탐색이 제한된 실시간 스트림에서도 탐색할 수 있도록 허용합니다</string>
+    <string name="morphe_livestream_dvr_title">실시간 스트림 DVR 활성화하기</string>
+    <string name="morphe_playback_in_feeds_entry_always_on">항상 사용</string>
+    <string name="morphe_playback_in_feeds_entry_off">사용 안함</string>
+    <string name="morphe_playback_in_feeds_entry_wifi_only">Wi-Fi 전용</string>
+    <string name="morphe_playback_in_feeds_title">피드에서 재생</string>
+    <string name="revanced_custom_dpi_summary">이 앱에만 적용할 화면 DPI를 강제로 설정할 수 있습니다 (0: 시스템 기본값)</string>
+    <string name="revanced_custom_dpi_title">사용자 정의 DPI</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_summary_off">미니 플레이어를 화면 밖으로 드래그해도 재생이 계속됩니다</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_summary_on">미니 플레이어를 화면 밖으로 드래그하면 재생이 일시 중지됩니다</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_title">수평 드래그로 동영상 재생 일시 중지</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_summary_off">미니 플레이어를 화면 밖으로 드래그하면 원래의 자동 위치 조정 동작이 사용됩니다</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_summary_on">미니플레이어를 화면 밖으로 드래그해도 UI 상태가 유지됩니다</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_title">드래그 상태 위치 기억하기</string>
+    <string name="revanced_override_play_next_in_queue_summary_off">'현재 재생목록에서 다음 순서로 재생' 메뉴를 탭하면 YouTube 기본 현재 재생목록이 실행됩니다</string>
+    <string name="revanced_override_play_next_in_queue_summary_on">'현재 재생목록에서 다음 순서로 재생' 메뉴를 탭하면 RVX 현재 재생목록 관리자가 실행됩니다</string>
+    <string name="revanced_override_play_next_in_queue_title">현재 재생목록 메뉴 재정의하기</string>
 </resources>

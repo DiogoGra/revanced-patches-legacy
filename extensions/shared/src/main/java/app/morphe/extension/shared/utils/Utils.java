@@ -371,7 +371,6 @@ public class Utils {
                     Utils.contextLocale = contextLocale;
 
                     // If they are different, overrides the Locale of the Context and resource.
-                    Locale.setDefault(applicationLocale);
                     Configuration configuration = new Configuration(mContext.getResources().getConfiguration());
                     configuration.setLocale(applicationLocale);
                     return mContext.createConfigurationContext(configuration);
@@ -387,7 +386,6 @@ public class Utils {
     public static void resetLocalizedContext() {
         try {
             if (contextLocale != null) {
-                Locale.setDefault(contextLocale);
                 Context mContext = getContext();
                 if (mContext != null) {
                     Configuration configuration = new Configuration(getResources(false).getConfiguration());

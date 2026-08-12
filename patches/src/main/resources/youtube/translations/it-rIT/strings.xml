@@ -26,10 +26,10 @@ Tocca il pulsante Continua e consenti le modifiche di ottimizzazione."</string>
     <string name="morphe_disable_quic_protocol_summary_off">Il protocollo QUIC è abilitato</string>
     <string name="morphe_disable_quic_protocol_summary_on">Il protocollo QUIC è disabilitato</string>
     <string name="morphe_disable_quic_protocol_title">Disabilita il protocollo QUIC</string>
-    <string name="morphe_force_original_audio_not_available">Per usare questa funzionalità, cambia \"Falsifica i flussi video\" a Android Reel o TV</string>
-    <string name="morphe_force_original_audio_summary_off">Utilizzo audio predefinito</string>
-    <string name="morphe_force_original_audio_summary_on">Utilizza la lingua audio originale</string>
-    <string name="morphe_force_original_audio_title">Forza la lingua audio originale</string>
+    <string name="morphe_force_original_audio_not_available">Per usare questa funzionalità, imposta \"Falsifica i flussi video\" su Android Reel o TV</string>
+    <string name="morphe_force_original_audio_summary_off">Utilizza audio predefinito</string>
+    <string name="morphe_force_original_audio_summary_on">Utilizza la lingua originale dell'audio</string>
+    <string name="morphe_force_original_audio_title">Forza la lingua originale dell'audio</string>
     <string name="morphe_oauth2_connection_failure_auth_error">Impossibile accedere a VR: %s</string>
     <string name="morphe_oauth2_connection_failure_auth_not_approved">Impossibile accedere a VR, l\'autenticazione del sito non è stata approvata</string>
     <string name="morphe_oauth2_connection_failure_generic">OAuth2 non è disponibile al momento</string>
@@ -2779,4 +2779,55 @@ Nota: i cookie generati senza effettuare l'accesso potrebbero non essere validi 
     <string name="revanced_yandex_transcribe_subtitles_language_title">Lingua Yandex</string>
     <string name="revanced_yandex_transcribe_subtitles_summary">Usa la trascrizione Yandex invece di Gemini. Yandex è più veloce e affidabile. Non è richiesta alcuna chiave API.</string>
     <string name="revanced_yandex_transcribe_subtitles_title">Trascrizione Yandex</string>
+    <string name="revanced_shorts_custom_actions_voice_over_translation_label">Traduzione del doppiaggio</string>
+    <string name="revanced_shorts_custom_actions_voice_over_translation_summary_off">Il menù della traduzione del doppiaggio è nascosto. È necessario abilitare le azioni personalizzate nelle impostazioni di Shorts</string>
+    <string name="revanced_shorts_custom_actions_voice_over_translation_summary_on">Il menù della traduzione del doppiaggio è visibile. È necessario abilitare le azioni personalizzate nelle impostazioni di Shorts</string>
+    <string name="revanced_shorts_custom_actions_voice_over_translation_title">Doppiaggio negli Shorts</string>
+    <string name="morphe_expand_livestream_dvr_duration_not_available">"'Espandi durata DVR in diretta' potrebbe non essere disponibile
+
+Per risolvere il problema, attiva 'Maschera flussi video' e modifica 'Client predefinito' in 'TV Simply' o 'visionOS'"</string>
+    <string name="morphe_expand_livestream_dvr_duration_summary">Consente di riavvolgere i video in diretta fino a 7 giorni</string>
+    <string name="morphe_expand_livestream_dvr_duration_title">Espandi la durata DVR sui video in diretta</string>
+    <string name="morphe_explore_menu_screen_summary">Scegli quali componenti mostrare nel menù a comparsa</string>
+    <string name="morphe_explore_menu_screen_title">Esplora menu</string>
+    <string name="morphe_hide_courses_menu_title">Nascondi il menù Corsi</string>
+    <string name="morphe_hide_explore_button_title">Nascondi il pulsante Esplora</string>
+    <string name="morphe_hide_fashion_menu_title">Nascondi il menù \'Moda e Bellezza\'</string>
+    <string name="morphe_hide_gaming_menu_title">Nascondi il menù Gaming</string>
+    <string name="morphe_hide_hype_menu_title">Nascondi il menù Hype</string>
+    <string name="morphe_hide_learning_menu_title">Nascondi il menù di apprendimento</string>
+    <string name="morphe_hide_live_menu_title">Nascondi il menù Live</string>
+    <string name="morphe_hide_memberships_menu_title">Nascondi il menù Abbonamenti</string>
+    <string name="morphe_hide_movies_menu_title">Nascondi il menù Film</string>
+    <string name="morphe_hide_music_menu_title">Nascondi il menù \'Musica e TV\'</string>
+    <string name="morphe_hide_news_menu_title">Nascondi il menù Notizie</string>
+    <string name="morphe_hide_playables_menu_title">Nascondi Sala Giochi</string>
+    <string name="morphe_hide_podcasts_menu_title">Nascondi il menù Podcast</string>
+    <string name="morphe_hide_privacy_tos_footer_title">Nascondi piè di pagina legali e sulla privacy</string>
+    <string name="morphe_hide_shopping_menu_title">Nascondi il menù Shopping</string>
+    <string name="morphe_hide_sports_menu_title">Nascondi il menù Sport</string>
+    <string name="morphe_hide_youtube_create_menu_title">Nascondi il menù YouTube Create</string>
+    <string name="morphe_hide_youtube_kids_menu_title">Nascondi il menù YouTube Kids</string>
+    <string name="morphe_hide_youtube_music_menu_title">Nascondi il menù YouTube Music</string>
+    <string name="morphe_hide_youtube_premium_menu_title">Nascondi la promozione di YouTube Premium</string>
+    <string name="morphe_hide_youtube_studio_menu_title">Nascondi il menù YouTube Studio</string>
+    <string name="morphe_hide_youtube_works_menu_title">Nascondi il menù \'Come funziona YouTube\'</string>
+    <string name="morphe_livestream_dvr_not_available">"'Abilita registrazione DVR in diretta' potrebbe non essere disponibile
+
+Per risolvere il problema, attiva 'Maschera flussi video' e modifica 'Client predefinito' in 'TV Simply' o 'visionOS'"</string>
+    <string name="morphe_livestream_dvr_summary">Consente l\'avanzamento su tutti i video in diretta, anche su quelli che normalmente lo limitano</string>
+    <string name="morphe_livestream_dvr_title">Abilita DVR sui video in diretta</string>
+    <string name="morphe_playback_in_feeds_entry_always_on">Sempre attivo</string>
+    <string name="morphe_playback_in_feeds_entry_off">Disattivato</string>
+    <string name="morphe_playback_in_feeds_entry_wifi_only">Solo Wi-Fi</string>
+    <string name="morphe_playback_in_feeds_title">Riproduzione nei feed</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_summary_off">La riproduzione prosegue quando il miniplayer viene trascinato fuori dallo schermo</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_summary_on">La riproduzione verrà messa in pausa quando il miniplayer viene trascinato fuori dallo schermo</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_title">Metti in pausa la riproduzione con uno scorrimento orizzontale</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_summary_off">Trascinando il miniplayer fuori dallo schermo viene applicato il comportamento originale di riposizionamento automatico</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_summary_on">Trascinando il miniplayer fuori dallo schermo, lo stato dell'interfaccia utente rimarrà invariato</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_title">Ricorda la posizione dello scorrimento</string>
+    <string name="revanced_override_play_next_in_queue_summary_off">L'opzione Riproduci il prossimo nella coda utilizza la coda nativa di YouTube</string>
+    <string name="revanced_override_play_next_in_queue_summary_on">L'opzione Riproduci il prossimo nella coda apre il gestore della coda di RVX</string>
+    <string name="revanced_override_play_next_in_queue_title">Sovrascrivi Riproduci il prossimo della coda</string>
 </resources>

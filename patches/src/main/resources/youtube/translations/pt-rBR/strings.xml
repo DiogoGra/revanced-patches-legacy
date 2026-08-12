@@ -27,7 +27,7 @@ Toque no botão continuar e permita as mudanças de otimização. "</string>
     <string name="morphe_disable_quic_protocol_summary_off">Protocolo QUIC ativado</string>
     <string name="morphe_disable_quic_protocol_summary_on">Protocolo QUIC desativado</string>
     <string name="morphe_disable_quic_protocol_title">Desativar protocolo QUIC</string>
-    <string name="morphe_force_original_audio_not_available">Para usar este recurso, altere \'Falsificar fluxos de vídeo\' para Android Reel ou TV</string>
+    <string name="morphe_force_original_audio_not_available">Para usar este recurso, altere \'Falsificar dados de transmissão\' para Android Reel ou TV</string>
     <string name="morphe_force_original_audio_summary_off">Usando áudio padrão</string>
     <string name="morphe_force_original_audio_summary_on">Usar o idioma original do áudio</string>
     <string name="morphe_force_original_audio_title">Forçar idioma do áudio original</string>
@@ -2799,4 +2799,57 @@ Fluxo de áudio proxy</string>
     <string name="revanced_yandex_transcribe_subtitles_language_title">Idioma do Yandex</string>
     <string name="revanced_yandex_transcribe_subtitles_summary">Use Yandex transcription instead of Gemini. Yandex is faster and more reliable. No API key is required.</string>
     <string name="revanced_yandex_transcribe_subtitles_title">Transcrição do Yandex</string>
+    <string name="revanced_shorts_custom_actions_voice_over_translation_label">Tradução de voz</string>
+    <string name="revanced_shorts_custom_actions_voice_over_translation_summary_off">O menu de tradução de narração está oculto. As ações personalizadas nas configurações do Shorts devem ser ativadas</string>
+    <string name="revanced_shorts_custom_actions_voice_over_translation_summary_on">O menu de tradução de voz é exibido. As ações personalizadas nas configurações do Shorts devem estar ativadas</string>
+    <string name="revanced_shorts_custom_actions_voice_over_translation_title">Tradução de narração nos Shorts</string>
+    <string name="morphe_expand_livestream_dvr_duration_not_available">"'Expandir a duração do DVR em lives' pode não estar disponível
+
+Para corrigir isso, ative 'Simular streams de vídeo' e altere o 'Cliente padrão' para 'TV Simply' ou 'visionOS'"</string>
+    <string name="morphe_expand_livestream_dvr_duration_summary">Permite voltar as lives em até 7 dias no passado</string>
+    <string name="morphe_expand_livestream_dvr_duration_title">Expandir a duração do DVR em lives</string>
+    <string name="morphe_explore_menu_screen_summary">Escolha quais componentes aparecem no menu Explorar</string>
+    <string name="morphe_explore_menu_screen_title">Menu Explorar</string>
+    <string name="morphe_hide_courses_menu_title">Ocultar menu Cursos</string>
+    <string name="morphe_hide_explore_button_title">Ocultar botão Mais</string>
+    <string name="morphe_hide_fashion_menu_title">Ocultar menu \'Moda e Beleza\'</string>
+    <string name="morphe_hide_gaming_menu_title">Ocultar menu Jogos</string>
+    <string name="morphe_hide_hype_menu_title">Ocultar menu Hype</string>
+    <string name="morphe_hide_learning_menu_title">Ocultar menu Aprender</string>
+    <string name="morphe_hide_live_menu_title">Ocultar menu Ao Vivo</string>
+    <string name="morphe_hide_memberships_menu_title">Ocultar menu Assinaturas</string>
+    <string name="morphe_hide_movies_menu_title">Ocultar menu Filmes</string>
+    <string name="morphe_hide_music_menu_title">Ocultar menu \'Música e TV\'</string>
+    <string name="morphe_hide_news_menu_title">Ocultar menu Notícias</string>
+    <string name="morphe_hide_playables_menu_title">Ocultar menu Jogos</string>
+    <string name="morphe_hide_podcasts_menu_title">Ocultar menu Podcasts</string>
+    <string name="morphe_hide_privacy_tos_footer_title">Ocultar rodapé \'Política de Privacidade\' e \'Termos de Serviço\'</string>
+    <string name="morphe_hide_shopping_menu_title">Ocultar menu Compras</string>
+    <string name="morphe_hide_sports_menu_title">Ocultar menu Esportes</string>
+    <string name="morphe_hide_youtube_create_menu_title">Ocultar menu Criar no YouTube</string>
+    <string name="morphe_hide_youtube_kids_menu_title">Ocultar menu YouTube Kids</string>
+    <string name="morphe_hide_youtube_music_menu_title">Ocultar menu YouTube Music</string>
+    <string name="morphe_hide_youtube_premium_menu_title">Ocultar menu YouTube Premium</string>
+    <string name="morphe_hide_youtube_studio_menu_title">Ocultar menu YouTube Studio</string>
+    <string name="morphe_hide_youtube_works_menu_title">Ocultar menu \'Como o YouTube funciona\'</string>
+    <string name="morphe_livestream_dvr_not_available">"'Ativar o DVR em lives' pode não estar disponível
+
+Para corrigir isso, ative 'Simular streams de vídeo' e altere o 'Cliente padrão' para 'TV Simply' ou 'visionOS'"</string>
+    <string name="morphe_livestream_dvr_summary">Permite navegar na barra de progresso em todas as lives, mesmo nas que normalmente restringem esse recurso</string>
+    <string name="morphe_livestream_dvr_title">Ativar o DVR em lives</string>
+    <string name="morphe_playback_in_feeds_entry_always_on">Sempre ligado</string>
+    <string name="morphe_playback_in_feeds_entry_off">Desligado</string>
+    <string name="morphe_playback_in_feeds_entry_wifi_only">Somente Wi-Fi</string>
+    <string name="morphe_playback_in_feeds_title">Reprodução em feeds</string>
+    <string name="revanced_custom_dpi_summary">Densidade de exibição forçada em pontos por polegada apenas para este app (0 = padrão do sistema)</string>
+    <string name="revanced_custom_dpi_title">DPI personalizado</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_summary_off">A reprodução continua quando o miniplayer é arrastado para fora da tela</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_summary_on">A reprodução será pausada quando o miniplayer for arrastado para fora da tela</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_title">Pausar a reprodução com arrasto horizontal</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_summary_off">Arrastar o miniplayer para fora da tela usa o comportamento de reposicionamento automático original</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_summary_on">Arrastar o miniplayer para fora da tela preservará o estado da sua interface</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_title">Lembrar a posição do arrasto</string>
+    <string name="revanced_override_play_next_in_queue_summary_off">A opção "Reproduzir a seguir na fila" utiliza a fila nativa do YouTube</string>
+    <string name="revanced_override_play_next_in_queue_summary_on">A opção "Reproduzir o próximo da fila" abre o gerenciador de filas do RVX</string>
+    <string name="revanced_override_play_next_in_queue_title">Substituir Reproduzir o próximo da fila</string>
 </resources>

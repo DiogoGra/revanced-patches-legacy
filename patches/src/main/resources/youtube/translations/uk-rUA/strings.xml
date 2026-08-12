@@ -26,7 +26,7 @@
     <string name="morphe_disable_quic_protocol_summary_off">Протокол QUIC увімкнено</string>
     <string name="morphe_disable_quic_protocol_summary_on">Протокол QUIC вимкнено</string>
     <string name="morphe_disable_quic_protocol_title">Вимкнути протокол QUIC</string>
-    <string name="morphe_force_original_audio_not_available">Щоб використати цю функцію, змініть \"Підміна відео потоків\" на Android Reel або TV</string>
+    <string name="morphe_force_original_audio_not_available">Щоб використовувати цю функцію, змініть клієнт \"Підміни відеопотоків\" на будь-який, окрім \"Android Studio\"</string>
     <string name="morphe_force_original_audio_summary_off">Використовується звукова доріжка за замовчуванням</string>
     <string name="morphe_force_original_audio_summary_on">Використовується оригінальна мова звукової доріжки</string>
     <string name="morphe_force_original_audio_title">Примусово оригінальна мова звукової доріжки</string>
@@ -2795,4 +2795,55 @@ uBlock Origin знайшов обхідний шлях для вирішення
     <string name="revanced_yandex_transcribe_subtitles_language_title"> Мова Yandex</string>
     <string name="revanced_yandex_transcribe_subtitles_summary">Використовуйте транскрибування Yandex замість Gemini. Ключ API не потрібен.</string>
     <string name="revanced_yandex_transcribe_subtitles_title">Транскрибування Yandex</string>
+    <string name="revanced_shorts_custom_actions_voice_over_translation_label">Аудіопереклад</string>
+    <string name="revanced_shorts_custom_actions_voice_over_translation_summary_off">Меню аудіоперекладу приховано. У налаштуваннях Shorts слід увімкнути власні дії</string>
+    <string name="revanced_shorts_custom_actions_voice_over_translation_summary_on">Відображається меню аудіоперекладу. У налаштуваннях Shorts має бути ввімкнено користувацькі дії</string>
+    <string name="revanced_shorts_custom_actions_voice_over_translation_title">Аудіопереклад у Shorts</string>
+    <string name="morphe_expand_livestream_dvr_duration_not_available">"\"Розширити тривалість DVR прямої трансляції\" може бути недоступним
+
+Щоб це виправити, увімкніть \"Підміна відеопотоків\" та змініть \"Типовий клієнт\" на \"TV Simply\" або \"visionOS\""</string>
+    <string name="morphe_expand_livestream_dvr_duration_summary">Дозволяє перемотувати прямі трансляції до 7 днів у минуле</string>
+    <string name="morphe_expand_livestream_dvr_duration_title">Розширити тривалість DVR прямої трансляції</string>
+    <string name="morphe_explore_menu_screen_summary">Виберіть, які компоненти будуть показуватися у меню \"Навігація\"</string>
+    <string name="morphe_explore_menu_screen_title">Меню \"Навігація\"</string>
+    <string name="morphe_hide_courses_menu_title">Приховати меню \"Навчання\"</string>
+    <string name="morphe_hide_explore_button_title">Приховати кнопку \"Навігація\"</string>
+    <string name="morphe_hide_fashion_menu_title">Приховати меню \"Мода та Краса\"</string>
+    <string name="morphe_hide_gaming_menu_title">Приховати меню \"Ігри\"</string>
+    <string name="morphe_hide_hype_menu_title">Приховати меню \"Hype\"</string>
+    <string name="morphe_hide_learning_menu_title">Приховати меню \"Навчання\"</string>
+    <string name="morphe_hide_live_menu_title">Приховати меню \"Прямі трансляції\"</string>
+    <string name="morphe_hide_memberships_menu_title">Приховати меню \"Спонсорство\"</string>
+    <string name="morphe_hide_movies_menu_title">Приховати меню \"Фільми\"</string>
+    <string name="morphe_hide_music_menu_title">Приховати меню \"Музика та ТВ\"</string>
+    <string name="morphe_hide_news_menu_title">Приховати меню \"Новини\"</string>
+    <string name="morphe_hide_playables_menu_title">Приховати меню \"Ігрова кімната\"</string>
+    <string name="morphe_hide_podcasts_menu_title">Приховати меню \"Подкасти\"</string>
+    <string name="morphe_hide_privacy_tos_footer_title">Приховати нижні колонтитули з юридичною інформацією та конфіденційністю</string>
+    <string name="morphe_hide_shopping_menu_title">Приховати меню \"Покупки\"</string>
+    <string name="morphe_hide_sports_menu_title">Приховати меню \"Спорт\"</string>
+    <string name="morphe_hide_youtube_create_menu_title">Приховати меню \"YouTube Create\"</string>
+    <string name="morphe_hide_youtube_kids_menu_title">Приховати меню \"YouTube Kids\"</string>
+    <string name="morphe_hide_youtube_music_menu_title">Приховати меню \"YouTube Music\"</string>
+    <string name="morphe_hide_youtube_premium_menu_title">Приховати меню \"YouTube Premium\"</string>
+    <string name="morphe_hide_youtube_studio_menu_title">Приховати меню \"YouTube Studio\"</string>
+    <string name="morphe_hide_youtube_works_menu_title">Приховати меню \"Як працює YouTube\"</string>
+    <string name="morphe_livestream_dvr_not_available">"\"Увімкнути DVR для прямої трансляції\" може бути недоступним
+
+Щоб це виправити, увімкніть \"Підміна відеопотоків\" та змініть \"Типовий клієнт\" на \"TV Simply\" або \"visionOS\""</string>
+    <string name="morphe_livestream_dvr_summary">Дозволяє перемотування у всіх прямих трансляціях, навіть тих, що зазвичай його обмежують</string>
+    <string name="morphe_livestream_dvr_title">Увімкнути DVR для прямої трансляції</string>
+    <string name="morphe_playback_in_feeds_entry_always_on">Завжди ввімкнено</string>
+    <string name="morphe_playback_in_feeds_entry_off">Вимкнено</string>
+    <string name="morphe_playback_in_feeds_entry_wifi_only">Лише Wi-Fi</string>
+    <string name="morphe_playback_in_feeds_title">Відтворення в стрічках</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_summary_off">Відтворення продовжується, коли мініплеєр перетягується за межі екрана</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_summary_on">Відтворення призупиниться, якщо перетягнути мініплеєр за межі екрана</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_title">Призупиняти відтворення при горизонтальному перетягуванні</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_summary_off">Перетягування мініплеєра за межі екрана використовує оригінальну поведінку автоматичного переміщення</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_summary_on">Якщо перетягнути мініплеєр за межі екрана, стан його інтерфейсу залишиться незмінним</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_title">Запам\'ятовувати позицію при перетягуванні</string>
+    <string name="revanced_override_play_next_in_queue_summary_off">Функція «Відтворити наступним у черзі» використовує вбудовану чергу YouTube</string>
+    <string name="revanced_override_play_next_in_queue_summary_on">«Відтворити наступним у черзі» відкриває менеджер черги RVX</string>
+    <string name="revanced_override_play_next_in_queue_title">Перевизначити відтворення наступного в черзі</string>
 </resources>

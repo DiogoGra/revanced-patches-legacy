@@ -26,7 +26,7 @@ MicroG-এর জন্য ব্যাটারি অপ্টিমাইজ�
     <string name="morphe_disable_quic_protocol_summary_off">কিউআইসি প্রোটোকল চালু আছে</string>
     <string name="morphe_disable_quic_protocol_summary_on">কিউআইসি প্রোটোকল বন্ধ আছে</string>
     <string name="morphe_disable_quic_protocol_title">কিউআইসি প্রোটোকল বন্ধ করুন</string>
-    <string name="morphe_force_original_audio_not_available">এই বৈশিষ্ট্যটি ব্যবহার করতে, \'স্পুফ ভিডিও স্ট্রিম\' অ্যান্ড্রয়েড রিল বা টিভিতে পরিবর্তন করুন</string>
+    <string name="morphe_force_original_audio_not_available">এই বৈশিষ্ট্যটি ব্যবহার করতে, \'ভিডিও স্ট্রিম স্পুফ করুন\' অ্যান্ড্রয়েড স্টুডিও ছাড়া অন্য কোনো ক্লায়েন্টে পরিবর্তন করুন।</string>
     <string name="morphe_force_original_audio_summary_off">ডিফল্ট অডিও ব্যবহার করছে</string>
     <string name="morphe_force_original_audio_summary_on">মূল অডিও ভাষা ব্যবহার করা হচ্ছে</string>
     <string name="morphe_force_original_audio_title">মূল অডিও ভাষা বলপূর্বক চালু করুন</string>
@@ -1051,4 +1051,44 @@ YouTube Doodles দেখানো কাস্টম হেডার প্র�
     <string name="revanced_switch_create_with_notifications_button_user_dialog_message">"এই সেটিংস নিষ্ক্রিয় করলে Shorts বিজ্ঞাপন ব্লকিংও নিষ্ক্রিয় হয়ে যাবে।
 
 যদি এই সেটিংস পরিবর্তন করার পরে কাজ না করে, তাহলে Incognito মোডে চেষ্টা করুন।"</string>
+    <string name="morphe_expand_livestream_dvr_duration_not_available">"'লাইভস্ট্রিম ডিভিআর সময়কাল প্রসারিত করুন' উপলব্ধ নাও হতে পারে
+
+এটি ঠিক করতে, 'স্পুফ ভিডিও স্ট্রিম' চালু করুন এবং 'ডিফল্ট ক্লায়েন্ট' 'TV Simply' বা 'visionOS' এ পরিবর্তন করুন"</string>
+    <string name="morphe_expand_livestream_dvr_duration_summary">আপনাকে লাইভ সম্প্রচারগুলি অতীতের ৭ দিন পর্যন্ত रिवाइंड করতে দেয়</string>
+    <string name="morphe_expand_livestream_dvr_duration_title">লাইভস্ট্রিম ডিভিআর সময়কাল বাড়ান</string>
+    <string name="morphe_explore_menu_screen_summary">অন্বেষণ মেনুতে কোন উপাদানগুলো দেখাতে চান তা নির্বাচন করুন</string>
+    <string name="morphe_explore_menu_screen_title">মেনু অন্বেষণ করুন</string>
+    <string name="morphe_hide_courses_menu_title">কোর্স মেনু লুকান</string>
+    <string name="morphe_hide_explore_button_title">\'আরো দেখুন\' বাটনটি লুকিয়ে রাখুন</string>
+    <string name="morphe_hide_fashion_menu_title">\'ফ্যাশন ও সৌন্দর্য\' মেনু লুকান</string>
+    <string name="morphe_hide_gaming_menu_title">গেমস্‌ মেনু লুকান</string>
+    <string name="morphe_hide_hype_menu_title">হাইপ মেনু লুকান</string>
+    <string name="morphe_hide_learning_menu_title">à®²à®¾à®à®¨ à®®à®¨à¯</string>
+    <string name="morphe_hide_live_menu_title">লাইভ মেনু লুকান</string>
+    <string name="morphe_hide_memberships_menu_title">সদস্যতা মেনু লুকান</string>
+    <string name="morphe_hide_movies_menu_title">মুভি মেনু লুকান</string>
+    <string name="morphe_hide_music_menu_title">\'সংগীত ও টিভি\' মেনু লুকান</string>
+    <string name="morphe_hide_news_menu_title">খবর মেনু লুকান</string>
+    <string name="morphe_hide_playables_menu_title">খেলার উপযুক্ত লুকান</string>
+    <string name="morphe_hide_podcasts_menu_title">পডকাস্ট মেনু লুকান</string>
+    <string name="morphe_hide_privacy_tos_footer_title">à®à®¨à¯à®¤ à®à®à® à®à®¬à®¯à®à®¤ à®µà¯à®¤à®°</string>
+    <string name="morphe_hide_shopping_menu_title">শপিং মেনু লুকান</string>
+    <string name="morphe_hide_sports_menu_title">স্পোর্টস মেনু লুকান</string>
+    <string name="morphe_hide_youtube_create_menu_title">YouTube তৈরি করুন মেনু লুকান</string>
+    <string name="morphe_hide_youtube_kids_menu_title">YouTube Kids মেনু লুকান</string>
+    <string name="morphe_hide_youtube_music_menu_title">YouTube Music মেনু লুকান</string>
+    <string name="morphe_hide_youtube_premium_menu_title">YouTube প্রিমিয়াম প্রচারণা লুকান</string>
+    <string name="morphe_hide_youtube_studio_menu_title">YouTube স্টুডিও মেনু লুকান</string>
+    <string name="morphe_hide_youtube_works_menu_title">\'YouTube à®à®°à® à®à®à®®à®¨à¯\' à®®à®¨à¯</string>
+    <string name="morphe_livestream_dvr_not_available">"'লাইভস্ট্রিম ডিভিআর সক্ষম করুন' উপলব্ধ নাও হতে পারে
+
+এটি ঠিক করতে, 'স্পুফ ভিডিও স্ট্রিম' চালু করুন এবং 'ডিফল্ট ক্লায়েন্ট' 'TV Simply' বা 'visionOS' এ পরিবর্তন করুন"</string>
+    <string name="morphe_livestream_dvr_summary">লাইভস্ট্রিমগুলিতে যেগুলি সাধারণত সীমাবদ্ধ, সেগুলিতেও সিকিং করার অনুমতি দেয়</string>
+    <string name="morphe_livestream_dvr_title">লাইভস্ট্রিম ডিভিআর সক্রিয় করুন</string>
+    <string name="morphe_playback_in_feeds_entry_always_on">সবসময় চালু</string>
+    <string name="morphe_playback_in_feeds_entry_off">বন্ধ</string>
+    <string name="morphe_playback_in_feeds_entry_wifi_only">শুধুমাত্র ওয়াই-ফাই</string>
+    <string name="morphe_playback_in_feeds_title">ফিডে প্লেব্যাক</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_title">অনুভূমিকভাবে টেনে প্লেব্যাক থামান</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_title">ড্র্যাগ অবস্থার অবস্থান মনে রাখুন</string>
 </resources>

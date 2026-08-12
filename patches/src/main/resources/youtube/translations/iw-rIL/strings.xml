@@ -26,7 +26,7 @@
     <string name="morphe_disable_quic_protocol_summary_off">פרוטוקול QUIC פעיל</string>
     <string name="morphe_disable_quic_protocol_summary_on">פרוטוקול QUIC מושבת</string>
     <string name="morphe_disable_quic_protocol_title">השבת פרוטוקול QUIC</string>
-    <string name="morphe_force_original_audio_not_available">כדי להשתמש בתכונה זו, שנה \'זיוף זרמי וידאו\' ל-Android Reel או TV</string>
+    <string name="morphe_force_original_audio_not_available">כדי להשתמש בתכונה זו, שנה את \'זיוף זרמי וידאו\' לכל לקוח מלבד Android Studio\'</string>
     <string name="morphe_force_original_audio_summary_off">שימוש בשמע ברירת מחדל</string>
     <string name="morphe_force_original_audio_summary_on">שימוש בשפת שמע מקורית</string>
     <string name="morphe_force_original_audio_title">כפה שפת שמע מקורית</string>
@@ -1105,4 +1105,44 @@
 
 אם שינוי הגדרה זו אינו נכנס לתוקף, נסה לעבור למצב פרטי."</string>
     <string name="revanced_yandex_transcribe_subtitles_title">תמלול Yandex</string>
+    <string name="morphe_expand_livestream_dvr_duration_not_available">"ייתכן ש'הרחבת משך הקלטת שידור חי' אינה זמינה
+
+כדי לתקן זאת, הפעל את 'התחזות לזרמי וידאו' ושנה את 'לקוח ברירת המחדל' ל-'TV Simply' או 'visionOS'"</string>
+    <string name="morphe_expand_livestream_dvr_duration_summary">מאפשר לך להריץ לאחור שידורים חיים עד 7 ימים אחורה</string>
+    <string name="morphe_expand_livestream_dvr_duration_title">הרחב את משך ה-DVR בשידור חי</string>
+    <string name="morphe_explore_menu_screen_summary">בחר אילו רכיבים יופיעו בתפריט החקירה</string>
+    <string name="morphe_explore_menu_screen_title">חקור תפריט</string>
+    <string name="morphe_hide_courses_menu_title">הסתר תפריט קורסים</string>
+    <string name="morphe_hide_explore_button_title">הסתר כפתור חקור</string>
+    <string name="morphe_hide_fashion_menu_title">הסתר תפריט \'אופנה ויופי\'</string>
+    <string name="morphe_hide_gaming_menu_title">הסתר תפריט גיימינג</string>
+    <string name="morphe_hide_hype_menu_title">הסתר תפריט הייפ</string>
+    <string name="morphe_hide_learning_menu_title">הסתר תפריט למידה</string>
+    <string name="morphe_hide_live_menu_title">הסתר תפריט לייב</string>
+    <string name="morphe_hide_memberships_menu_title">הסתר תפריט מנויים</string>
+    <string name="morphe_hide_movies_menu_title">הסתר תפריט סרטים</string>
+    <string name="morphe_hide_music_menu_title">הסתר תפריט \'מוזיקה וטלוויזיה\'</string>
+    <string name="morphe_hide_news_menu_title">הסתר תפריט חדשות</string>
+    <string name="morphe_hide_playables_menu_title">הסתר תפריט משחקייה</string>
+    <string name="morphe_hide_podcasts_menu_title">הסתר תפריט פודקאסטים</string>
+    <string name="morphe_hide_privacy_tos_footer_title">הסתר כותרות גרורות משפטיות ופרטיות</string>
+    <string name="morphe_hide_shopping_menu_title">הסתר תפריט קניות</string>
+    <string name="morphe_hide_sports_menu_title">הסתר תפריט ספורט</string>
+    <string name="morphe_hide_youtube_create_menu_title">הסתר תפריט YouTube Create</string>
+    <string name="morphe_hide_youtube_kids_menu_title">הסתר תפריט YouTube Kids</string>
+    <string name="morphe_hide_youtube_music_menu_title">הסתר תפריט YouTube Music</string>
+    <string name="morphe_hide_youtube_premium_menu_title">הסתר תפריט YouTube Premium</string>
+    <string name="morphe_hide_youtube_studio_menu_title">הסתר תפריט YouTube Studio</string>
+    <string name="morphe_hide_youtube_works_menu_title">הסתר תפריט \'איך YouTube עובד\'</string>
+    <string name="morphe_livestream_dvr_not_available">"ייתכן ש'הפעלת הקלטת שידור חי' אינה זמינה
+
+כדי לתקן זאת, הפעל את 'התחזות לזרמי וידאו' ושנה את 'לקוח ברירת המחדל' ל-'TV Simply' או 'visionOS'"</string>
+    <string name="morphe_livestream_dvr_summary">מאפשר חיפוש בכל הזרמות החיות, גם באלו שמגבילות זאת בדרך כלל</string>
+    <string name="morphe_livestream_dvr_title">הפעל DVR לשידור חי</string>
+    <string name="morphe_playback_in_feeds_entry_always_on">תמיד מופעל</string>
+    <string name="morphe_playback_in_feeds_entry_off">כבוי</string>
+    <string name="morphe_playback_in_feeds_entry_wifi_only">רק Wi-Fi</string>
+    <string name="morphe_playback_in_feeds_title">השמעה בפידים</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_title">השהה השמעה באמצעות גרירה אופקית</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_title">זכור את מצב הגרירה</string>
 </resources>

@@ -21,7 +21,7 @@ Davam et düyməsinə toxun və optimallaşdırma dəyişikliklərin qəbul et."
     <string name="morphe_disable_quic_protocol_summary_off">QUIC protokolu işləkdir</string>
     <string name="morphe_disable_quic_protocol_summary_on">QUIC protokolu qapadılıb</string>
     <string name="morphe_disable_quic_protocol_title">QUIC protokolunu qeyri-aktiv et</string>
-    <string name="morphe_force_original_audio_not_available">Bu xüsusiyyəti istifadə etmək üçün \"Video yayımların saxtalaşdır\"-ı Android Reel-ə və ya TV-yə dəyişdir</string>
+    <string name="morphe_force_original_audio_not_available">Bu xüsusiyyəti istifadə etmək üçün \'Video yayımların saxtalaşdırı\' \'Android Studio\' istisna istənilən qəbulediciyə dəyiş</string>
     <string name="morphe_force_original_audio_summary_off">İlkin səs istifadəsi</string>
     <string name="morphe_force_original_audio_summary_on">Orijinal səs dilini faydalanmaq</string>
     <string name="morphe_force_original_audio_title">Orijinal səs dilini zorla</string>
@@ -1008,4 +1008,44 @@ Qeyd: Bunu aktivləşdirmə video reklamları da məcburi olaraq gizlədir"</str
     <string name="revanced_switch_create_with_notifications_button_user_dialog_message">"Bu seçimin qapanması Shorts reklam əngəllənməsin də qapadacaq.
 
 Bu seçimi dəyişdirmə işə düşmürsə, Gizli rejimə keçməyə çalışın."</string>
+    <string name="morphe_expand_livestream_dvr_duration_not_available">"'Canlı yayım DVR müddətini genişləndir' əlçatan olmaya bilər
+
+Bunu düzəltmək üçün 'Video yayımlarını saxtalaşdır'-ı aktivləşdir və 'İlkin qəbuledicini' 'TV Simply' və ya 'visionOS' olaraq dəyişdir"</string>
+    <string name="morphe_expand_livestream_dvr_duration_summary">Canlı yayımları 7 günə kimi keçmişə geri çevirməyə imkan verir</string>
+    <string name="morphe_expand_livestream_dvr_duration_title">Canlı yayım DVR müddətini genişləndir</string>
+    <string name="morphe_explore_menu_screen_summary">Kəşf et menyusunda hansı elementlər görünür seç</string>
+    <string name="morphe_explore_menu_screen_title">Kəşf edin menyusu</string>
+    <string name="morphe_hide_courses_menu_title">Kurslar menyusunu gizlət</string>
+    <string name="morphe_hide_explore_button_title">Kəşf edin düyməsini gizlət</string>
+    <string name="morphe_hide_fashion_menu_title">\"Moda və Gözəllik\" menyusunu gizlət</string>
+    <string name="morphe_hide_gaming_menu_title">Oyunlar menyusunu gizlət</string>
+    <string name="morphe_hide_hype_menu_title">Hayp menyusunu gizlət</string>
+    <string name="morphe_hide_learning_menu_title">Öyrədici menyusunu gizlət</string>
+    <string name="morphe_hide_live_menu_title">Canlı menyusunu gizlət</string>
+    <string name="morphe_hide_memberships_menu_title">Üzvlüklər menyusunu gizlət</string>
+    <string name="morphe_hide_movies_menu_title">Filmlər menyusunu gizlət</string>
+    <string name="morphe_hide_music_menu_title">\"Musiqi və TV\" menyusunu gizlət</string>
+    <string name="morphe_hide_news_menu_title">Xəbərlər menyusunu gizlət</string>
+    <string name="morphe_hide_playables_menu_title">Oynanıla bilənlər menyusunu gizlət</string>
+    <string name="morphe_hide_podcasts_menu_title">Podkastlar menyusunu gizlət</string>
+    <string name="morphe_hide_privacy_tos_footer_title">Hüquqi və məxfilik alt yazıların gizlət</string>
+    <string name="morphe_hide_shopping_menu_title">Alış-veriş menyusunu gizlət</string>
+    <string name="morphe_hide_sports_menu_title">İdman menyusunu gizlət</string>
+    <string name="morphe_hide_youtube_create_menu_title">YouTube Create menyusunu gizlət</string>
+    <string name="morphe_hide_youtube_kids_menu_title">YouTube Kids menyusunu gizlət</string>
+    <string name="morphe_hide_youtube_music_menu_title">YouTube Music menyusunu gizlət</string>
+    <string name="morphe_hide_youtube_premium_menu_title">YouTube Premium menyusunu gizlət</string>
+    <string name="morphe_hide_youtube_studio_menu_title">YouTube Studio menyusunu gizlət</string>
+    <string name="morphe_hide_youtube_works_menu_title">\"YouTube necə işləyir\" menyusunu gizlət</string>
+    <string name="morphe_livestream_dvr_not_available">"'Canlı yayım DVR-ni aktivləşdir' əlçatan olmaya bilər
+
+Bunu düzəltmək üçün 'Video yayımlarını saxtalaşdır'-ı aktivləşdir və 'İlkin qəbuledicini' 'TV Simply' və ya 'visionOS' olaraq dəyişdir"</string>
+    <string name="morphe_livestream_dvr_summary">Bütün canlı yayımlarda, hətta adətən məhdudiyyət qoyulanları belə irəli-geri çəkməyə icazə verir</string>
+    <string name="morphe_livestream_dvr_title">Canlı yayım DVR-ni aktivləşdir</string>
+    <string name="morphe_playback_in_feeds_entry_always_on">Həmişə aktiv</string>
+    <string name="morphe_playback_in_feeds_entry_off">Qapalı</string>
+    <string name="morphe_playback_in_feeds_entry_wifi_only">Yalnız Wi-Fi</string>
+    <string name="morphe_playback_in_feeds_title">Axınlarda oynatma</string>
+    <string name="revanced_miniplayer_disable_horizontal_drag_playback_title">Üfüqi sürükləmə ilə oynatmanı dayandır</string>
+    <string name="revanced_miniplayer_disable_horizontal_reposition_title">Sürükləmə vəziyyəti mövqeyini xatırla</string>
 </resources>

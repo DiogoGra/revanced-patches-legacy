@@ -1,5 +1,6 @@
 package app.morphe.patches.shared
 
+import app.morphe.patcher.Fingerprint
 import app.morphe.patches.shared.extension.Constants.EXTENSION_SETTING_CLASS_DESCRIPTOR
 import app.morphe.util.containsLiteralInstruction
 import app.morphe.util.fingerprint.legacyFingerprint
@@ -67,6 +68,14 @@ internal val buildRequestFingerprint = legacyFingerprint(
                         // Later targets
                         method.parameters[1].type == "Ljava/util/Map;")
     }
+)
+
+internal object CurrentAudioVideoFormatToStringFingerprint : Fingerprint(
+    name = "toString",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "Ljava/lang/String;",
+    parameters = listOf(),
+    strings = listOf("currentVideoFormat=")
 )
 
 internal fun indexOfNewUrlRequestBuilderInstruction(method: Method) =

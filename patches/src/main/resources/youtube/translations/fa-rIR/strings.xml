@@ -31,4 +31,9 @@
     <string name="revanced_settings_search_no_results_summary">کلیدواژه دیگری را امتحان کنید</string>
     <string name="revanced_settings_search_no_results_title">نتایجی برای %s یافت نشد</string>
     <string name="revanced_settings_search_remove_message">حذف از تاریخچه جستجو؟</string>
+    <string name="morphe_force_original_audio_not_available">برای استفاده از این ویژگی، گزینه‌ی «Spoof video streams» را به Android Reel یا TV تغییر دهید</string>
+    <string name="morphe_force_original_audio_summary_off">استفاده از صدای پیش‌فرض</string>
+    <string name="morphe_force_original_audio_summary_on">استفاده از زبان صوتی اصلی</string>
+    <string name="morphe_force_original_audio_title">زبان صوتی اصلی را اجباری کنید</string>
+    <string name="morphe_playback_in_feeds_entry_off">خاموش</string>
 </resources>

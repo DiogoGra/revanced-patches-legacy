@@ -2,20 +2,23 @@ package app.morphe.patches.youtube.utils.fix.streamingdata
 
 import app.morphe.patches.shared.misc.spoof.spoofVideoStreamsPatch
 import app.morphe.patches.shared.spoof.useragent.baseSpoofUserAgentPatch
+import app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBLE_PACKAGE
 import app.morphe.patches.youtube.utils.compatibility.Constants.YOUTUBE_PACKAGE_NAME
 import app.morphe.patches.youtube.utils.mainactivity.mainActivityFingerprint
 import app.morphe.patches.youtube.utils.playservice.is_19_34_or_greater
 import app.morphe.patches.youtube.utils.playservice.is_19_50_or_greater
 import app.morphe.patches.youtube.utils.playservice.is_20_10_or_greater
 import app.morphe.patches.youtube.utils.playservice.is_20_14_or_greater
+import app.morphe.patches.youtube.utils.playservice.is_20_31_or_greater
 import app.morphe.patches.youtube.utils.playservice.versionCheckPatch
 import app.morphe.patches.youtube.utils.settings.ResourceUtils.addPreference
 import app.morphe.patches.youtube.utils.settings.settingsPatch
 import app.morphe.patches.youtube.video.information.videoInformationPatch
 import app.morphe.patches.youtube.video.videoid.videoIdPatch
 
+@Suppress("unused")
 val spoofStreamingDataPatch = spoofVideoStreamsPatch(
-    extensionClassDescriptor = "Lapp/morphe/extension/youtube/patches/spoof/SpoofVideoStreamsPatch;",
+    extensionClass = "Lapp/morphe/extension/youtube/patches/spoof/SpoofVideoStreamsPatch;",
     mainActivityOnCreateFingerprint = mainActivityFingerprint.second,
     fixMediaFetchHotConfig = {
         is_19_34_or_greater
@@ -27,7 +30,21 @@ val spoofStreamingDataPatch = spoofVideoStreamsPatch(
     fixParsePlaybackResponseFeatureFlag = {
         is_19_50_or_greater
     },
+    fixMediaSessionFeatureFlag = {
+        is_20_14_or_greater
+    },
+    fixReelItemWatchResponseFeatureFlag = {
+        is_20_31_or_greater
+    },
+    hookAccountIdentity = {
+        true
+    },
+    useNewRequestBuilderFingerprint = {
+        false
+    },
     block = {
+        compatibleWith(COMPATIBLE_PACKAGE)
+
         dependsOn(
             settingsPatch,
             versionCheckPatch,
