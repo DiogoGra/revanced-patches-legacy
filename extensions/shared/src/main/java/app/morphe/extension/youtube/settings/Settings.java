@@ -863,15 +863,13 @@ public class Settings extends SharedYouTubeSettings {
             SPOOF_APP_VERSION_TARGET.resetToDefault();
         }
 
-        // VR 1.74 is not selectable in the settings, and it's selected by spoof stream patch if needed.
-        if (SPOOF_VIDEO_STREAMS_CLIENT_TYPE.get() == ClientType.ANDROID_VR_1_74) {
+        // Hidden or retired clients must not remain selected after an upgrade.
+        ClientType spoofVideoStreamsClient = SPOOF_VIDEO_STREAMS_CLIENT_TYPE.get();
+        if (spoofVideoStreamsClient == ClientType.ANDROID_VR_1_74
+                || spoofVideoStreamsClient == ClientType.ANDROID_REEL
+                || spoofVideoStreamsClient == ClientType.ANDROID_REEL_AUTH
+                || spoofVideoStreamsClient == ClientType.ANDROID_REEL_NO_AUTH) {
             SPOOF_VIDEO_STREAMS_CLIENT_TYPE.resetToDefault();
-        }
-
-        // TV Simply may require PoToken
-        if (SPOOF_VIDEO_STREAMS_CLIENT_TYPE.get() == ClientType.TV_SIMPLY) {
-            Logger.printInfo(() -> "Migrating from TV Simply to TV");
-            SPOOF_VIDEO_STREAMS_CLIENT_TYPE.save(ClientType.TV);
         }
 
         // Categories were previously saved without a 'sb_' key prefix, so they need an additional adjustment.

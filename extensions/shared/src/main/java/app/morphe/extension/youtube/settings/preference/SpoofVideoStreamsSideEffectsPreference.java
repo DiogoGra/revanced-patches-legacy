@@ -101,7 +101,7 @@ public class SpoofVideoStreamsSideEffectsPreference extends Preference {
             // VR 1.74 is not exposed in the UI and should never be reached here.
             case ANDROID_VR_1_73, ANDROID_VR_1_74 ->
                     summary = str("morphe_spoof_video_streams_about_no_stable_volume");
-            case TV ->
+            case TV, TV_SIMPLY ->
                     summary = str("morphe_spoof_video_streams_about_js");
             case VISIONOS ->
                     summary = str("morphe_spoof_video_streams_about_no_stable_volume");
