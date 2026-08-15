@@ -121,16 +121,20 @@ public final class CustomActionsPatch {
     }
 
     /**
-     * Injection point.
+     * Injection point. Stores only a normal menu item as the template for custom actions.
+     *
+     * <p>Server-rendered Shorts menus use a separate path for element-transformer items.
+     * Those rows cannot be safely cloned with a custom label and icon on legacy clients.</p>
      */
-    public static void setFlyoutMenuObject(Object bottomSheetMenuObject) {
+    public static void setFlyoutMenuObject(Object bottomSheetMenuObject,
+                                           boolean isElementTransformer) {
         if (!SHORTS_CUSTOM_ACTIONS_FLYOUT_MENU_ENABLED) {
             return;
         }
         if (!isShortsActive()) {
             return;
         }
-        if (bottomSheetMenuObject == null) {
+        if (isElementTransformer || bottomSheetMenuObject == null) {
             return;
         }
         for (CustomAction customAction : CustomAction.values()) {

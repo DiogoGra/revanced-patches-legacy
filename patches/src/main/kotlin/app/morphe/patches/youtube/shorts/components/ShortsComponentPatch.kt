@@ -354,9 +354,23 @@ private val shortsCustomActionsPatch = bytecodePatch(
                 val bottomSheetMenuObject =
                     (getInstruction<ReferenceInstruction>(bottomSheetMenuInitializeIndex).reference as MethodReference).parameterTypes[0]!!
 
+                val elementTransformerFlagIndex =
+                    indexOfFirstInstructionReversedOrThrow(bottomSheetMenuInitializeIndex) {
+                        opcode == Opcode.AND_INT_LIT16 &&
+                                (this as WideLiteralInstruction).wideLiteral == 0x1000L
+                    }
+
                 val bottomSheetMenuListIndex = it.instructionMatches.first().index
                 val bottomSheetMenuListField =
                     (getInstruction<ReferenceInstruction>(bottomSheetMenuListIndex).reference as FieldReference)
+
+                val setFlyoutMenuObjectIndex = indexOfFirstInstructionReversedOrThrow(addListIndex) {
+                    opcode == Opcode.IGET_OBJECT &&
+                            getReference<FieldReference>()?.toString() ==
+                            bottomSheetMenuListField.toString()
+                }
+                val elementTransformerFlagRegister =
+                    getInstruction<TwoRegisterInstruction>(elementTransformerFlagIndex).registerA
 
                 val bottomSheetMenuClass = bottomSheetMenuListField.definingClass
                 val bottomSheetMenuList = bottomSheetMenuListField.type
@@ -373,9 +387,9 @@ private val shortsCustomActionsPatch = bytecodePatch(
                 )
 
                 addInstruction(
-                    bottomSheetMenuInitializeIndex + 1,
-                    "invoke-static {v$bottomSheetMenuObjectRegister}, " +
-                            "$EXTENSION_CUSTOM_ACTIONS_CLASS_DESCRIPTOR->setFlyoutMenuObject(Ljava/lang/Object;)V"
+                    setFlyoutMenuObjectIndex,
+                    "invoke-static {v$bottomSheetMenuObjectRegister, v$elementTransformerFlagRegister}, " +
+                            "$EXTENSION_CUSTOM_ACTIONS_CLASS_DESCRIPTOR->setFlyoutMenuObject(Ljava/lang/Object;Z)V"
                 )
 
                 val addFlyoutMenuMethod =
