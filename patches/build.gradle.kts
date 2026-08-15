@@ -17,6 +17,10 @@ dependencies {
     implementation(libs.gson)
 }
 
+configurations.named("runtimeClasspath") {
+    exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
+}
+
 sourceSets {
     main {
         kotlin {
