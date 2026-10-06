@@ -1,34 +1,108 @@
+/*
+ * Copyright (C) 2024-2026 anddea
+ *
+ * This file is part of the revanced-patches project:
+ * https://github.com/anddea/revanced-patches
+ *
+ * Original author(s):
+ * - anddea (https://github.com/anddea)
+ * - inotia00 (https://github.com/inotia00)
+ *
+ * Licensed under the GNU General Public License v3.0.
+ *
+ * ------------------------------------------------------------------------
+ * GPLv3 Section 7 – Additional Terms & Attribution Requirements
+ * ------------------------------------------------------------------------
+ *
+ * This file contains substantial original work by the author(s) listed above.
+ *
+ * In accordance with Section 7 of the GNU General Public License v3.0,
+ * the following additional terms apply to this file:
+ *
+ * 1. Source Credit Preservation (Section 7(b)): This specific copyright notice
+ *    and the list of original authors above must be preserved in any copy
+ *    or derivative work. You may add your own copyright notice below it,
+ *    but you may not remove the original one.
+ *
+ * 2. Origin & Modification Marking (Section 7(c)): Modified versions must be
+ *    clearly marked as such (e.g., by adding a "Modified by" line or a new
+ *    copyright notice) and must not be misrepresented as the original work.
+ *
+ * 3. Version Control Attribution (Section 7(b)): Any ports or substantial
+ *    modifications must retain historical authorship credit in version control
+ *    systems (e.g., Git), listing original author(s) appropriately and
+ *    modifiers as committers or co-authors.
+ *
+ * 4. User Interface Attribution (Section 7(b)): Any works containing or
+ *    derived from this material must maintain a visible credit or
+ *    acknowledgment to the original author(s) within the application's
+ *    user interface (e.g., in an "About" or "Credits" section).
+ */
+
+/*
+ * Portions of this file are ported from Morphe:
+ * Copyright 2026 Morphe.
+ * https://github.com/MorpheApp/morphe-patches
+ *
+ * Original hard forked code:
+ * https://github.com/ReVanced/revanced-patches/commit/724e6d61b2ecd868c1a9a37d465a688e83a74799
+ *
+ * See the included NOTICE file for GPLv3 §7(b) and §7(c) terms that apply to Morphe contributions.
+ */
+
 package app.morphe.patches.youtube.general.toolbar
 
+import app.morphe.patcher.Fingerprint
+import app.morphe.patcher.InstructionLocation.MatchAfterWithin
 import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.removeInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.replaceInstruction
+import app.morphe.patcher.literal
+import app.morphe.patcher.methodCall
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
-import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod.Companion.toMutable
 import app.morphe.patcher.util.smali.ExternalLabel
+import app.morphe.patches.shared.misc.fix.proto.immutableMethodRef
+import app.morphe.patches.shared.misc.fix.proto.mutableCopyMethodRef
+import app.morphe.patches.shared.misc.fix.proto.parseByteArrayMethodRef
 import app.morphe.patches.youtube.utils.castbutton.castButtonPatch
 import app.morphe.patches.youtube.utils.castbutton.hookToolBarCastButton
-import app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBLE_PACKAGE
+import app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBILITY_YOUTUBE
 import app.morphe.patches.youtube.utils.extension.Constants.GENERAL_CLASS_DESCRIPTOR
+import app.morphe.patches.youtube.utils.extension.Constants.GENERAL_PATH
 import app.morphe.patches.youtube.utils.patch.PatchList.TOOLBAR_COMPONENTS
+import app.morphe.patches.youtube.utils.playertype.playerTypeHookPatch
 import app.morphe.patches.youtube.utils.playservice.is_19_16_or_greater
 import app.morphe.patches.youtube.utils.playservice.is_19_46_or_greater
 import app.morphe.patches.youtube.utils.playservice.is_20_15_or_greater
+import app.morphe.patches.youtube.utils.playservice.is_20_31_or_greater
 import app.morphe.patches.youtube.utils.playservice.versionCheckPatch
-import app.morphe.patches.youtube.utils.resourceid.*
+import app.morphe.patches.youtube.utils.resourceid.sharedResourceIdPatch
+import app.morphe.patches.youtube.utils.resourceid.ytPremiumWordMarkHeader
+import app.morphe.patches.youtube.utils.resourceid.ytWordMarkHeader
 import app.morphe.patches.youtube.utils.settings.ResourceUtils.addPreference
-import app.morphe.patches.youtube.utils.settings.ResourceUtils.getContext
 import app.morphe.patches.youtube.utils.settings.settingsPatch
 import app.morphe.patches.youtube.utils.toolbar.hookToolBar
 import app.morphe.patches.youtube.utils.toolbar.toolBarHookPatch
-import app.morphe.util.*
-import app.morphe.util.Utils.printWarn
-import app.morphe.util.fingerprint.*
+import app.morphe.util.REGISTER_TEMPLATE_REPLACEMENT
+import app.morphe.util.cloneMutableAndPreserveParameters
+import app.morphe.util.findInstructionIndicesReversedOrThrow
+import app.morphe.util.findMethodOrThrow
+import app.morphe.util.fingerprint.injectLiteralInstructionBooleanCall
+import app.morphe.util.fingerprint.matchOrThrow
+import app.morphe.util.fingerprint.methodCall
+import app.morphe.util.fingerprint.methodOrThrow
+import app.morphe.util.fingerprint.mutableClassOrThrow
+import app.morphe.util.getFreeRegisterProvider
+import app.morphe.util.getReference
+import app.morphe.util.indexOfFirstInstruction
+import app.morphe.util.indexOfFirstInstructionOrThrow
+import app.morphe.util.indexOfFirstInstructionReversedOrThrow
+import app.morphe.util.replaceLiteralInstructionCall
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
@@ -41,17 +115,60 @@ import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethodParameter
 import com.android.tools.smali.dexlib2.util.MethodUtil
-import org.w3c.dom.Element
+
+private const val NAVIGATION_CLASS_DESCRIPTOR =
+    "$GENERAL_PATH/NavigationButtonsPatch;"
+private const val LAYOUT_COMPONENTS_FILTER_CLASS_DESCRIPTOR =
+    "Lapp/morphe/extension/youtube/patches/components/LayoutComponentsFilter;"
+
+private object SearchTermThumbnailFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = listOf("L", "I"),
+    filters = listOf(
+        methodCall(
+            smali = "Ljava/util/Iterator;->next()Ljava/lang/Object;"
+        ),
+        literal(
+            0,
+            location = MatchAfterWithin(30)
+        ),
+        methodCall(
+            smali = "Landroid/widget/ImageView;->setVisibility(I)V",
+            location = MatchAfterWithin(10)
+        ),
+        literal(
+            8,
+            location = MatchAfterWithin(10)
+        ),
+        methodCall(
+            smali = "Landroid/widget/ImageView;->setVisibility(I)V",
+            location = MatchAfterWithin(10)
+        ),
+        methodCall(
+            smali = "Landroid/widget/ImageView;->setImageDrawable(Landroid/graphics/drawable/Drawable;)V",
+        ),
+        methodCall(
+            smali = "Landroid/net/Uri;->parse(Ljava/lang/String;)Landroid/net/Uri;",
+        ),
+        literal(
+            0,
+            location = MatchAfterWithin(20)
+        )
+    ),
+    strings = listOf("ss_rds")
+)
 
 @Suppress("unused")
 val toolBarComponentsPatch = bytecodePatch(
     TOOLBAR_COMPONENTS.title,
     TOOLBAR_COMPONENTS.summary,
 ) {
-    compatibleWith(COMPATIBLE_PACKAGE)
+    compatibleWith(COMPATIBILITY_YOUTUBE)
 
     dependsOn(
         castButtonPatch,
+        playerTypeHookPatch,
         sharedResourceIdPatch,
         settingsPatch,
         toolBarHookPatch,
@@ -59,28 +176,6 @@ val toolBarComponentsPatch = bytecodePatch(
     )
 
     execute {
-        fun MutableMethod.injectSearchBarHook(
-            insertIndex: Int,
-            insertRegister: Int,
-            descriptor: String
-        ) =
-            addInstructions(
-                insertIndex, """
-                invoke-static {v$insertRegister}, $GENERAL_CLASS_DESCRIPTOR->$descriptor(Z)Z
-                move-result v$insertRegister
-                """
-            )
-
-        fun MutableMethod.injectSearchBarHook(
-            insertIndex: Int,
-            descriptor: String
-        ) =
-            injectSearchBarHook(
-                insertIndex,
-                getInstruction<OneRegisterInstruction>(insertIndex).registerA,
-                descriptor
-            )
-
         var settingArray = arrayOf(
             "PREFERENCE_SCREEN: GENERAL",
             "SETTINGS: TOOLBAR_COMPONENTS"
@@ -127,112 +222,24 @@ val toolBarComponentsPatch = bytecodePatch(
             )
         }
 
-        // Override the header in the search bar.
-        setActionBarRingoFingerprint.mutableClassOrThrow().methods.first { method ->
-            MethodUtil.isConstructor(method)
-        }.apply {
-            val insertIndex = indexOfFirstInstructionOrThrow(Opcode.IPUT_BOOLEAN)
-            val insertRegister = getInstruction<TwoRegisterInstruction>(insertIndex).registerA
+        if (!is_20_31_or_greater) {
+            // Override the header in the search bar.
+            setActionBarRingoFingerprint.mutableClassOrThrow().methods.first { method ->
+                MethodUtil.isConstructor(method)
+            }.apply {
+                val insertIndex = indexOfFirstInstructionOrThrow(Opcode.IPUT_BOOLEAN)
+                val insertRegister = getInstruction<TwoRegisterInstruction>(insertIndex).registerA
 
-            addInstruction(
-                insertIndex + 1,
-                "const/4 v$insertRegister, 0x0"
-            )
-            addInstructions(
-                insertIndex, """
+                addInstruction(
+                    insertIndex + 1,
+                    "const/4 v$insertRegister, 0x0"
+                )
+                addInstructions(
+                    insertIndex, """
                     invoke-static {}, $GENERAL_CLASS_DESCRIPTOR->overridePremiumHeader()Z
                     move-result v$insertRegister
                     """
-            )
-        }
-
-        // endregion
-
-        // region patch for enable wide search bar
-
-        // Limitation: Premium header will not be applied for YouTube Premium users if the user uses the 'Wide search bar with header' option.
-        // This is because it forces the deprecated search bar to be loaded.
-        // As a solution to this limitation, 'Change YouTube header' patch is required.
-        actionBarRingoBackgroundFingerprint.methodOrThrow().apply {
-            val viewIndex =
-                indexOfFirstLiteralInstructionOrThrow(actionBarRingoBackground) + 2
-            val viewRegister = getInstruction<OneRegisterInstruction>(viewIndex).registerA
-
-            addInstructions(
-                viewIndex + 1,
-                "invoke-static {v$viewRegister}, $GENERAL_CLASS_DESCRIPTOR->setWideSearchBarLayout(Landroid/view/View;)V"
-            )
-
-            val targetIndex = indexOfActionBarRingoBackgroundTabletInstruction(this) + 1
-            val targetRegister = getInstruction<OneRegisterInstruction>(targetIndex).registerA
-
-            injectSearchBarHook(
-                targetIndex + 1,
-                targetRegister,
-                "enableWideSearchBarWithHeaderInverse"
-            )
-        }
-
-        actionBarRingoTextFingerprint.methodOrThrow(actionBarRingoBackgroundFingerprint).apply {
-            val targetIndex = indexOfActionBarRingoTextTabletInstructions(this) + 1
-            val targetRegister = getInstruction<OneRegisterInstruction>(targetIndex).registerA
-
-            injectSearchBarHook(
-                targetIndex + 1,
-                targetRegister,
-                "enableWideSearchBarWithHeader"
-            )
-        }
-
-        actionBarRingoConstructorFingerprint.methodOrThrow().apply {
-            val staticCalls = implementation!!.instructions
-                .withIndex()
-                .filter { (_, instruction) ->
-                    val methodReference = (instruction as? ReferenceInstruction)?.reference
-                    instruction.opcode == Opcode.INVOKE_STATIC &&
-                            methodReference is MethodReference &&
-                            methodReference.parameterTypes.size == 1 &&
-                            methodReference.returnType == "Z"
-                }
-
-            if (staticCalls.size != 2)
-                throw PatchException("Size of staticCalls does not match: ${staticCalls.size}")
-
-            mapOf(
-                staticCalls.elementAt(0).index to "enableWideSearchBar",
-                staticCalls.elementAt(1).index to "enableWideSearchBarWithHeader"
-            ).forEach { (index, descriptor) ->
-                val walkerMethod = getWalkerMethod(index)
-
-                walkerMethod.apply {
-                    injectSearchBarHook(
-                        implementation!!.instructions.lastIndex,
-                        descriptor
-                    )
-                }
-            }
-        }
-
-        youActionBarFingerprint.matchOrThrow(setActionBarRingoFingerprint).let {
-            it.method.apply {
-                injectSearchBarHook(
-                    it.instructionMatches.last().index,
-                    "enableWideSearchBarInYouTab"
                 )
-            }
-        }
-
-        // This attribution cannot be changed in extension, so change it in the xml file.
-
-        getContext().document("res/layout/action_bar_ringo_background.xml").use { document ->
-            document.doRecursively { node ->
-                arrayOf("layout_marginStart").forEach replacement@{ replacement ->
-                    if (node !is Element) return@replacement
-
-                    node.getAttributeNode("android:$replacement")?.let { attribute ->
-                        attribute.textContent = "0.0dip"
-                    }
-                }
             }
         }
 
@@ -261,7 +268,7 @@ val toolBarComponentsPatch = bytecodePatch(
         hookToolBar("$GENERAL_CLASS_DESCRIPTOR->hideSearchButton")
 
         toolbarSearchButtonFingerprint
-            .methodOrThrow(toolbarSearchButtonLabelFingerprint)
+            .methodOrThrow()
             .apply {
                 val index = indexOfShowAsActionInstruction(this)
                 val instruction = getInstruction<FiveRegisterInstruction>(index)
@@ -275,9 +282,122 @@ val toolBarComponentsPatch = bytecodePatch(
 
         // endregion
 
+        // region patch for hide search bar back button
+
+        searchBarParentFingerprint.methodOrThrow().apply {
+            addInstruction(
+                0,
+                "invoke-static {}, $GENERAL_CLASS_DESCRIPTOR->setSearchBarBackButtonActive()V"
+            )
+
+            findInstructionIndicesReversedOrThrow {
+                opcode == Opcode.RETURN_OBJECT
+            }.forEach { returnIndex ->
+                val viewRegister = getInstruction<OneRegisterInstruction>(returnIndex).registerA
+
+                addInstruction(
+                    returnIndex,
+                    "invoke-static {v$viewRegister}, $GENERAL_CLASS_DESCRIPTOR->setSearchBarBackButtonView(Landroid/view/View;)V"
+                )
+            }
+        }
+
+        searchResultFingerprint.methodOrThrow().apply {
+            addInstruction(
+                0,
+                "invoke-static {}, $GENERAL_CLASS_DESCRIPTOR->setSearchBarBackButtonActive()V"
+            )
+
+            findInstructionIndicesReversedOrThrow {
+                opcode == Opcode.RETURN_OBJECT
+            }.forEach { returnIndex ->
+                val viewRegister = getInstruction<OneRegisterInstruction>(returnIndex).registerA
+
+                addInstruction(
+                    returnIndex,
+                    "invoke-static {v$viewRegister}, $GENERAL_CLASS_DESCRIPTOR->setSearchBarBackButtonView(Landroid/view/View;)V"
+                )
+            }
+        }
+
+        SearchBarBackButtonOnExitFingerprint.method.addInstruction(
+            0,
+            "invoke-static {}, $GENERAL_CLASS_DESCRIPTOR->clearSearchBarBackButtonView()V"
+        )
+
+        SearchBarBackButtonOnResumeFingerprint.match(
+            searchBarParentFingerprint.mutableClassOrThrow()
+        ).method.apply {
+            val insertIndex = indexOfFirstInstructionOrThrow(Opcode.INVOKE_SUPER) + 1
+
+            addInstruction(
+                insertIndex,
+                "invoke-static {}, $GENERAL_CLASS_DESCRIPTOR->setSearchBarBackButtonActive()V"
+            )
+        }
+
+        SearchResultsBackButtonOnResumeFingerprint.match(
+            searchResultFingerprint.mutableClassOrThrow()
+        ).method.apply {
+            val insertIndex = indexOfFirstInstructionOrThrow(Opcode.INVOKE_SUPER) + 1
+
+            addInstruction(
+                insertIndex,
+                "invoke-static {}, $GENERAL_CLASS_DESCRIPTOR->setSearchBarBackButtonActive()V"
+            )
+        }
+
+        AppCompatToolbarNavigationIconSetterFingerprint.let { match ->
+            match.method.cloneMutableAndPreserveParameters(match.classDef).apply {
+                findInstructionIndicesReversedOrThrow(Opcode.RETURN_VOID).forEach { returnIndex ->
+                    addInstruction(
+                        returnIndex,
+                        "invoke-static {p0, p1}, $GENERAL_CLASS_DESCRIPTOR->applySearchBarBackButtonSpacing(Landroid/view/ViewGroup;Landroid/graphics/drawable/Drawable;)V"
+                    )
+                }
+            }
+        }
+
+        // endregion
+
+        // region patch for search in channel
+
+        hookToolBar("$GENERAL_CLASS_DESCRIPTOR->openSearchInChannel")
+
+        SearchRequestLoaderFingerprint.method.addInstructions(
+            0, """
+                invoke-static {p1}, $GENERAL_CLASS_DESCRIPTOR->overrideSearchInChannelRequestQuery(Ljava/lang/String;)Ljava/lang/String;
+                move-result-object p1
+                """
+        )
+
+        // endregion
+
         // region patch for hide search term thumbnail
 
-        if (!is_20_15_or_greater) {
+        if (is_20_15_or_greater) {
+            SearchTermThumbnailFingerprint.method.apply {
+                val methodCalls = findInstructionIndicesReversedOrThrow {
+                    (opcode == Opcode.INVOKE_INTERFACE || opcode == Opcode.INVOKE_VIRTUAL) &&
+                            getReference<MethodReference>()?.parameterTypes ==
+                            listOf("Landroid/widget/ImageView;", "Landroid/net/Uri;")
+                }
+
+                methodCalls.forEach { insertIndex ->
+                    val invokeInstruction = getInstruction<FiveRegisterInstruction>(insertIndex)
+                    val imageViewRegister = invokeInstruction.registerD
+                    val uriRegister = invokeInstruction.registerE
+
+                    addInstructions(
+                        insertIndex,
+                        """
+                            invoke-static { v$imageViewRegister, v$uriRegister }, $LAYOUT_COMPONENTS_FILTER_CLASS_DESCRIPTOR->hideSearchTermThumbnails(Landroid/view/View;Landroid/net/Uri;)Landroid/net/Uri;
+                            move-result-object v$uriRegister
+                        """
+                    )
+                }
+            }
+        } else {
             createSearchSuggestionsFingerprint.methodOrThrow().apply {
                 val iteratorIndex = indexOfIteratorInstruction(this)
                 val replaceIndex = indexOfFirstInstruction(iteratorIndex) {
@@ -336,28 +456,11 @@ val toolBarComponentsPatch = bytecodePatch(
                     "$GENERAL_CLASS_DESCRIPTOR->hideSearchTermThumbnail(Z)Z"
                 )
             }
-
-            settingArray += "SETTINGS: HIDE_SEARCH_TERM_THUMBNAIL"
         }
 
-        // endregion
-
-        /*
-        // region patch for hide voice search button
-
-        if (is_19_28_or_greater) {
-            imageSearchButtonConfigFingerprint.injectLiteralInstructionBooleanCall(
-                45617544L,
-                "$GENERAL_CLASS_DESCRIPTOR->hideImageSearchButton(Z)Z"
-            )
-
-            updatePatchStatus(PATCH_STATUS_CLASS_DESCRIPTOR, "ImageSearchButton")
-
-            settingArray += "SETTINGS: HIDE_IMAGE_SEARCH_BUTTON"
-        }
+        settingArray += "SETTINGS: HIDE_SEARCH_TERM_THUMBNAIL"
 
         // endregion
-         */
 
         // region patch for hide voice search button
 
@@ -410,7 +513,106 @@ val toolBarComponentsPatch = bytecodePatch(
 
         // region patch for hide You may like section
 
-        if (is_19_46_or_greater && !is_20_15_or_greater) {
+        if (is_20_15_or_greater) {
+            val searchSuggestionEndpointField = SearchSuggestionEndpoint2021Fingerprint
+                .instructionMatches.first().instruction.getReference<FieldReference>()!!
+            val searchSuggestionEndpointClass = searchSuggestionEndpointField.definingClass
+
+            SearchBoxTypingStringFingerprint.let {
+                it.method.apply {
+                    // Includes trending searches ("You may like") and search history.
+                    val searchSuggestionCollectionField =
+                        it.instructionMatches.first().instruction.getReference<FieldReference>()!!
+                    val typedStringField =
+                        it.instructionMatches[2].instruction.getReference<FieldReference>()!!
+
+                    val helperMethod = ImmutableMethod(
+                        definingClass,
+                        "patch_setSearchSuggestions",
+                        listOf(
+                            ImmutableMethodParameter(
+                                parameterTypes.first().toString(),
+                                null,
+                                null,
+                            ),
+                        ),
+                        "V",
+                        AccessFlags.PRIVATE.value or AccessFlags.FINAL.value,
+                        annotations,
+                        null,
+                        MutableMethodImplementation(7),
+                    ).toMutable().apply {
+                        addInstructionsWithLabels(
+                            0,
+                            """
+                                move-object/from16 v0, p1
+                                iget-object v1, v0, $typedStringField
+
+                                # Check if the setting is enabled and if the typed string is empty.
+                                invoke-static { v1 }, $GENERAL_CLASS_DESCRIPTOR->hideYouMayLikeSection(Ljava/lang/String;)Z
+                                move-result v1
+                                
+                                # If the setting is disabled or the typed string is not empty, do nothing.
+                                if-eqz v1, :ignore
+
+                                # Get a collection of search suggestions.
+                                iget-object v1, v0, $searchSuggestionCollectionField
+                                if-eqz v1, :ignore
+
+                                # Create a new list to hold filtered search suggestions.
+                                new-instance v2, Ljava/util/ArrayList;
+                                invoke-direct { v2 }, Ljava/util/ArrayList;-><init>()V
+
+                                # Iterate through the collection and check if the search suggestion is the search history.
+                                invoke-interface { v1 }, Ljava/util/Collection;->iterator()Ljava/util/Iterator;
+                                move-result-object v3
+
+                                :loop
+                                invoke-interface { v3 }, Ljava/util/Iterator;->hasNext()Z
+                                move-result v1
+                                if-eqz v1, :exit
+
+                                invoke-interface { v3 }, Ljava/util/Iterator;->next()Ljava/lang/Object;
+                                move-result-object v1
+
+                                instance-of v4, v1, $searchSuggestionEndpointClass
+                                if-eqz v4, :add_item
+
+                                check-cast v1, $searchSuggestionEndpointClass
+
+                                # Each search suggestion has a command endpoint.
+                                # If the search suggestion is the search history, the command includes the keyword '/delete'.
+                                iget-object v4, v1, $searchSuggestionEndpointField
+                                invoke-static { v1, v4 }, $GENERAL_CLASS_DESCRIPTOR->isSearchHistory(Ljava/lang/Object;Ljava/lang/String;)Z
+                                move-result v4
+
+                                # If this search suggestion is not the search history, skip adding it.
+                                if-eqz v4, :loop
+
+                                :add_item
+                                invoke-virtual { v2, v1 }, Ljava/util/ArrayList;->add(Ljava/lang/Object;)Z
+                                goto :loop
+
+                                # Save the updated collection to a field.
+                                :exit
+                                iput-object v2, v0, $searchSuggestionCollectionField
+
+                                :ignore
+                                return-void
+                            """,
+                        )
+                    }
+
+                    it.classDef.methods.add(helperMethod)
+                    addInstruction(
+                        0,
+                        "invoke-direct/range {p0 .. p1}, $helperMethod",
+                    )
+                }
+            }
+
+            settingArray += "SETTINGS: HIDE_YOU_MAY_LIKE_SECTION"
+        } else if (is_19_46_or_greater && !is_20_15_or_greater) {
             val (searchSuggestionEndpointClass, searchSuggestionEndpointField) = with(
                 searchSuggestionEndpointFingerprint.methodOrThrow(
                     searchSuggestionEndpointParentFingerprint
@@ -521,9 +723,62 @@ val toolBarComponentsPatch = bytecodePatch(
             )
 
             settingArray += "SETTINGS: HIDE_YOU_MAY_LIKE_SECTION"
-        } else if (is_20_15_or_greater) {
-            printWarn("\"Hide You may like section\" is not yet supported in this version. Use YouTube 20.14.43 or earlier.")
         }
+
+        hookToolBar("$NAVIGATION_CLASS_DESCRIPTOR->setToolbarSettingsOnClickListener")
+
+        TopBarRendererSecondaryFilterFingerprint.let {
+            it.method.apply {
+                var buttonsClass: String? = null
+                val protoListIndex = it.instructionMatches.first().index
+                for (index in protoListIndex until implementation!!.instructions.size) {
+                    val instruction = getInstruction(index)
+                    if (instruction.opcode == Opcode.CHECK_CAST) {
+                        buttonsClass =
+                            (instruction as ReferenceInstruction).reference.toString()
+                        break
+                    }
+                }
+
+                val protoListRegister =
+                    getInstruction<FiveRegisterInstruction>(protoListIndex).registerC
+                val freeRegisters = getFreeRegisterProvider(protoListIndex, 2)
+                val protoListFreeRegister = freeRegisters.getFreeRegister()
+                val buttonByteRegister = freeRegisters.getFreeRegister()
+
+                addInstructionsWithLabels(
+                    protoListIndex,
+                    """
+                            invoke-interface {v$protoListRegister}, ${immutableMethodRef.get()}
+                            move-result v$protoListFreeRegister
+                            if-nez v$protoListFreeRegister, :immutable
+
+                            invoke-static {v$protoListRegister}, ${mutableCopyMethodRef.get()}
+                            move-result-object v$protoListRegister
+
+                            invoke-static {v$protoListRegister}, $NAVIGATION_CLASS_DESCRIPTOR->createToolbarSettingsButton(Ljava/util/List;)[B
+                            move-result-object v$buttonByteRegister
+
+                            # Remove toolbar buttons hidden by the user before layout.
+                            invoke-static {v$protoListRegister}, $NAVIGATION_CLASS_DESCRIPTOR->modifyToolbarButtons(Ljava/util/List;)V
+
+                            if-eqz v$buttonByteRegister, :immutable
+
+                            sget-object v$protoListFreeRegister, $buttonsClass->a:$buttonsClass
+                            invoke-static {v$protoListFreeRegister, v$buttonByteRegister}, ${parseByteArrayMethodRef.get()!!}
+                            move-result-object v$protoListFreeRegister
+                            check-cast v$protoListFreeRegister, $buttonsClass
+                            invoke-interface {v$protoListRegister, v$protoListFreeRegister}, Ljava/util/List;->add(Ljava/lang/Object;)Z
+                            invoke-static {v$protoListRegister}, $NAVIGATION_CLASS_DESCRIPTOR->applyToolbarSettingsButtonIndex(Ljava/util/List;)V
+
+                            :immutable
+                            nop
+                        """,
+                )
+            }
+        }
+
+        settingArray += "SETTINGS: SHOW_TOOLBAR_SETTINGS_BUTTON"
 
         // endregion
 
@@ -546,54 +801,6 @@ val toolBarComponentsPatch = bytecodePatch(
                 )
             }
         }
-
-        // endregion
-
-        // region patch for replace create button
-
-        val matchedMethods = mutableListOf<MutableMethod>()
-        classDefForEach { classDef ->
-            classDef.methods.forEach { method ->
-                if (method.containsLiteralInstruction(ytOutlineVideoCamera)) {
-                    val mutableMethod = mutableClassDefBy(classDef).findMutableMethodOf(method)
-                    matchedMethods.add(mutableMethod)
-                }
-            }
-        }
-
-        if (matchedMethods.isEmpty()) {
-            throw PatchException("No methods matched createButtonDrawableFingerprint")
-        }
-
-        // println("Found ${matchedMethods.size} methods matching createButtonDrawableFingerprint")
-        // matchedMethods.forEach { method ->
-        //     println("Patching method: ${method.methodCall()} in class ${method.definingClass}")
-        // }
-
-        matchedMethods.forEach { method ->
-            method.apply {
-                val index = indexOfFirstLiteralInstructionOrThrow(ytOutlineVideoCamera)
-                val register = getInstruction<OneRegisterInstruction>(index).registerA
-
-                addInstructions(
-                    index + 1, """
-                        invoke-static {v$register}, $GENERAL_CLASS_DESCRIPTOR->getCreateButtonDrawableId(I)I
-                        move-result v$register
-                        """
-                )
-            }
-        }
-
-        hookToolBar("$GENERAL_CLASS_DESCRIPTOR->replaceCreateButton")
-
-        findMethodOrThrow(
-            "Lcom/google/android/apps/youtube/app/application/Shell_SettingsActivity;"
-        ) {
-            name == "onCreate"
-        }.addInstruction(
-            0,
-            "invoke-static {p0}, $GENERAL_CLASS_DESCRIPTOR->setShellActivityTheme(Landroid/app/Activity;)V"
-        )
 
         // endregion
 

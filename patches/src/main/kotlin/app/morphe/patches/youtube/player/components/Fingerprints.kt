@@ -1,7 +1,23 @@
+/*
+ * Portions of this file are ported from Morphe:
+ * Copyright 2026 Morphe.
+ * https://github.com/MorpheApp/morphe-patches
+ *
+ * See the included NOTICE file for GPLv3 §7(b) and §7(c) terms that apply to Morphe contributions.
+ */
+
 @file:Suppress("SpellCheckingInspection")
 
 package app.morphe.patches.youtube.player.components
 
+import app.morphe.patcher.Fingerprint
+import app.morphe.patcher.InstructionLocation.MatchAfterImmediately
+import app.morphe.patcher.InstructionLocation.MatchAfterWithin
+import app.morphe.patcher.fieldAccess
+import app.morphe.patcher.literal
+import app.morphe.patcher.methodCall
+import app.morphe.patcher.opcode
+import app.morphe.patcher.string
 import app.morphe.patches.youtube.utils.PLAYER_RESPONSE_MODEL_CLASS_DESCRIPTOR
 import app.morphe.patches.youtube.utils.resourceid.componentLongClickListener
 import app.morphe.patches.youtube.utils.resourceid.darkBackground
@@ -137,7 +153,7 @@ internal val doubleTapInfoConstructorFingerprint = legacyFingerprint(
         "Landroid/view/MotionEvent;",
         "I",
         "Z",
-        "Lj\$/time/Duration;"
+        "Lj$/time/Duration;"
     )
 )
 
@@ -301,19 +317,38 @@ internal val infoCardsIncognitoFingerprint = legacyFingerprint(
     strings = listOf("vibrator")
 )
 
-internal val linearLayoutManagerItemCountsFingerprint = legacyFingerprint(
-    name = "linearLayoutManagerItemCountsFingerprint",
-    returnType = "I",
-    accessFlags = AccessFlags.FINAL.value,
-    parameters = listOf("L", "L", "L", "Z"),
-    opcodes = listOf(
-        Opcode.IF_NEZ,
-        Opcode.IF_LEZ,
-        Opcode.INVOKE_VIRTUAL,
+internal object RelatedItemSectionFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.STATIC),
+    returnType = "Z",
+    parameters = listOf("L"),
+    filters = listOf(
+        opcode(Opcode.AND_INT_LIT8),
+        fieldAccess(
+            opcode = Opcode.IGET_OBJECT,
+            type = "Ljava/lang/String;",
+        ),
+        string(
+            string = "related-items",
+            location = MatchAfterWithin(3),
+        ),
     ),
-    customFingerprint = { method, _ ->
-        method.definingClass == "Landroid/support/v7/widget/LinearLayoutManager;"
-    }
+)
+
+internal object WatchNextResponseModelClassResolverFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = emptyList(),
+    filters = listOf(
+        string("Request being made from non-critical thread"),
+        methodCall(
+            opcode = Opcode.INVOKE_INTERFACE,
+            smali = "Lcom/google/common/util/concurrent/ListenableFuture;->get()Ljava/lang/Object;",
+        ),
+        opcode(
+            opcode = Opcode.CHECK_CAST,
+            location = MatchAfterWithin(3),
+        ),
+    ),
 )
 
 internal val lithoComponentOnClickListenerFingerprint = legacyFingerprint(
@@ -328,7 +363,7 @@ internal val engagementPanelPlaylistSyntheticFingerprint = legacyFingerprint(
     name = "engagementPanelPlaylistSyntheticFingerprint",
     strings = listOf("engagement-panel-playlist"),
     customFingerprint = { _, classDef ->
-        classDef.interfaces.contains("Landroid/view/View${'$'}OnClickListener;")
+        classDef.interfaces.contains($$"Landroid/view/View$OnClickListener;")
     }
 )
 
@@ -408,4 +443,31 @@ internal val watermarkParentFingerprint = legacyFingerprint(
     returnType = "L",
     accessFlags = AccessFlags.PUBLIC or AccessFlags.FINAL,
     strings = listOf("player_overlay_in_video_programming")
+)
+
+internal object ModernEndScreenPlayerResponseFingerprint : Fingerprint(
+    returnType = "V",
+    parameters = listOf("L"),
+    filters = listOf(
+        fieldAccess(
+            opcode = Opcode.IPUT_OBJECT,
+            type = "Ljava/lang/String;",
+        ),
+        fieldAccess(
+            opcode = Opcode.IGET_OBJECT,
+            type = "Ljava/lang/String;",
+            location = MatchAfterImmediately(),
+        ),
+        methodCall(
+            opcode = Opcode.INVOKE_VIRTUAL,
+            name = "ordinal",
+            location = MatchAfterWithin(7),
+        ),
+        literal(5),
+        literal(8),
+        literal(9),
+    ),
+    custom = { method, classDef ->
+        classDef.methods.count() == 5 && AccessFlags.FINAL.isSet(method.accessFlags)
+    },
 )

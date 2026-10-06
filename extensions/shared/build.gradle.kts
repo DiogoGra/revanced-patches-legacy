@@ -21,6 +21,7 @@ android {
 }
 
 dependencies {
+    testImplementation("junit:junit:4.13.2")
     compileOnly(libs.annotation)
     compileOnly(libs.preference)
 
@@ -29,7 +30,6 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.lang3)
     implementation(libs.okhttp3)
-    implementation(libs.protobuf.javalite)
 
     implementation(libs.nanohttpd)
     implementation(libs.protobuf.javalite)

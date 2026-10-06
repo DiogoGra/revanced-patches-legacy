@@ -3,6 +3,7 @@ package app.morphe.extension.youtube.utils;
 import static app.morphe.extension.shared.utils.ResourceUtils.getAnimation;
 import static app.morphe.extension.shared.utils.ResourceUtils.getInteger;
 
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Color;
@@ -57,10 +58,12 @@ public class ExtendedUtils extends PackageUtils {
     public static final boolean IS_19_28_OR_GREATER = isVersionOrGreater("19.28.00");
     public static final boolean IS_19_29_OR_GREATER = isVersionOrGreater("19.29.00");
     public static final boolean IS_19_34_OR_GREATER = isVersionOrGreater("19.34.00");
-    public static final boolean IS_20_09_OR_GREATER = isVersionOrGreater("20.09.00");
     public static final boolean IS_20_10_OR_GREATER = isVersionOrGreater("20.10.00");
     public static final boolean IS_20_22_OR_GREATER = isVersionOrGreater("20.22.00");
     public static final boolean IS_20_31_OR_GREATER = isVersionOrGreater("20.31.00");
+    public static final boolean IS_21_17_OR_GREATER = isVersionOrGreater("21.17.00");
+    public static final boolean IS_21_21_OR_GREATER = isVersionOrGreater("21.21.00");
+    public static final boolean IS_21_29_OR_GREATER = isVersionOrGreater("21.29.00");
 
     public static final boolean IS_ARC = hasSystemFeature("org.chromium.arc");
     public static final boolean IS_AUTOMOTIVE = hasSystemFeature("android.hardware.type.automotive");
@@ -161,12 +164,11 @@ public class ExtendedUtils extends PackageUtils {
 
         // Preset size constants.
         final int dip4 = dipToPixels(4);   // Height for handle bar.
-        final int dip5 = dipToPixels(5);
-        final int dip8 = dipToPixels(8);   // Padding for mainLayout from left and right.
+        final int dip8 = dipToPixels(8);   // Vertical padding for mainLayout.
         final int dip20 = dipToPixels(20);
         final int dip40 = dipToPixels(40); // Width for handle bar.
 
-        mainLayout.setPadding(dip5, dip8, dip5, dip8);
+        mainLayout.setPadding(0, dip8, 0, dip8);
 
         // Set rounded rectangle background for the main layout.
         RoundRectShape roundRectShape = new RoundRectShape(
@@ -200,6 +202,12 @@ public class ExtendedUtils extends PackageUtils {
 
     public static void showBottomSheetDialog(Context mContext, LinearLayout mainLayout,
                                              @Nullable Map<LinearLayout, Runnable> actionsMap) {
+        showBottomSheetDialog(mContext, mainLayout, actionsMap, null);
+    }
+
+    public static void showBottomSheetDialog(Context mContext, LinearLayout mainLayout,
+                                             @Nullable Map<LinearLayout, Runnable> actionsMap,
+                                             @Nullable android.content.DialogInterface.OnDismissListener onDismissListener) {
         // Create a dialog without a theme for custom appearance.
         Dialog dialog = new Dialog(mContext);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE); // Remove default title bar.
@@ -297,6 +305,9 @@ public class ExtendedUtils extends PackageUtils {
         dialog.setOnDismissListener(d -> {
             PlayerType.getOnChange().removeObserver(playerTypeObserver);
             Logger.printDebug(() -> "PlayerType observer removed on dialog dismiss");
+            if (onDismissListener != null) {
+                onDismissListener.onDismiss(d);
+            }
         });
 
         dialog.show(); // Display the dialog.
@@ -414,6 +425,7 @@ public class ExtendedUtils extends PackageUtils {
             }
         }
 
+        @SuppressLint("ClickableViewAccessibility")
         @Override
         public boolean onTouch(View v, MotionEvent event) {
             switch (event.getAction()) {

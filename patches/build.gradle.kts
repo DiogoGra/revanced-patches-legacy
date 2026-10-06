@@ -15,6 +15,7 @@ patches {
 dependencies {
     // Used by JsonGenerator.
     implementation(libs.gson)
+    testImplementation(libs.junit)
 }
 
 configurations.named("runtimeClasspath") {
@@ -27,6 +28,7 @@ sourceSets {
             exclude(
                 "app/morphe/patches/music/**",
                 "app/morphe/patches/reddit/**",
+                "app/morphe/patches/youtube/layout/hide/settingsmenu/HideSettingsMenuFilterPatch.kt",
             )
         }
         resources {
@@ -39,16 +41,21 @@ sourceSets {
 }
 
 tasks {
+    named<JavaCompile>("compileTestJava") {
+        options.release.set(17)
+    }
     jar {
         exclude("app/morphe/generator")
     }
     register<JavaExec>("generatePatchesList") {
         description = "Build patch with patch list"
 
-        dependsOn(build)
+        dependsOn("buildAndroid")
 
-        classpath = sourceSets["main"].runtimeClasspath
+        // The generator needs Kotlin locally; the Android bundle must not package it.
+        classpath = sourceSets["main"].output + configurations["compileClasspath"]
         mainClass.set("app.morphe.generator.MainKt")
+        args(layout.buildDirectory.file("libs/patches-${project.version}.mpp").get().asFile.absolutePath)
     }
     // Used by gradle-semantic-release-plugin.
     publish {
@@ -58,19 +65,6 @@ tasks {
 
 kotlin {
     compilerOptions {
-        freeCompilerArgs = listOf("-Xcontext-receivers")
-    }
-}
-
-publishing {
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/DiogoGra/revanced-patches-legacy")
-            credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
-            }
-        }
+        freeCompilerArgs = listOf("-Xcontext-parameters")
     }
 }

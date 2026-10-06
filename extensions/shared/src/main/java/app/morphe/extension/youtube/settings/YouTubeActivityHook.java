@@ -1,5 +1,8 @@
 package app.morphe.extension.youtube.settings;
 
+import static app.morphe.extension.youtube.utils.ExtendedUtils.IS_20_31_OR_GREATER;
+import static app.morphe.extension.youtube.utils.ExtendedUtils.isSpoofingToLessThan;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.graphics.drawable.Drawable;
@@ -9,12 +12,10 @@ import android.widget.Toolbar;
 
 import app.morphe.extension.shared.settings.BaseActivityHook;
 import app.morphe.extension.shared.utils.Utils;
+import app.morphe.extension.youtube.patches.theme.ThemePatch;
 import app.morphe.extension.youtube.settings.preference.YouTubePreferenceFragment;
 import app.morphe.extension.youtube.settings.search.YouTubeSearchViewController;
 import app.morphe.extension.youtube.utils.ThemeUtils;
-
-import static app.morphe.extension.youtube.utils.ExtendedUtils.IS_19_34_OR_GREATER;
-import static app.morphe.extension.youtube.utils.ExtendedUtils.isSpoofingToLessThan;
 
 /**
  * Hooks LicenseActivity to inject a custom {@link YouTubePreferenceFragment}
@@ -23,7 +24,24 @@ import static app.morphe.extension.youtube.utils.ExtendedUtils.isSpoofingToLessT
 @SuppressWarnings("deprecation")
 public class YouTubeActivityHook extends BaseActivityHook {
 
+    /**
+     * Whether YouTube and extension-created icons should use the bold resources.
+     *
+     * <p>This is intentionally exposed as a field. Referencing it from an extension icon's
+     * static initializer also guarantees that this hook class is initialized before the icon
+     * selection is made.
+     */
+    public static final boolean USE_BOLD_ICONS = IS_20_31_OR_GREATER
+            && !Settings.SETTINGS_DISABLE_BOLD_ICONS.get()
+            && !Settings.RESTORE_OLD_SETTINGS_MENUS.get()
+            && !isSpoofingToLessThan("20.31.00");
+
     private static int currentThemeValueOrdinal = -1; // Must initially be a non-valid enum ordinal value.
+    private static Boolean settingsDarkMode;
+
+    static {
+        Utils.setAppIsUsingBoldIcons(USE_BOLD_ICONS);
+    }
 
     /**
      * Controller for managing search view components in the toolbar.
@@ -36,7 +54,24 @@ public class YouTubeActivityHook extends BaseActivityHook {
      */
     @SuppressWarnings("unused")
     public static void initialize(Activity parentActivity) {
+        ThemePatch.applyToSettingsActivity(parentActivity);
+        settingsDarkMode = ThemeUtils.isDarkModeEnabled();
         BaseActivityHook.initialize(new YouTubeActivityHook(), parentActivity);
+    }
+
+    /**
+     * Recreates the already-inflated main RVX settings screen when YouTube changes appearance.
+     * Nested preference dialogs are created later and already read the current palette directly.
+     */
+    public static void refreshTheme(Activity activity) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) return;
+
+        ThemePatch.applyToSettingsActivity(activity);
+        final boolean dark = ThemeUtils.isDarkModeEnabled();
+        if (settingsDarkMode != null && settingsDarkMode != dark) {
+            settingsDarkMode = dark;
+            activity.recreate();
+        }
     }
 
     /**
@@ -112,21 +147,22 @@ public class YouTubeActivityHook extends BaseActivityHook {
      * Injection point.
      */
     @SuppressWarnings("unused")
-    public static boolean useCairoSettingsFragment(boolean original) {
-        // Early targets have layout issues and it's better to always force off.
-        if (!IS_19_34_OR_GREATER) {
-            return false;
-        }
-        // Spoofing can cause half broken settings menus of old and new settings.
-        if (isSpoofingToLessThan("19.35.36")) {
-            return false;
-        }
+    public static boolean disableCairoSettingsFragment(boolean original) {
+        return !Settings.RESTORE_OLD_SETTINGS_MENUS.get() && original;
+    }
 
-        // On the first launch of a clean install, forcing the cairo menu can give a
-        // half broken appearance because all the preference icons may not be available yet.
-        // 19.34+ cairo settings are always on, so it doesn't need to be forced anyway.
-        // Cairo setting will show on the next launch of the app.
-        return original;
+    /**
+     * Injection point.
+     * <p>
+     * Returns the same icon-style decision used by extension-created icons. The static initializer
+     * publishes that decision to the legacy shared state for callers that still use it.
+     *
+     * @param original the value returned by YouTube's feature flag.
+     * @return whether YouTube and extension-created icons should use the bold resources.
+     */
+    @SuppressWarnings("unused")
+    public static boolean useBoldIcons(boolean original) {
+        return USE_BOLD_ICONS;
     }
 
     /**

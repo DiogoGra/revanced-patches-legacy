@@ -1,11 +1,44 @@
-package app.morphe.extension.shared.patches.components;
+/*
+ * Copyright (C) 2026 anddea
+ *
+ * This file is part of the revanced-patches project:
+ * https://github.com/anddea/revanced-patches
+ *
+ * Licensed under the GNU General Public License v3.0.
+ *
+ * ------------------------------------------------------------------------
+ * GPLv3 Section 7 – Additional Terms & Attribution Requirements
+ * ------------------------------------------------------------------------
+ *
+ * This file contains substantial original work by the author(s) listed above.
+ *
+ * In accordance with Section 7 of the GNU General Public License v3.0,
+ * the following additional terms apply to this file:
+ *
+ * 1. Source Credit Preservation (Section 7(b)): This specific copyright notice
+ *    and the list of original authors above must be preserved in any copy
+ *    or derivative work. You may add your own copyright notice below it,
+ *    but you may not remove the original one.
+ *
+ * 2. Origin & Modification Marking (Section 7(c)): Modified versions must be
+ *    clearly marked as such (e.g., by adding a "Modified by" line or a new
+ *    copyright notice) and must not be misrepresented as the original work.
+ *
+ * 3. Version Control Attribution (Section 7(b)): Any ports or substantial
+ *    modifications must retain historical authorship credit in version control
+ *    systems (e.g., Git), listing original author(s) appropriately and
+ *    modifiers as committers or co-authors.
+ *
+ * 4. User Interface Attribution (Section 7(b)): Any works containing or
+ *    derived from this material must maintain a visible credit or
+ *    acknowledgment to the original author(s) within the application's
+ *    user interface (e.g., in an "About" or "Credits" section).
+ */
 
-import static app.morphe.extension.youtube.utils.ExtendedUtils.IS_20_22_OR_GREATER;
+package app.morphe.extension.shared.patches.components;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
-import org.apache.commons.lang3.StringUtils;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -15,79 +48,68 @@ import java.util.Map;
 
 import app.morphe.extension.shared.settings.BaseSettings;
 import app.morphe.extension.shared.utils.Logger;
+import app.morphe.extension.shared.utils.PackageUtils;
 import app.morphe.extension.shared.utils.StringTrieSearch;
 import app.morphe.extension.shared.utils.Utils;
-import app.morphe.extension.youtube.settings.Settings;
 
 @SuppressWarnings("unused")
 public final class LithoFilterPatch {
     /**
-     * Simple wrapper to pass the litho parameters through the prefix search.
-     */
-    private static final class LithoFilterParameters {
-        final String identifier;
-        final String path;
-        final String accessibility;
-        final byte[] buffer;
-
-        LithoFilterParameters(String lithoIdentifier, String lithoPath,
-                              String accessibility, byte[] buffer) {
-            this.identifier = lithoIdentifier;
-            this.path = lithoPath;
-            this.accessibility = accessibility;
-            this.buffer = buffer;
-        }
+         * Simple wrapper to pass the litho parameters through the prefix search.
+         */
+        private record LithoFilterParameters(String identifier, String path, String accessibility,
+                                             Object contextSource, byte[] buffer) {
 
         @NonNull
-        @Override
-        public String toString() {
-            // Estimate the percentage of the buffer that are Strings.
-            StringBuilder builder = new StringBuilder(Math.max(100, buffer.length / 2));
-            builder.append( "ID: ");
-            builder.append(identifier);
-            if (!accessibility.isEmpty()) {
-                // AccessibilityId and AccessibilityText are pieces of BufferStrings.
-                builder.append(" Accessibility: ");
-                builder.append(accessibility);
-            }
-            builder.append(" Path: ");
-            builder.append(path);
-            if (Settings.DEBUG_PROTOBUFFER.get()) {
-                builder.append(" BufferStrings: ");
-                findAsciiStrings(builder, buffer);
-            }
-
-            return builder.toString();
-        }
-
-        /**
-         * Search through a byte array for all ASCII strings.
-         */
-        static void findAsciiStrings(StringBuilder builder, byte[] buffer) {
-            // Valid ASCII values (ignore control characters).
-            final int minimumAscii = 32;  // 32 = space character
-            final int maximumAscii = 126; // 127 = delete character
-            final int minimumAsciiStringLength = 4; // Minimum length of an ASCII string to include.
-            String delimitingCharacter = "❙"; // Non ascii character, to allow easier log filtering.
-
-            final int length = buffer.length;
-            int start = 0;
-            int end = 0;
-            while (end < length) {
-                int value = buffer[end];
-                if (value < minimumAscii || value > maximumAscii || end == length - 1) {
-                    if (end - start >= minimumAsciiStringLength) {
-                        for (int i = start; i < end; i++) {
-                            builder.append((char) buffer[i]);
-                        }
-                        builder.append(delimitingCharacter);
-                    }
-                    start = end + 1;
+            @Override
+            public String toString() {
+                // Estimate the percentage of the buffer that are Strings.
+                StringBuilder builder = new StringBuilder(Math.max(100, buffer.length / 2));
+                builder.append("ID: ");
+                builder.append(identifier);
+                if (!accessibility.isEmpty()) {
+                    // AccessibilityId and AccessibilityText are pieces of BufferStrings.
+                    builder.append(" Accessibility: ");
+                    builder.append(accessibility);
                 }
-                end++;
+                builder.append(" Path: ");
+                builder.append(path);
+                if (BaseSettings.DEBUG_PROTOBUFFER.get()) {
+                    builder.append(" BufferStrings: ");
+                    findAsciiStrings(builder, buffer);
+                }
+
+                return builder.toString();
+            }
+
+            /**
+             * Search through a byte array for all ASCII strings.
+             */
+            static void findAsciiStrings(StringBuilder builder, byte[] buffer) {
+                // Valid ASCII values (ignore control characters).
+                final int minimumAscii = 32;  // 32 = space character
+                final int maximumAscii = 126; // 127 = delete character
+                final int minimumAsciiStringLength = 4; // Minimum length of an ASCII string to include.
+                String delimitingCharacter = "❙"; // Non ascii character, to allow easier log filtering.
+
+                final int length = buffer.length;
+                int start = 0;
+                int end = 0;
+                while (end < length) {
+                    int value = buffer[end];
+                    if (value < minimumAscii || value > maximumAscii || end == length - 1) {
+                        if (end - start >= minimumAsciiStringLength) {
+                            for (int i = start; i < end; i++) {
+                                builder.append((char) buffer[i]);
+                            }
+                            builder.append(delimitingCharacter);
+                        }
+                        start = end + 1;
+                    }
+                    end++;
+                }
             }
         }
-    }
 
     /**
      * Placeholder for actual filters.
@@ -120,7 +142,10 @@ public final class LithoFilterPatch {
      * Instead, parse the identifier found near the start of the buffer and use that to
      * identify the correct buffer to use when filtering.
      */
-    private static final boolean EXTRACT_IDENTIFIER_FROM_BUFFER = IS_20_22_OR_GREATER;
+    // This Litho runtime is shared by YouTube and YouTube Music. Referencing YouTube's
+    // ExtendedUtils here initializes YouTube's Settings in Music and registers duplicate keys.
+    private static final boolean EXTRACT_IDENTIFIER_FROM_BUFFER =
+            PackageUtils.isVersionOrGreater("20.22.00");
 
     /**
      * Turns on additional logging, used for development purposes only.
@@ -142,6 +167,13 @@ public final class LithoFilterPatch {
      * Used for 20.21 and lower.
      */
     private static final ThreadLocal<byte[]> bufferThreadLocal = new ThreadLocal<>();
+    private static final ThreadLocal<byte[]> directBufferThreadLocal = new ThreadLocal<>();
+    private static final ThreadLocal<DirectByteBufferCache> directByteBufferCacheThreadLocal = new ThreadLocal<>();
+
+    /**
+     * Retains a copied direct buffer while the same Elements FlatBuffer is used for subcomponents.
+     */
+    private record DirectByteBufferCache(ByteBuffer source, byte[] copy) { }
 
     /**
      * Identifier to protocol buffer mapping.  Only used for 20.22+.
@@ -191,8 +223,8 @@ public final class LithoFilterPatch {
                             if (!group.isEnabled()) return false;
 
                             LithoFilterParameters parameters = (LithoFilterParameters) callbackParameter;
-                            final boolean isFiltered = filter.isFiltered(parameters.identifier,
-                                    parameters.accessibility, parameters.path, parameters.buffer,
+                            final boolean isFiltered = filter.isFiltered(parameters.contextSource,
+                                    parameters.identifier, parameters.accessibility, parameters.path, parameters.buffer,
                                     group, type, matchedStartIndex);
 
                             if (isFiltered && BaseSettings.DEBUG.get()) {
@@ -344,43 +376,82 @@ public final class LithoFilterPatch {
     /**
      * Injection point.
      */
+    public static void setDirectProtoBuffer(@Nullable byte[] buffer) {
+        directBufferThreadLocal.set(buffer == null ? EMPTY_BYTE_ARRAY : buffer);
+    }
+
+    /**
+     * Injection point for Elements components backed by a FlatBuffer instead of UPB.
+     *
+     * <p>Direct buffers cannot expose an array. Copy them once per backing buffer and reuse the
+     * copy while its subcomponents are converted.</p>
+     */
+    public static void setDirectProtoBuffer(@Nullable ByteBuffer buffer) {
+        if (buffer == null) {
+            setDirectProtoBuffer(EMPTY_BYTE_ARRAY);
+            return;
+        }
+        if (buffer.hasArray()) {
+            setDirectProtoBuffer(buffer.array());
+            return;
+        }
+
+        DirectByteBufferCache cache = directByteBufferCacheThreadLocal.get();
+        if (cache == null || cache.source() != buffer) {
+            ByteBuffer duplicate = buffer.duplicate();
+            duplicate.clear();
+            byte[] copy = new byte[duplicate.remaining()];
+            duplicate.get(copy);
+            cache = new DirectByteBufferCache(buffer, copy);
+            directByteBufferCacheThreadLocal.set(cache);
+        }
+        setDirectProtoBuffer(cache.copy());
+    }
+
+    /**
+     * Injection point.
+     */
     public static boolean isFiltered(String identifier, @Nullable String accessibilityId,
-                                     @Nullable String accessibilityText, StringBuilder pathBuilder) {
+                                     @Nullable String accessibilityText, StringBuilder pathBuilder,
+                                     Object contextSource) {
         try {
             if (identifier.isEmpty() || pathBuilder.length() == 0) {
                 return false;
             }
 
-            byte[] buffer = null;
-            if (EXTRACT_IDENTIFIER_FROM_BUFFER) {
-                final int pipeIndex = identifier.indexOf('|');
-                if (pipeIndex >= 0) {
-                    // If the identifier contains no pipe, then it's not an ".eml" identifier
-                    // and the buffer is not uniquely identified. Typically this only happens
-                    // for subcomponents where buffer filtering is not used.
-                    String identifierKey = identifier.substring(0, pipeIndex);
+            byte[] buffer = directBufferThreadLocal.get();
+            directBufferThreadLocal.remove();
+            if (buffer == null) {
+                if (EXTRACT_IDENTIFIER_FROM_BUFFER) {
+                    final int pipeIndex = identifier.indexOf('|');
+                    if (pipeIndex >= 0) {
+                        // If the identifier contains no pipe, then it's not an ".eml" identifier
+                        // and the buffer is not uniquely identified. Typically this only happens
+                        // for subcomponents where buffer filtering is not used.
+                        String identifierKey = identifier.substring(0, pipeIndex);
 
-                    var map = identifierToBufferThread.get();
-                    if (map != null) {
-                        buffer = map.get(identifierKey);
-                    }
+                        var map = identifierToBufferThread.get();
+                        if (map != null) {
+                            buffer = map.get(identifierKey);
+                        }
 
-                    if (buffer == null) {
-                        // Buffer for thread local not found. Use the last buffer found from any thread.
-                        buffer = identifierToBufferGlobal.get(identifierKey);
+                        if (buffer == null) {
+                            // Buffer for thread local not found. Use the last buffer found from any thread.
+                            buffer = identifierToBufferGlobal.get(identifierKey);
 
-                        if (DEBUG_EXTRACT_IDENTIFIER_FROM_BUFFER && buffer == null) {
-                            // No buffer is found for some components, such as
-                            // shorts_lockup_cell.eml on channel profiles.
-                            // For now, just ignore this and filter without a buffer.
-                            if (BaseSettings.DEBUG.get()) {
-                                Logger.printException(() -> "Debug: Could not find buffer for identifier: " + identifier);
+                            if (DEBUG_EXTRACT_IDENTIFIER_FROM_BUFFER && buffer == null) {
+                                // No buffer is found for some components, such as
+                                // shorts_lockup_cell.eml on channel profiles.
+                                // For now, just ignore this and filter without a buffer.
+                                if (BaseSettings.DEBUG.get()) {
+                                    Logger.printException(() -> "Debug: Could not find buffer for identifier: " + identifier);
+                                }
                             }
                         }
                     }
+                } else {
+                    buffer = bufferThreadLocal.get();
                 }
-            } else {
-                buffer = bufferThreadLocal.get();
             }
 
             // Potentially the buffer may have been null or never set up until now.
@@ -398,7 +469,7 @@ public final class LithoFilterPatch {
             if (accessibilityText != null && !accessibilityText.isBlank()) {
                 accessibility = accessibilityId + '|' + accessibilityText;
             }
-            LithoFilterParameters parameter = new LithoFilterParameters(identifier, path, accessibility, buffer);
+            LithoFilterParameters parameter = new LithoFilterParameters(identifier, path, accessibility, contextSource, buffer);
             Logger.printDebug(() -> "Searching " + parameter);
 
             return identifierSearchTree.matches(identifier, parameter)

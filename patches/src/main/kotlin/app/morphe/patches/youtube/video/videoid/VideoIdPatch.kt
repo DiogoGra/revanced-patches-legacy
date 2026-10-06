@@ -1,55 +1,104 @@
 package app.morphe.patches.youtube.video.videoid
 
-import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
+import app.morphe.patches.youtube.utils.extension.sharedExtensionPatch
 import app.morphe.patches.youtube.utils.playertype.playerTypeHookPatch
+import app.morphe.patches.youtube.utils.playservice.is_21_04_or_greater
+import app.morphe.patches.youtube.utils.playservice.versionCheckPatch
 import app.morphe.patches.youtube.video.playerresponse.Hook
 import app.morphe.patches.youtube.video.playerresponse.addPlayerResponseMethodHook
 import app.morphe.patches.youtube.video.playerresponse.playerResponseMethodHookPatch
-import app.morphe.util.fingerprint.matchOrThrow
+import app.morphe.patches.youtube.utils.PLAYER_RESPONSE_MODEL_CLASS_DESCRIPTOR
+import app.morphe.util.getReference
+import app.morphe.util.indexOfFirstInstructionOrThrow
+import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.builder.BuilderInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.reference.MethodReference
+import java.lang.ref.WeakReference
 
-private var videoIdRegister = 0
-private var videoIdInsertIndex = 0
-private lateinit var videoIdMethod: MutableMethod
+private lateinit var videoIdMethodRef: WeakReference<MutableMethod>
+private var videoIdRegister = -1
+private var videoIdInsertIndex = -1
 
-private var backgroundPlaybackVideoIdRegister = 0
-private var backgroundPlaybackInsertIndex = 0
-private lateinit var backgroundPlaybackMethod: MutableMethod
+private lateinit var backgroundPlaybackMethodRef: WeakReference<MutableMethod>
+private var backgroundPlaybackVideoIdRegister = -1
+private lateinit var backgroundPlaybackInsertInstruction: BuilderInstruction
 
 val videoIdPatch = bytecodePatch(
     description = "videoIdPatch",
 ) {
-    dependsOn(playerResponseMethodHookPatch)
+    dependsOn(
+        sharedExtensionPatch,
+        playerResponseMethodHookPatch,
+        versionCheckPatch,
+    )
 
     execute {
-        /**
-         * Supplies the method and register index of the video id register.
-         *
-         * @param consumer Consumer that receives the method, insert index and video id register index.
-         */
-        fun Pair<String, Fingerprint>.setFields(consumer: (MutableMethod, Int, Int) -> Unit) =
-            matchOrThrow().let { result ->
-                val videoIdRegisterIndex = result.instructionMatches.last().index
-
-                result.method.let {
-                    val videoIdRegister =
-                        it.getInstruction<OneRegisterInstruction>(videoIdRegisterIndex).registerA
-                    val insertIndex = videoIdRegisterIndex + 1
-                    consumer(it, insertIndex, videoIdRegister)
+        if (is_21_04_or_greater) {
+            VideoIdFingerprint.let { result ->
+                result.method.apply {
+                    videoIdMethodRef = WeakReference(this)
+                    val index = result.instructionMatches[1].index
+                    videoIdRegister = getInstruction<OneRegisterInstruction>(index).registerA
+                    videoIdInsertIndex = index + 1
                 }
             }
+        } else {
+            LegacyVideoIdFingerprint.let { result ->
+                result.method.apply {
+                    videoIdMethodRef = WeakReference(this)
+                    val index = indexOfFirstInstructionOrThrow {
+                        val methodReference = getReference<MethodReference>()
+                        opcode == Opcode.INVOKE_INTERFACE &&
+                            methodReference?.returnType == "Ljava/lang/String;" &&
+                            methodReference.parameterTypes.isEmpty() &&
+                            methodReference.definingClass == PLAYER_RESPONSE_MODEL_CLASS_DESCRIPTOR
+                    }
+                    videoIdRegister = getInstruction<OneRegisterInstruction>(index + 1).registerA
+                    videoIdInsertIndex = index + 2
+                }
+            }
+        }
 
-        videoIdFingerprint.setFields { method, index, register ->
-            videoIdMethod = method
-            videoIdInsertIndex = index
-            videoIdRegister = register
+        VideoIdBackgroundPlayFingerprint.let {
+            it.method.apply {
+                backgroundPlaybackMethodRef = WeakReference(this)
+                val index = it.instructionMatches.first().index
+                backgroundPlaybackVideoIdRegister = getInstruction<OneRegisterInstruction>(index + 1).registerA
+                // Video information can insert instructions before this hook. Track the
+                // instruction after move-result-object so callbacks always receive a String.
+                backgroundPlaybackInsertInstruction = getInstruction(index + 2)
+            }
         }
     }
 }
+
+/**
+ * Alternate hook that supports regular videos while playing in the background.
+ */
+internal fun hookBackgroundPlayVideoId(
+    methodDescriptor: String,
+) = backgroundPlaybackMethodRef.get()!!.addInstruction(
+    backgroundPlaybackInsertInstruction.location.index,
+    "invoke-static {v$backgroundPlaybackVideoIdRegister}, $methodDescriptor",
+)
+
+/**
+ * Hooks a no-argument callback into the background player path.
+ *
+ * The modern 21.04 video-information bridge reads its state from the extension and therefore does
+ * not accept the video-ID register used by [hookBackgroundPlayVideoId].
+ */
+internal fun hookBackgroundPlayVideoIdNoArgs(
+    methodDescriptor: String,
+) = backgroundPlaybackMethodRef.get()!!.addInstruction(
+    backgroundPlaybackInsertInstruction.location.index,
+    "invoke-static { }, $methodDescriptor",
+)
 
 /**
  * Hooks the new video id when the video changes.
@@ -64,26 +113,8 @@ val videoIdPatch = bytecodePatch(
  */
 internal fun hookVideoId(
     methodDescriptor: String
-) = videoIdMethod.addInstruction(
-    videoIdInsertIndex++,
-    "invoke-static {v$videoIdRegister}, $methodDescriptor"
-)
-
-/**
- * Alternate hook that supports only regular videos, but hook supports changing to new video
- * during background play when no video is visible.
- *
- * _Does not support Shorts_.
- *
- * Be aware, the hook can be called multiple times for the same video id.
- *
- * @param methodDescriptor which method to call. Params have to be `Ljava/lang/String;`
- */
-fun hookBackgroundPlayVideoId(
-    methodDescriptor: String,
-) = backgroundPlaybackMethod.addInstruction(
-    backgroundPlaybackInsertIndex++, // move-result-object offset
-    "invoke-static {v$backgroundPlaybackVideoIdRegister}, $methodDescriptor",
+) = videoIdMethodRef.get()!!.addInstruction(
+    videoIdInsertIndex++, "invoke-static {v$videoIdRegister}, $methodDescriptor"
 )
 
 /**

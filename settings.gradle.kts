@@ -1,4 +1,4 @@
-rootProject.name = "morphe-patches"
+rootProject.name = "rvx"
 
 pluginManagement {
     repositories {
@@ -18,7 +18,7 @@ pluginManagement {
 }
 
 plugins {
-    id("app.morphe.patches") version "1.2.0"
+    id("app.morphe.patches") version "1.3.3"
 }
 
 settings {
@@ -30,5 +30,3 @@ settings {
         proguardFiles(rootProject.projectDir.resolve("extensions/proguard-rules.pro").toString())
     }
 }
-
-include(":patches:stub")

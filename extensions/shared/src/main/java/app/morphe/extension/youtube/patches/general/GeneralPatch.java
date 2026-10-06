@@ -1,5 +1,56 @@
+/*
+ * Copyright (C) 2024-2026 anddea
+ *
+ * This file is part of the revanced-patches project:
+ * https://github.com/anddea/revanced-patches
+ *
+ * Original author(s):
+ * - anddea (https://github.com/anddea)
+ * - inotia00 (https://github.com/inotia00)
+ *
+ * Licensed under the GNU General Public License v3.0.
+ *
+ * ------------------------------------------------------------------------
+ * GPLv3 Section 7 – Additional Terms & Attribution Requirements
+ * ------------------------------------------------------------------------
+ *
+ * This file contains substantial original work by the author(s) listed above.
+ *
+ * In accordance with Section 7 of the GNU General Public License v3.0,
+ * the following additional terms apply to this file:
+ *
+ * 1. Source Credit Preservation (Section 7(b)): This specific copyright notice
+ *    and the list of original authors above must be preserved in any copy
+ *    or derivative work. You may add your own copyright notice below it,
+ *    but you may not remove the original one.
+ *
+ * 2. Origin & Modification Marking (Section 7(c)): Modified versions must be
+ *    clearly marked as such (e.g., by adding a "Modified by" line or a new
+ *    copyright notice) and must not be misrepresented as the original work.
+ *
+ * 3. Version Control Attribution (Section 7(b)): Any ports or substantial
+ *    modifications must retain historical authorship credit in version control
+ *    systems (e.g., Git), listing original author(s) appropriately and
+ *    modifiers as committers or co-authors.
+ *
+ * 4. User Interface Attribution (Section 7(b)): Any works containing or
+ *    derived from this material must maintain a visible credit or
+ *    acknowledgment to the original author(s) within the application's
+ *    user interface (e.g., in an "About" or "Credits" section).
+ */
+
+/*
+ * Portions of this file are ported from Morphe:
+ * Copyright 2026 Morphe.
+ * https://github.com/MorpheApp/morphe-patches
+ *
+ * See the included NOTICE file for GPLv3 §7(b) and §7(c) terms that apply to Morphe contributions.
+ */
+
 package app.morphe.extension.youtube.patches.general;
 
+import static app.morphe.extension.shared.utils.BaseThemeUtils.getAppForegroundColor;
+import static app.morphe.extension.shared.utils.BaseThemeUtils.getDialogBackgroundColor;
 import static app.morphe.extension.shared.utils.ResourceUtils.getXmlIdentifier;
 import static app.morphe.extension.shared.utils.StringRef.str;
 import static app.morphe.extension.shared.utils.Utils.getChildView;
@@ -7,15 +58,21 @@ import static app.morphe.extension.shared.utils.Utils.hideViewByLayoutParams;
 import static app.morphe.extension.shared.utils.Utils.hideViewGroupByMarginLayoutParams;
 import static app.morphe.extension.shared.utils.Utils.hideViewUnderCondition;
 import static app.morphe.extension.youtube.patches.utils.PatchStatus.ImageSearchButton;
-import static app.morphe.extension.youtube.patches.utils.PatchStatus.TargetActivityClass;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
+import android.text.InputType;
+import android.util.Pair;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,29 +80,264 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.ConsoleMessage;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 
 import com.google.android.apps.youtube.app.application.Shell_SettingsActivity;
-import com.google.android.apps.youtube.app.settings.SettingsActivity;
 
 import org.apache.commons.lang3.StringUtils;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.ref.WeakReference;
+import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.WeakHashMap;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.IntSupplier;
 
+import com.google.protobuf.MessageLite;
+
+import app.morphe.extension.shared.requests.Requester;
+import app.morphe.extension.shared.requests.Route;
+import app.morphe.extension.shared.ui.CustomDialog;
 import app.morphe.extension.shared.utils.Logger;
 import app.morphe.extension.shared.utils.PackageUtils;
+import app.morphe.extension.shared.utils.ResourceType;
 import app.morphe.extension.shared.utils.ResourceUtils;
 import app.morphe.extension.shared.utils.Utils;
+import app.morphe.extension.youtube.innertube.ConfigResponseOuterClass.ConfigResponse;
+import app.morphe.extension.youtube.patches.utils.PlaylistPatch;
+import app.morphe.extension.youtube.patches.utils.ReturnYouTubeChannelNamePatch;
 import app.morphe.extension.youtube.settings.Settings;
+import app.morphe.extension.youtube.shared.RootView;
+import app.morphe.extension.youtube.shared.VideoInformation;
 import app.morphe.extension.youtube.utils.ExtendedUtils;
-import app.morphe.extension.youtube.utils.ThemeUtils;
 
 @SuppressWarnings({"deprecation", "unused"})
 public class GeneralPatch {
+
+    private static final String OPEN_SEARCH_ACTION = "com.google.android.youtube.action.open.search";
+    private static final String YOUTUBE_MAIN_ACTIVITY_CLASS_NAME =
+            "com.google.android.apps.youtube.app.watchwhile.MainActivity";
+    private static final int SEARCH_INTENT_FLAGS =
+            Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP;
+    private static final String CHANNEL_BROWSE_ID_PREFIX = "UC";
+    private static final int YOUTUBE_VIDEO_ID_LENGTH = 11;
+    private static final String CHANNEL_SEARCH_WEBVIEW_USER_AGENT =
+            "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 " +
+                    "(KHTML, like Gecko) Chrome/120.0.6099.230 Mobile Safari/537.36";
+    private static final String CHANNEL_SEARCH_WEBVIEW_HOST = "m.youtube.com";
+    private static final String CHANNEL_SEARCH_WEBVIEW_BRIDGE_SCHEME = "revanced-channel-search";
+    private static final String CHANNEL_SEARCH_WEBVIEW_LOG_PREFIX = "revanced-channel-search:";
+    private static final String YOUTUBE_VIDEO_SCHEME_URL = "vnd.youtube://";
+    private static final String CHANNEL_SEARCH_WEBVIEW_JAVASCRIPT = """
+            (function() {
+                function openInApp(event) {
+                    var target = event.target;
+                    while (target && target.tagName !== 'A') {
+                        target = target.parentElement;
+                    }
+                    if (!target || !target.href) { return; }
+            
+                    var href = target.getAttribute('href') || '';
+                    if (href.indexOf('/watch') < 0 && href.indexOf('/shorts/') < 0 && href.indexOf('/playlist') < 0) {
+                        return;
+                    }
+            
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+                    window.location.href = 'revanced-channel-search://open?url=' + encodeURIComponent(target.href);
+                }
+            
+                function recordResult(result) {
+                    if (window.revancedChannelSearchLastFilterResult !== result) {
+                        try {
+                            console.log('revanced-channel-search:filter-result='
+                                    + result + ', url=' + window.location.href);
+                        } catch (error) {
+                        }
+                    }
+                    window.revancedChannelSearchLastFilterResult = result;
+                    return result;
+                }
+
+                function renderUnfiltered(reason) {
+                    window.revancedChannelSearchRenderUnfiltered = true;
+                    if (window.revancedChannelSearchMissingTabFallback) {
+                        window.clearTimeout(window.revancedChannelSearchMissingTabFallback);
+                        window.revancedChannelSearchMissingTabFallback = null;
+                    }
+                    var style = document.getElementById('revanced-channel-search-style');
+                    if (style && style.parentElement) {
+                        style.parentElement.removeChild(style);
+                    }
+                    if (window.revancedChannelSearchObserver) {
+                        window.revancedChannelSearchObserver.disconnect();
+                        window.revancedChannelSearchObserver = null;
+                    }
+                    return recordResult('unfiltered:' + reason);
+                }
+
+                function getSearchTitle() {
+                    var searchTab = document.querySelector('yt-tab-shape.ytTabShapeLastTab');
+                    if (searchTab) {
+                        return searchTab.getAttribute('tab-title');
+                    }
+                    var activeTab = document.querySelector('yt-tab-shape[aria-selected="true"]');
+                    if (activeTab) {
+                        return activeTab.getAttribute('tab-title');
+                    }
+                    return null;
+                }
+
+                function trim() {
+                    if (window.revancedChannelSearchRenderUnfiltered) {
+                        return recordResult('unfiltered:cached');
+                    }
+
+                    var searchTitle = getSearchTitle();
+                    var search = null;
+                    if (searchTitle) {
+                        search = document.querySelector('.tab-content[tab-title="' + searchTitle + '"]');
+                    }
+
+                    if (!search || !search.parentElement) {
+                        if (!window.revancedChannelSearchMissingTabFallback) {
+                            window.revancedChannelSearchMissingTabFallback = window.setTimeout(function() {
+                                var fallbackTitle = getSearchTitle();
+                                var fallbackSearch = fallbackTitle ? document.querySelector('.tab-content[tab-title="' + fallbackTitle + '"]') : null;
+                                if (!fallbackSearch) {
+                                    renderUnfiltered('missing-search-tab-timeout');
+                                }
+                            }, 5000);
+                        }
+                        return recordResult('waiting:missing-search-tab');
+                    }
+
+                    if (window.revancedChannelSearchMissingTabFallback) {
+                        window.clearTimeout(window.revancedChannelSearchMissingTabFallback);
+                        window.revancedChannelSearchMissingTabFallback = null;
+                    }
+
+                    var style = document.getElementById('revanced-channel-search-style');
+                    if (!style) {
+                        style = document.createElement('style');
+                        style.id = 'revanced-channel-search-style';
+                        var escapedTitle = searchTitle.replace(/'/g, "\\\\'");
+                        style.textContent = 'ytm-mobile-topbar-renderer, ytm-pivot-bar-renderer, yt-page-header-renderer, .single-column-browse-results-tab-bar, #player-container-id, ytm-tabs-renderer, ytm-channel-header-renderer, ytm-browse-header-renderer, ytm-app-header, ytm-bottom-sheet-renderer { display: none !important; } html, body, ytm-app, .page-container, ytm-browse, ytm-single-column-browse-results-renderer { margin: 0 !important; padding: 0 !important; } body { overflow: auto !important; } .tab-content:not([tab-title="' + escapedTitle + '"]) { display: none !important; } .tab-content[tab-title="' + escapedTitle + '"] { display: block !important; margin: 0 !important; padding: 0 !important; } ytm-section-list-renderer { margin-top: 0 !important; } ytm-item-section-renderer { border-bottom: 0 !important; }';
+                        (document.head || document.documentElement).appendChild(style);
+                    }
+            
+                    Array.prototype.forEach.call(search.parentElement.children, function(child) {
+                        if (child !== search) {
+                            child.style.display = 'none';
+                        }
+                    });
+                    return recordResult('filtered');
+                }
+            
+                var result = trim();
+            
+                if (!window.revancedChannelSearchClickBridge) {
+                    window.addEventListener('click', openInApp, true);
+                    window.addEventListener('auxclick', openInApp, true);
+                    document.addEventListener('click', openInApp, true);
+                    document.addEventListener('auxclick', openInApp, true);
+                    window.revancedChannelSearchClickBridge = true;
+                }
+            
+                if (result.indexOf('unfiltered:') !== 0 && !window.revancedChannelSearchObserver) {
+                    window.revancedChannelSearchObserver = new MutationObserver(trim);
+                    window.revancedChannelSearchObserver.observe(document.documentElement, { childList: true, subtree: true });
+                }
+
+                return result;
+            })();
+            """;
+
+    private static final String CHANNEL_SEARCH_WEBVIEW_VIDEO_IDS_JAVASCRIPT = """
+            (function() {
+                function getSearchResults() {
+                    var searchTab = document.querySelector('yt-tab-shape.ytTabShapeLastTab');
+                    var searchTitle = searchTab ? searchTab.getAttribute('tab-title') : null;
+                    if (!searchTitle) {
+                        var activeTab = document.querySelector('yt-tab-shape[aria-selected="true"]');
+                        searchTitle = activeTab ? activeTab.getAttribute('tab-title') : null;
+                    }
+                    if (searchTitle) {
+                        var tabs = document.querySelectorAll('.tab-content');
+                        for (var i = 0; i < tabs.length; i++) {
+                            if (tabs[i].getAttribute('tab-title') === searchTitle) {
+                                return tabs[i];
+                            }
+                        }
+                    }
+                    return document;
+                }
+
+                function getVideoId(href) {
+                    var watchMatch = href.match(/[?&]v=([^&#]+)/);
+                    if (watchMatch) {
+                        return watchMatch[1];
+                    }
+                    var shortsMatch = href.match(/\\/shorts\\/([^/?#]+)/);
+                    return shortsMatch ? shortsMatch[1] : null;
+                }
+
+                var videoIds = [];
+                var seen = {};
+                var results = getSearchResults();
+                var anchors = results.querySelectorAll(
+                        'ytm-compact-video-renderer a[href], '
+                        + 'ytm-video-renderer a[href], '
+                        + 'ytm-reel-item-renderer a[href]');
+                Array.prototype.forEach.call(anchors, function(anchor) {
+                    var videoId = getVideoId(anchor.getAttribute('href') || '');
+                    if (videoId && videoId.length === 11 && !seen[videoId]) {
+                        seen[videoId] = true;
+                        videoIds.push(videoId);
+                    }
+                });
+                return videoIds;
+            })();
+            """;
+
+    private static volatile String lastSearchInChannelQuery = "";
+    private static volatile String pendingSearchInChannelVisibleQuery = "";
+    private static volatile String pendingSearchInChannelRequestQuery = "";
 
     // region [Disable layout updates] patch
 
@@ -55,9 +347,64 @@ public class GeneralPatch {
             "X-Youtube-Hot-Config-Data",
             "X-Youtube-Hot-Hash-Data"
     };
+    private static final int CONFIG_CONNECTION_TIMEOUT_MILLISECONDS = 10 * 1000;
+    private static final int MAX_MILLISECONDS_TO_WAIT_FOR_CONFIG_FETCH = 20 * 1000;
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String COLD_CONFIG_DATA_HEADER = "X-Youtube-Cold-Config-Data";
+    private static final String COLD_HASH_DATA_HEADER = "X-Youtube-Cold-Hash-Data";
+    private static final String VISITOR_ID_HEADER = "X-Goog-Visitor-Id";
+    private static final String CONFIG_CLIENT_VERSION = ExtendedUtils.IS_21_21_OR_GREATER
+            // YT 21.21+ includes an experimental flag that is incompatible with the phone layout.
+            ? "21.20.402"
+            : PackageUtils.getAppVersionName();
+    private static final Route.CompiledRoute GET_CONFIG = new Route(
+            Route.Method.POST,
+            "config" +
+                    "?fields=responseContext.globalConfigGroup.bytesSerializedColdConfigGroup," +
+                    "responseContext.globalConfigGroup.coldHashData" +
+                    "&alt=proto"
+    ).compile();
 
     private static final boolean DISABLE_LAYOUT_UPDATES =
             Settings.DISABLE_LAYOUT_UPDATES.get();
+    private static final boolean FIX_VIDEO_ACTION_BAR = Settings.RESTORE_OLD_VIDEO_ACTION_BAR.get()
+            // If "Disable layout updates" is enabled, this narrower override is not required.
+            && !DISABLE_LAYOUT_UPDATES
+            // Tablets already have a non-collapsed video action bar.
+            && !PackageUtils.isTablet();
+    private static volatile boolean needFetch = true;
+
+    /**
+     * Interface implemented by YouTube's generated config model during patching.
+     */
+    public interface ConfigInfoInterface {
+        void patch_setColdConfigData(String coldConfigData);
+        void patch_setColdHashData(String coldHashData);
+    }
+
+    /**
+     * Interface to use obfuscated methods.
+     */
+    public interface RequestInterface {
+        // Method is added during patching.
+        String patch_getEndpoint();
+    }
+
+    /**
+     * Field number of the continuation token in the body of 'next' requests.
+     * Watch page requests have no continuation. Comment requests do.
+     */
+    private static final int NEXT_REQUEST_CONTINUATION_FIELD = 8;
+    /**
+     * Time when the body of a watch page 'next' request was last built, or zero if none is pending.
+     * Comment requests also use the 'next' endpoint, and overriding their config
+     * prevents newly posted comments from showing until the comment sorting is changed.
+     */
+    private static volatile long watchNextRequestTime;
+    private static final long WATCH_NEXT_REQUEST_TIMEOUT_MILLISECONDS = 10_000;
+
+    private record ConfigGroup(String coldConfigData, String coldHashData) {
+    }
 
     /**
      * @param key   Keys to be added to the header of CronetBuilder.
@@ -73,27 +420,375 @@ public class GeneralPatch {
         return value;
     }
 
+    private static void fetchConfigRequest(Map<String, String> requestHeaders) {
+        CompletableFuture<ConfigGroup> future = CompletableFuture.supplyAsync(
+                () -> sendConfigRequest(requestHeaders)
+        );
+        try {
+            ConfigGroup configGroup = future.get(
+                    MAX_MILLISECONDS_TO_WAIT_FOR_CONFIG_FETCH,
+                    TimeUnit.MILLISECONDS
+            );
+            if (configGroup == null) {
+                Logger.printInfo(() -> "Received null config");
+            } else {
+                String coldConfigData = configGroup.coldConfigData;
+                String coldHashData = configGroup.coldHashData;
+                Logger.printInfo(() -> "Received config length: " + coldConfigData.length()
+                        + " hash length: " + coldHashData.length());
+                Settings.INNERTUBE_COLD_CONFIG_DATA.save(coldConfigData);
+                Settings.INNERTUBE_COLD_HASH_DATA.save(coldHashData);
+            }
+        } catch (TimeoutException ex) {
+            Logger.printInfo(() -> "getConfigGroup timed out", ex);
+            future.cancel(true);
+        } catch (CancellationException ex) {
+            Logger.printInfo(() -> "getConfigGroup was previously cancelled");
+        } catch (InterruptedException ex) {
+            Logger.printException(() -> "getConfigGroup interrupted", ex);
+            future.cancel(true);
+            Thread.currentThread().interrupt(); // Restore interrupt status flag.
+        } catch (ExecutionException ex) {
+            Logger.printException(() -> "getConfigGroup failure", ex);
+        }
+    }
+
+    private static void handleConfigConnectionError(String toastMessage, Exception ex) {
+        Logger.printInfo(() -> toastMessage, ex);
+    }
+
+    private static ConfigGroup parseConfigResponse(HttpURLConnection connection) {
+        try (InputStream inputStream = connection.getInputStream()) {
+            ConfigResponse configResponse = ConfigResponse.parseFrom(inputStream);
+            if (!configResponse.hasContext()) {
+                Logger.printDebug(() -> "Context is empty");
+                return null;
+            }
+
+            app.morphe.extension.youtube.innertube.ConfigResponseOuterClass.Context context = configResponse.getContext();
+            if (!context.hasGlobalConfigGroup()) {
+                Logger.printDebug(() -> "GlobalConfigGroup is empty");
+                return null;
+            }
+
+            app.morphe.extension.youtube.innertube.ConfigResponseOuterClass.GlobalConfigGroup globalConfigGroup =
+                    context.getGlobalConfigGroup();
+            String coldHashData = globalConfigGroup.getColdHashData();
+            if (StringUtils.isEmpty(coldHashData)) {
+                Logger.printDebug(() -> "ColdHashData is empty");
+                return null;
+            }
+            if (!globalConfigGroup.hasRawColdConfigGroup()) {
+                Logger.printDebug(() -> "RawColdConfigGroup is empty");
+                return null;
+            }
+
+            app.morphe.extension.youtube.innertube.ConfigResponseOuterClass.RawColdConfigGroup rawColdConfigGroup =
+                    globalConfigGroup.getRawColdConfigGroup();
+            String coldConfigData = rawColdConfigGroup.getConfigData();
+            if (StringUtils.isEmpty(coldConfigData)) {
+                Logger.printDebug(() -> "ConfigData is empty");
+                return null;
+            }
+
+            return new ConfigGroup(coldConfigData, coldHashData);
+        } catch (Exception ex) {
+            Logger.printException(() -> "Parse failed", ex);
+        }
+
+        return null;
+    }
+
+    private static byte[] configRequestBody() {
+        try {
+            JSONObject client = new JSONObject();
+            client.put("clientName", "ANDROID");
+            client.put("clientVersion", CONFIG_CLIENT_VERSION);
+            client.put("deviceMake", Build.MANUFACTURER);
+            client.put("deviceModel", Build.MODEL);
+            client.put("osName", "Android");
+            client.put("osVersion", Build.VERSION.RELEASE);
+            // The modern video action bar is not enabled for unknown cold-config clients.
+            client.put("clientFormFactor", "UNKNOWN_FORM_FACTOR");
+            client.put("androidSdkVersion", Build.VERSION.SDK_INT);
+            client.put("screenWidthPoints", 1280);
+            client.put("screenHeightPoints", 720);
+            client.put("screenPixelDensity", 4);
+            client.put("screenDensityFloat", 4);
+
+            Locale localeDefault = Locale.getDefault();
+            client.put("hl", localeDefault.getLanguage());
+            client.put("gl", localeDefault.getCountry());
+
+            JSONObject context = new JSONObject();
+            context.put("client", client);
+
+            JSONObject innerTubeBody = new JSONObject();
+            innerTubeBody.put("context", context);
+            return innerTubeBody.toString().getBytes(StandardCharsets.UTF_8);
+        } catch (JSONException ex) {
+            Logger.printException(() -> "configBody failed", ex);
+        }
+
+        return new byte[0];
+    }
+
+    private static HttpURLConnection getConfigConnection(Map<String, String> requestHeaders) throws IOException {
+        String userAgent = String.format(
+                Locale.US,
+                "com.google.android.youtube/%s(Linux; U; Android %s; %s; %s Build/%s)",
+                CONFIG_CLIENT_VERSION,
+                Build.VERSION.RELEASE,
+                Locale.getDefault(),
+                Build.MODEL,
+                Build.ID
+        );
+
+        HttpURLConnection connection = Requester.getConnectionFromCompiledRoute(
+                "https://youtubei.googleapis.com/youtubei/v1/",
+                GET_CONFIG
+        );
+        connection.setRequestProperty("Content-Type", "application/json");
+        connection.setRequestProperty("User-Agent", userAgent);
+        connection.setRequestProperty("X-YouTube-Client-Name", "3");
+        connection.setRequestProperty("X-YouTube-Client-Version", CONFIG_CLIENT_VERSION);
+        connection.setRequestProperty("X-GOOG-API-FORMAT-VERSION", "2");
+        connection.setUseCaches(false);
+        connection.setDoOutput(true);
+        connection.setConnectTimeout(CONFIG_CONNECTION_TIMEOUT_MILLISECONDS);
+        connection.setReadTimeout(CONFIG_CONNECTION_TIMEOUT_MILLISECONDS);
+
+        if (requestHeaders != null) {
+            for (Map.Entry<String, String> entry : requestHeaders.entrySet()) {
+                String headerValue = entry.getValue();
+                if (headerValue != null && !headerValue.isEmpty()) {
+                    connection.setRequestProperty(entry.getKey(), headerValue);
+                }
+            }
+        }
+
+        return connection;
+    }
+
+    private static ConfigGroup sendConfigRequest(Map<String, String> requestHeaders) {
+        Utils.verifyOffMainThread();
+
+        final long startTime = System.currentTimeMillis();
+        Logger.printDebug(() -> "Fetching config request");
+
+        try {
+            byte[] requestBody = configRequestBody();
+            HttpURLConnection connection = getConfigConnection(requestHeaders);
+            connection.setFixedLengthStreamingMode(requestBody.length);
+            connection.getOutputStream().write(requestBody);
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode == Requester.HTTP_STATUS_CODE_SUCCESS && connection.getContentLength() != 0) {
+                return parseConfigResponse(connection);
+            }
+
+            handleConfigConnectionError("Config request failed with code: " + responseCode, null);
+        } catch (SocketTimeoutException ex) {
+            handleConfigConnectionError("Connection timeout", ex);
+        } catch (IOException ex) {
+            handleConfigConnectionError("Network error", ex);
+        } catch (Exception ex) {
+            Logger.printException(() -> "sendRequest failed", ex);
+        } finally {
+            Logger.printDebug(() -> "Fetched config request, took: "
+                    + (System.currentTimeMillis() - startTime) + "ms");
+        }
+
+        return null;
+    }
+
+    private static void fetchConfigRequestIfNeeded(String url, Map<String, String> requestHeaders) {
+        if (Settings.INNERTUBE_COLD_CONFIG_DATA.isSetToDefault()
+                || Settings.INNERTUBE_COLD_HASH_DATA.isSetToDefault()) {
+            if (needFetch) {
+                if (requestHeaders != null) {
+                    String visitorId = requestHeaders.get(VISITOR_ID_HEADER);
+                    if (StringUtils.isNotEmpty(visitorId)) {
+                        Map<String, String> minHeaders = new HashMap<>();
+                        minHeaders.put(VISITOR_ID_HEADER, visitorId);
+
+                        String authorization = requestHeaders.get(AUTHORIZATION_HEADER);
+                        if (StringUtils.isNotEmpty(authorization)) {
+                            minHeaders.put(AUTHORIZATION_HEADER, authorization);
+                        }
+
+                        needFetch = false;
+                        fetchConfigRequest(minHeaders);
+                    }
+                }
+            }
+        } else {
+            needFetch = false;
+        }
+    }
+
+    /**
+     * Overrides the matching cold-config headers on {@code /next} requests.
+     */
+    public static Map<String, String> fixVideoActionBar(
+            String url,
+            Map<String, String> requestHeaders
+    ) {
+        if (FIX_VIDEO_ACTION_BAR && url != null) {
+            fetchConfigRequestIfNeeded(url, requestHeaders);
+
+            Uri uri = Uri.parse(url);
+            String path = uri.getPath();
+            if (path != null && path.contains("next") && requestHeaders != null && isWatchNextRequest()) {
+                if (requestHeaders.get(COLD_CONFIG_DATA_HEADER) != null) {
+                    String coldConfigData = Settings.INNERTUBE_COLD_CONFIG_DATA.get();
+                    if (StringUtils.isNotEmpty(coldConfigData)) {
+                        requestHeaders.put(COLD_CONFIG_DATA_HEADER, coldConfigData);
+                    }
+                }
+                if (requestHeaders.get(COLD_HASH_DATA_HEADER) != null) {
+                    String coldHashData = Settings.INNERTUBE_COLD_HASH_DATA.get();
+                    if (StringUtils.isNotEmpty(coldHashData)) {
+                        requestHeaders.put(COLD_HASH_DATA_HEADER, coldHashData);
+                    }
+                }
+            }
+        }
+
+        return requestHeaders;
+    }
+
+    /**
+     * Whether a 'next' request is for the watch page, and not for comments.
+     */
+    private static boolean isWatchNextRequest() {
+        final long requestTime = watchNextRequestTime;
+        watchNextRequestTime = 0;
+        return requestTime != 0
+                && System.currentTimeMillis() - requestTime < WATCH_NEXT_REQUEST_TIMEOUT_MILLISECONDS;
+    }
+
+    /**
+     * Injection point.
+     * Called when the body of an InnerTube request is built.
+     */
+    public static void onBuildRequestBody(MessageLite body, RequestInterface request) {
+        try {
+            if (FIX_VIDEO_ACTION_BAR && body != null && request != null
+                    && "next".equals(request.patch_getEndpoint())
+                    && !hasTopLevelField(body.toByteArray(), NEXT_REQUEST_CONTINUATION_FIELD)) {
+                watchNextRequestTime = System.currentTimeMillis();
+            }
+        } catch (Exception ex) {
+            Logger.printException(() -> "onBuildRequestBody failure", ex);
+        }
+    }
+
+    /**
+     * @return If the serialized protocol buffer message has a top level field with the given number.
+     *         If the message cannot be read, true is returned.
+     */
+    private static boolean hasTopLevelField(byte[] message, int fieldNumber) {
+        int position = 0;
+        final int end = message.length;
+        while (position < end) {
+            long tag = 0;
+            int shift = 0;
+            int value;
+            do {
+                // A varint is at most 10 bytes; a larger shift would wrap (shift & 63) and corrupt the tag.
+                if (position >= end || shift >= 64) return true;
+                value = message[position++] & 0xFF;
+                tag |= (long) (value & 0x7F) << shift;
+                shift += 7;
+            } while ((value & 0x80) != 0);
+
+            if ((tag >>> 3) == fieldNumber) return true;
+
+            switch ((int) (tag & 0x7)) {
+                case 0: // Varint.
+                    do {
+                        if (position >= end) return true;
+                    } while ((message[position++] & 0x80) != 0);
+                    break;
+                case 1: // 64-bit.
+                    // Truncated message: subtracting avoids int overflow and stops position running past the end.
+                    if (end - position < 8) return true;
+                    position += 8;
+                    break;
+                case 2: // Length delimited.
+                    long length = 0;
+                    shift = 0;
+                    do {
+                        // Same 10-byte varint limit as the tag loop above.
+                        if (position >= end || shift >= 64) return true;
+                        value = message[position++] & 0xFF;
+                        length |= (long) (value & 0x7F) << shift;
+                        shift += 7;
+                    } while ((value & 0x80) != 0);
+                    // A 10-byte varint can set bit 63, making length negative and moving position backwards.
+                    if (length < 0 || length > end - position) return true;
+                    position += (int) length;
+                    break;
+                case 5: // 32-bit.
+                    // Truncated message: same overflow-safe check as the 64-bit case.
+                    if (end - position < 4) return true;
+                    position += 4;
+                    break;
+                default: // Groups (3, 4) and invalid wire types (6, 7): treat as unreadable.
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Overrides the generated request model before it is serialized.
+     */
+    public static void fixVideoActionBar(ConfigInfoInterface configInfo) {
+        if (FIX_VIDEO_ACTION_BAR && configInfo != null) {
+            String coldConfigData = Settings.INNERTUBE_COLD_CONFIG_DATA.get();
+            if (StringUtils.isNotEmpty(coldConfigData)) {
+                configInfo.patch_setColdConfigData(coldConfigData);
+            }
+            String coldHashData = Settings.INNERTUBE_COLD_HASH_DATA.get();
+            if (StringUtils.isNotEmpty(coldHashData)) {
+                configInfo.patch_setColdHashData(coldHashData);
+            }
+        }
+    }
+
+    /**
+     * The tablet cold config restores the old action bar but also forces the legacy related
+     * videos overlay. Keep that old overlay path to avoid a broken fullscreen panel.
+     */
+    public static boolean fixRelatedVideoOverlay(boolean original) {
+        if (FIX_VIDEO_ACTION_BAR
+                && !Settings.INNERTUBE_COLD_CONFIG_DATA.isSetToDefault()
+                && !Settings.INNERTUBE_COLD_HASH_DATA.isSetToDefault()) {
+            return false;
+        }
+
+        return original;
+    }
+
+    /**
+     * Injection point.
+     * Turns off a feature flag that interferes with overriding config.
+     */
+    public static boolean useMediaSessionFeatureFlag(boolean original) {
+        if (FIX_VIDEO_ACTION_BAR) {
+            return false;
+        }
+        return original;
+    }
+
     // endregion
 
     // region [Disable sign in to TV popup] patch
 
     public static boolean disableSignInToTvPopup() {
         return Settings.DISABLE_SIGNIN_TO_TV_POPUP.get();
-    }
-
-    // endregion
-
-    // region [Disable splash animation] patch
-
-    public static boolean disableSplashAnimation(boolean original) {
-        return !Settings.DISABLE_SPLASH_ANIMATION.get() && original;
-    }
-
-    public static int disableSplashAnimation(int i, int i2) {
-        if (!Settings.DISABLE_SPLASH_ANIMATION.get() || i != i2) {
-            return i;
-        }
-        return i - 1;
     }
 
     // endregion
@@ -108,15 +803,11 @@ public class GeneralPatch {
 
     // region [Hide layout components] patch
 
-    public static boolean disableTranslucentStatusBar(boolean original) {
-        return !Settings.DISABLE_TRANSLUCENT_STATUS_BAR.get() && original;
-    }
-
     private static String[] accountMenuBlockList;
 
     private static String[] getAccountMenuBlockList(Context mContext) {
         if (accountMenuBlockList == null) {
-            int settingsIdentifier = ResourceUtils.getIdentifier("settings", ResourceUtils.ResourceType.STRING, mContext);
+            int settingsIdentifier = ResourceUtils.getIdentifier("settings", ResourceType.STRING, mContext);
             if (settingsIdentifier != 0) {
                 String settings = mContext.getResources().getString(settingsIdentifier);
                 accountMenuBlockList = Settings.HIDE_ACCOUNT_MENU_FILTER_STRINGS.get().split("\\n");
@@ -126,12 +817,7 @@ public class GeneralPatch {
                         .toArray(String[]::new);
             }
         }
-        //noinspection ReplaceNullCheck
-        if (accountMenuBlockList != null) {
-            return accountMenuBlockList;
-        } else {
-            return Settings.HIDE_ACCOUNT_MENU_FILTER_STRINGS.get().split("\\n");
-        }
+        return Objects.requireNonNullElseGet(accountMenuBlockList, () -> Settings.HIDE_ACCOUNT_MENU_FILTER_STRINGS.get().split("\\n"));
     }
 
     /**
@@ -221,7 +907,7 @@ public class GeneralPatch {
         }
 
         // This method is called after AlertDialog#show(),
-        // So we need to hide the AlertDialog before pressing the possitive button.
+        // So we need to hide the AlertDialog before pressing the positive button.
         final Window window = dialog.getWindow();
         final Button button = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
         if (window != null && button != null) {
@@ -333,6 +1019,22 @@ public class GeneralPatch {
                 return legacyFragmentId;
             }
         }
+        return original;
+    }
+
+    public static int useLegacySettingsFragment(int original) {
+        return useLegacySettingsFragment(original,
+                () -> ResourceUtils.getXmlIdentifier("settings_fragment"));
+    }
+
+    static int useLegacySettingsFragment(int original, IntSupplier legacyFragmentIdSupplier) {
+        if (Settings.RESTORE_OLD_SETTINGS_MENUS.get()
+                || ExtendedUtils.isSpoofingToLessThan("19.35.36")) {
+            final int legacyFragmentId = legacyFragmentIdSupplier.getAsInt();
+            if (legacyFragmentId != 0) {
+                return legacyFragmentId;
+            }
+        }
 
         return original;
     }
@@ -379,99 +1081,6 @@ public class GeneralPatch {
         return ResourceUtils.getDrawable("");
     }
 
-    private static final boolean wideSearchbarEnabled = Settings.ENABLE_WIDE_SEARCH_BAR.get();
-    // Loads the search bar deprecated by Google.
-    private static final boolean wideSearchbarWithHeaderEnabled = Settings.ENABLE_WIDE_SEARCH_BAR_WITH_HEADER.get();
-    private static final boolean wideSearchbarYouTabEnabled = Settings.ENABLE_WIDE_SEARCH_BAR_IN_YOU_TAB.get();
-
-    public static boolean enableWideSearchBar(boolean original) {
-        return wideSearchbarEnabled || original;
-    }
-
-    /**
-     * Limitation: Premium header will not be applied for YouTube Premium users if the user uses the 'Wide search bar with header' option.
-     * This is because it forces the deprecated search bar to be loaded.
-     * As a solution to this limitation, 'Change YouTube header' patch is required.
-     */
-    public static boolean enableWideSearchBarWithHeader(boolean original) {
-        if (!wideSearchbarEnabled)
-            return original;
-        else
-            return wideSearchbarWithHeaderEnabled || original;
-    }
-
-    public static boolean enableWideSearchBarWithHeaderInverse(boolean original) {
-        if (!wideSearchbarEnabled)
-            return original;
-        else
-            return !wideSearchbarWithHeaderEnabled && original;
-    }
-
-    public static boolean enableWideSearchBarInYouTab(boolean original) {
-        if (!wideSearchbarEnabled)
-            return original;
-        else
-            return !wideSearchbarYouTabEnabled && original;
-    }
-
-    private static int searchBarId = 0;
-    private static int youtubeTextId = 0;
-    private static int searchBoxId = 0;
-    private static int searchIconId = 0;
-
-    public static void setWideSearchBarLayout(View view) {
-        if (!wideSearchbarEnabled)
-            return;
-
-        if (searchBarId == 0) {
-            searchBarId = ResourceUtils.getIdIdentifier("search_bar");
-        }
-
-        if (!(view.findViewById(searchBarId) instanceof RelativeLayout searchBarView))
-            return;
-
-        // When the deprecated search bar is loaded, two search bars overlap.
-        // Manually hides another search bar.
-        if (wideSearchbarWithHeaderEnabled) {
-            if (youtubeTextId == 0) {
-                youtubeTextId = ResourceUtils.getIdIdentifier("youtube_text");
-                searchBoxId = ResourceUtils.getIdIdentifier("search_box");
-                searchIconId = ResourceUtils.getIdIdentifier("search_icon");
-            }
-            final View searchIconView = searchBarView.findViewById(searchIconId);
-            final View searchBoxView = searchBarView.findViewById(searchBoxId);
-            final View textView = searchBarView.findViewById(youtubeTextId);
-            if (textView != null) {
-                RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(0, 0);
-                layoutParams.setMargins(0, 0, 0, 0);
-                textView.setLayoutParams(layoutParams);
-            }
-            // The search icon in the deprecated search bar is clickable, but onClickListener is not assigned.
-            // Assign onClickListener and disable the effect when clicked.
-            if (searchIconView != null && searchBoxView != null) {
-                searchIconView.setOnClickListener(view1 -> searchBoxView.callOnClick());
-                searchIconView.getBackground().setAlpha(0);
-            }
-        } else {
-            // This is the legacy method - Wide search bar without YouTube header.
-            // Since the padding start is 0, it does not look good.
-            // Add a padding start of 8.0 dip.
-            final int paddingLeft = searchBarView.getPaddingLeft();
-            final int paddingRight = searchBarView.getPaddingRight();
-            final int paddingTop = searchBarView.getPaddingTop();
-            final int paddingBottom = searchBarView.getPaddingBottom();
-            final int paddingStart = Utils.dipToPixels(8f);
-
-            // In RelativeLayout, paddingStart cannot be assigned programmatically.
-            // Check RTL layout and set left padding or right padding.
-            if (Utils.isRightToLeftLocale()) {
-                searchBarView.setPadding(paddingLeft, paddingTop, paddingStart, paddingBottom);
-            } else {
-                searchBarView.setPadding(paddingStart, paddingTop, paddingRight, paddingBottom);
-            }
-        }
-    }
-
     public static boolean hideCastButton(boolean original) {
         return !Settings.HIDE_TOOLBAR_CAST_BUTTON.get() && original;
     }
@@ -513,6 +1122,601 @@ public class GeneralPatch {
         );
     }
 
+    public static void openSearchInChannel(String enumString, View toolbarView) {
+        if (!isSearchButton(enumString))
+            return;
+
+        ImageView imageView = getChildView((ViewGroup) toolbarView, view -> view instanceof ImageView);
+        if (imageView == null)
+            return;
+
+        // YouTube assigns the original listener after creating the button.
+        Utils.runOnMainThreadDelayed(() ->
+                imageView.setOnClickListener(GeneralPatch::openSearchInChannel), 0);
+    }
+
+    public static String overrideSearchInChannelRequestQuery(String original) {
+        String visibleQuery = pendingSearchInChannelVisibleQuery;
+        String requestQuery = pendingSearchInChannelRequestQuery;
+
+        if (StringUtils.isEmpty(requestQuery)) {
+            return original;
+        }
+
+        if (StringUtils.isBlank(original)
+                || StringUtils.equals(original, visibleQuery)
+                || StringUtils.equals(original, requestQuery)) {
+            clearPendingSearchInChannelQuery();
+            return requestQuery;
+        }
+
+        clearPendingSearchInChannelQuery();
+        return original;
+    }
+
+    private static void openSearchInChannel(View view) {
+        String channelId = RootView.getBrowseId();
+        if (!isChannelBrowseId(channelId)) {
+            openSearchBar(view);
+            return;
+        }
+
+        Context context = view.getContext();
+        String channelName = getChannelName(channelId, view);
+        EditText editText = new EditText(context);
+        editText.setSingleLine(true);
+        editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        editText.setHint(str("revanced_search_in_channel_query_hint"));
+        if (!StringUtils.isBlank(lastSearchInChannelQuery)) {
+            editText.setText(lastSearchInChannelQuery);
+            editText.setSelection(editText.length());
+        }
+
+        Pair<Dialog, LinearLayout> dialogPair = CustomDialog.create(
+                context,
+                str("revanced_search_in_channel_title"),
+                null,
+                editText,
+                str("revanced_change_start_page_entry_search"),
+                () -> {
+                    String query = editText.getText().toString().trim();
+                    if (!query.isEmpty()) {
+                        cacheSearchInChannelQuery(query);
+                        openSearchInChannel(context, channelId, channelName, query);
+                    }
+                },
+                () -> {
+                },
+                str("revanced_search_in_channel_search_youtube"),
+                () -> {
+                    String query = editText.getText().toString().trim();
+                    if (query.isEmpty()) {
+                        openSearchBar(view);
+                    } else {
+                        cacheSearchInChannelQuery(query);
+                        openSearch(context, query);
+                    }
+                },
+                true,
+                true
+        );
+
+        Dialog dialog = dialogPair.first;
+        dialog.setOnShowListener(dialogInterface -> {
+            editText.requestFocus();
+            Window window = dialog.getWindow();
+            if (window != null) {
+                window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            }
+        });
+        dialog.show();
+    }
+
+    private static boolean isChannelBrowseId(String browseId) {
+        return browseId != null && browseId.startsWith(CHANNEL_BROWSE_ID_PREFIX);
+    }
+
+    private static void openSearchBar(View view) {
+        Context context = view.getContext();
+        clearPendingSearchInChannelQuery();
+        Intent intent = new Intent(OPEN_SEARCH_ACTION);
+        intent.setClassName(context.getPackageName(), YOUTUBE_MAIN_ACTIVITY_CLASS_NAME);
+        intent.addFlags(SEARCH_INTENT_FLAGS);
+        context.startActivity(intent);
+    }
+
+    private static void openSearchInChannel(Context context, String channelId, String channelName, String query) {
+        if (Settings.SEARCH_IN_CHANNEL_USE_WEBVIEW.get()) {
+            openSearchInChannelWebView(context, channelId, channelName, query);
+            return;
+        }
+
+        openSearchInChannelNative(context, channelName, query);
+    }
+
+    private static void openSearchInChannelNative(Context context, String channelName, String query) {
+        setPendingSearchInChannelQuery(query, getSearchInChannelNativeQuery(channelName, query));
+        openSearch(context, query, true);
+    }
+
+    private static void openSearch(Context context, String query) {
+        openSearch(context, query, false);
+    }
+
+    private static void openSearch(Context context, String query, boolean preservePendingSearchInChannelQuery) {
+        if (!preservePendingSearchInChannelQuery) {
+            clearPendingSearchInChannelQuery();
+        }
+        Intent intent = new Intent(Intent.ACTION_SEARCH);
+        intent.setClassName(context.getPackageName(), YOUTUBE_MAIN_ACTIVITY_CLASS_NAME);
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.addFlags(SEARCH_INTENT_FLAGS);
+        intent.putExtra(SearchManager.QUERY, query);
+        context.startActivity(intent);
+    }
+
+    private static void cacheSearchInChannelQuery(String query) {
+        lastSearchInChannelQuery = query;
+    }
+
+    private static void setPendingSearchInChannelQuery(String visibleQuery, String requestQuery) {
+        pendingSearchInChannelVisibleQuery = visibleQuery;
+        pendingSearchInChannelRequestQuery = requestQuery;
+    }
+
+    private static void clearPendingSearchInChannelQuery() {
+        pendingSearchInChannelVisibleQuery = "";
+        pendingSearchInChannelRequestQuery = "";
+    }
+
+    private static String getChannelName(String channelId) {
+        String videoChannelId = VideoInformation.getChannelId();
+        if (StringUtils.equals(channelId, videoChannelId)) {
+            return VideoInformation.getChannelName();
+        }
+
+        return ReturnYouTubeChannelNamePatch.getCachedChannelName(channelId);
+    }
+
+    private static String getChannelName(String channelId, View anchorView) {
+        String channelName = getChannelName(channelId);
+        if (StringUtils.isNotBlank(channelName)) {
+            return channelName;
+        }
+
+        channelName = getVisibleChannelName(anchorView);
+        if (StringUtils.isNotBlank(channelName)) {
+            ReturnYouTubeChannelNamePatch.setCachedChannelName(channelId, channelName);
+        }
+
+        return channelName;
+    }
+
+    private static String getVisibleChannelName(View anchorView) {
+        try {
+            Activity activity = Utils.getActivity();
+            View rootView = activity == null
+                    ? anchorView.getRootView()
+                    : activity.findViewById(android.R.id.content);
+            String[] bestText = {""};
+            float[] bestTextSize = {0.0f};
+            float minimumTextSize = anchorView.getResources().getDisplayMetrics().scaledDensity * 16.0f;
+            findVisibleChannelName(rootView, minimumTextSize, bestText, bestTextSize);
+            return bestText[0];
+        } catch (Exception ex) {
+            Logger.printException(() -> "getVisibleChannelName failed", ex);
+            return "";
+        }
+    }
+
+    private static void findVisibleChannelName(View view, float minimumTextSize, String[] bestText, float[] bestTextSize) {
+        if (view == null || !view.isShown()) {
+            return;
+        }
+
+        if (view instanceof TextView textView) {
+            String text = StringUtils.trimToEmpty(textView.getText().toString());
+            Rect visibleRect = new Rect();
+            if (isVisibleChannelNameCandidate(text)
+                    && textView.getTextSize() >= minimumTextSize
+                    && textView.getTextSize() > bestTextSize[0]
+                    && textView.getGlobalVisibleRect(visibleRect)) {
+                bestText[0] = text;
+                bestTextSize[0] = textView.getTextSize();
+            }
+        }
+
+        if (view instanceof ViewGroup viewGroup) {
+            for (int i = 0, childCount = viewGroup.getChildCount(); i < childCount; i++) {
+                findVisibleChannelName(viewGroup.getChildAt(i), minimumTextSize, bestText, bestTextSize);
+            }
+        }
+    }
+
+    private static boolean isVisibleChannelNameCandidate(String text) {
+        return StringUtils.isNotBlank(text)
+                && text.length() <= 100
+                && !StringUtils.contains(text, "\n")
+                && !StringUtils.startsWith(text, "@")
+                && !StringUtils.equalsAnyIgnoreCase(
+                text,
+                "Home",
+                "Videos",
+                "Shorts",
+                "Live",
+                "Playlists",
+                "Community",
+                "Channels",
+                "About",
+                "Subscribe",
+                "Subscribed"
+        );
+    }
+
+    private static String getSearchInChannelNativeQuery(String channelName, String query) {
+        channelName = StringUtils.trimToEmpty(channelName);
+        return StringUtils.isBlank(channelName) || StringUtils.containsIgnoreCase(query, channelName)
+                ? query
+                : query + " " + channelName;
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private static void openSearchInChannelWebView(Context context, String channelId, String channelName, String query) {
+        clearPendingSearchInChannelQuery();
+
+        if (!Utils.isWebViewSupported()) {
+            Utils.showToastLong(str("revanced_search_in_channel_webview_unavailable"));
+            openSearchInChannelNative(context, channelName, query);
+            return;
+        }
+
+        try {
+            Dialog dialog = new Dialog(context);
+            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+            LinearLayout layout = new LinearLayout(context);
+            layout.setOrientation(LinearLayout.VERTICAL);
+            layout.setBackgroundColor(getDialogBackgroundColor());
+            layout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+
+            android.widget.FrameLayout webViewContainer = new android.widget.FrameLayout(context);
+            webViewContainer.setLayoutParams(new LinearLayout.LayoutParams(
+                    LayoutParams.MATCH_PARENT, 0, 1.0f));
+
+            android.widget.ProgressBar progressBar = new android.widget.ProgressBar(context);
+            android.widget.FrameLayout.LayoutParams progressParams = new android.widget.FrameLayout.LayoutParams(
+                    LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+            progressParams.gravity = android.view.Gravity.CENTER;
+            progressBar.setLayoutParams(progressParams);
+
+            LinearLayout actionPanel = new LinearLayout(context);
+            actionPanel.setOrientation(LinearLayout.VERTICAL);
+            actionPanel.setGravity(android.view.Gravity.CENTER_HORIZONTAL);
+            actionPanel.setPadding(
+                    Utils.dipToPixels(24),
+                    Utils.dipToPixels(8),
+                    Utils.dipToPixels(24),
+                    Utils.dipToPixels(8));
+            actionPanel.setBackgroundColor(getDialogBackgroundColor());
+
+            TextView addToQueueTip = new TextView(context);
+            addToQueueTip.setText(str("revanced_search_in_channel_scroll_tip"));
+            addToQueueTip.setTextColor(getAppForegroundColor());
+            addToQueueTip.setTextSize(14);
+            addToQueueTip.setGravity(android.view.Gravity.CENTER);
+            addToQueueTip.setPadding(0, 0, 0, Utils.dipToPixels(4));
+
+            Button addToQueueButton = Utils.addButton(
+                    context,
+                    str("revanced_queue_manager_add_to_queue_and_open_queue"),
+                    null,
+                    true,
+                    false,
+                    dialog);
+            addToQueueButton.setEnabled(false);
+
+            String webViewUrl = getChannelSearchWebViewUrl(channelId, query);
+            Logger.printDebug(() -> "Channel search WebView load URL: " + webViewUrl);
+            WebView webView = getWebView(context, dialog, progressBar, addToQueueButton);
+            webView.setVisibility(View.INVISIBLE);
+            addToQueueButton.setOnClickListener(view ->
+                    addChannelSearchResultsToQueue(webView, dialog, addToQueueButton));
+
+            webViewContainer.addView(webView);
+            webViewContainer.addView(progressBar);
+            layout.addView(webViewContainer);
+            actionPanel.addView(addToQueueTip, new LinearLayout.LayoutParams(
+                    LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+            actionPanel.addView(addToQueueButton, new LinearLayout.LayoutParams(
+                    LayoutParams.MATCH_PARENT, Utils.dipToPixels(36)));
+            layout.addView(actionPanel, new LinearLayout.LayoutParams(
+                    LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+
+            dialog.setContentView(layout);
+            dialog.setOnDismissListener(dialogInterface -> {
+                webView.stopLoading();
+                webView.destroy();
+            });
+            dialog.show();
+
+            Window window = dialog.getWindow();
+            if (window != null) {
+                window.setLayout(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+                window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+            }
+
+            webView.loadUrl(webViewUrl);
+        } catch (Exception ex) {
+            Logger.printException(() -> "openSearchInChannelWebView failed", ex);
+            openSearchInChannelNative(context, channelName, query);
+        }
+    }
+
+    private static void addChannelSearchResultsToQueue(
+            WebView webView,
+            Dialog dialog,
+            Button addToQueueButton
+    ) {
+        addToQueueButton.setEnabled(false);
+        try {
+            webView.evaluateJavascript(CHANNEL_SEARCH_WEBVIEW_VIDEO_IDS_JAVASCRIPT, result -> {
+                String[] videoIds = parseChannelSearchVideoIds(result);
+                if (videoIds.length == 0) {
+                    addToQueueButton.setEnabled(true);
+                    Utils.showToastShort(str("revanced_search_in_channel_no_results"));
+                    return;
+                }
+
+                Logger.printDebug(() -> "Channel search WebView queue videos: " + videoIds.length);
+                dialog.dismiss();
+                PlaylistPatch.addVideosToQueueAndOpen(videoIds);
+            });
+        } catch (Exception ex) {
+            addToQueueButton.setEnabled(true);
+            Logger.printException(() -> "addChannelSearchResultsToQueue failed", ex);
+        }
+    }
+
+    private static String[] parseChannelSearchVideoIds(String result) {
+        try {
+            JSONArray videoIdsJson = new JSONArray(result);
+            LinkedHashSet<String> videoIds = new LinkedHashSet<>();
+            for (int i = 0; i < videoIdsJson.length(); i++) {
+                String videoId = videoIdsJson.optString(i, "");
+                if (videoId.length() == YOUTUBE_VIDEO_ID_LENGTH) {
+                    videoIds.add(videoId);
+                }
+            }
+            return videoIds.toArray(new String[0]);
+        } catch (JSONException ex) {
+            Logger.printException(() -> "parseChannelSearchVideoIds failed: " + result, ex);
+            return new String[0];
+        }
+    }
+
+    @SuppressLint("SetJavaScriptEnabled") // Required by YouTube mobile search. WebView is restricted below.
+    @NonNull
+    private static WebView getWebView(Context context, Dialog dialog, View progressBar, Button addToQueueButton) {
+        WebView webView = new WebView(context);
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setAllowContentAccess(false);
+        settings.setAllowFileAccess(false);
+        settings.setAllowFileAccessFromFileURLs(false);
+        settings.setAllowUniversalAccessFromFileURLs(false);
+        settings.setGeolocationEnabled(false);
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        settings.setUserAgentString(CHANNEL_SEARCH_WEBVIEW_USER_AGENT);
+
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+                String message = consoleMessage.message();
+                if (StringUtils.startsWith(message, CHANNEL_SEARCH_WEBVIEW_LOG_PREFIX)) {
+                    Logger.printDebug(() -> "Channel search WebView JS " + message);
+                    return true;
+                }
+                return super.onConsoleMessage(consoleMessage);
+            }
+        });
+
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                return handleChannelSearchWebViewNavigation(context, dialog, request.getUrl().toString());
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return handleChannelSearchWebViewNavigation(context, dialog, url);
+            }
+
+            @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                super.onPageStarted(view, url, favicon);
+                addToQueueButton.setEnabled(false);
+                Logger.printDebug(() -> "Channel search WebView page started: " + url);
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                progressBar.setVisibility(View.GONE);
+                view.setVisibility(View.VISIBLE);
+                boolean searchUrl = isChannelSearchWebViewSearchUrl(url);
+                addToQueueButton.setEnabled(searchUrl);
+                Logger.printDebug(() -> "Channel search WebView page finished: "
+                        + url + ", searchUrl: " + searchUrl);
+                if (searchUrl) {
+                    view.evaluateJavascript(CHANNEL_SEARCH_WEBVIEW_JAVASCRIPT, result ->
+                            Logger.printDebug(() -> "Channel search WebView filter result: "
+                                    + result + ", url: " + url));
+                }
+            }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                super.onReceivedError(view, request, error);
+                if (request.isForMainFrame()) {
+                    Logger.printDebug(() -> "Channel search WebView page error: "
+                            + request.getUrl()
+                            + ", code: " + error.getErrorCode()
+                            + ", description: " + error.getDescription());
+                }
+            }
+
+            @Override
+            public void onReceivedHttpError(
+                    WebView view,
+                    WebResourceRequest request,
+                    WebResourceResponse errorResponse
+            ) {
+                super.onReceivedHttpError(view, request, errorResponse);
+                if (request.isForMainFrame()) {
+                    Logger.printDebug(() -> "Channel search WebView HTTP error: "
+                            + request.getUrl()
+                            + ", status: " + errorResponse.getStatusCode()
+                            + ", reason: " + errorResponse.getReasonPhrase());
+                }
+            }
+        });
+        return webView;
+    }
+
+    private static boolean handleChannelSearchWebViewNavigation(Context context, Dialog dialog, String url) {
+        try {
+            Uri uri = Uri.parse(url);
+            Logger.printDebug(() -> "Channel search WebView navigation requested: " + url);
+            if (StringUtils.equalsIgnoreCase(uri.getScheme(), CHANNEL_SEARCH_WEBVIEW_BRIDGE_SCHEME)) {
+                String targetUrl = uri.getQueryParameter("url");
+                Logger.printDebug(() -> "Channel search WebView bridge target URL: " + targetUrl);
+                if (StringUtils.isNotBlank(targetUrl)) {
+                    openYouTubeUrlInApp(context, dialog, targetUrl);
+                }
+                return true;
+            }
+
+            if (openYouTubeUrlInApp(context, dialog, url)) {
+                Logger.printDebug(() -> "Channel search WebView opened in app: " + url);
+                return true;
+            }
+
+            boolean allowed = isAllowedChannelSearchWebViewUrl(uri);
+            Logger.printDebug(() -> "Channel search WebView navigation "
+                    + (allowed ? "allowed: " : "blocked: ") + url);
+            return !allowed;
+        } catch (Exception ex) {
+            Logger.printException(() -> "handleChannelSearchWebViewNavigation failed", ex);
+            return true;
+        }
+    }
+
+    private static boolean isAllowedChannelSearchWebViewUrl(Uri uri) {
+        return StringUtils.equalsAnyIgnoreCase(uri.getScheme(), "https", "http");
+    }
+
+    private static boolean isChannelSearchWebViewSearchUrl(String url) {
+        try {
+            Uri uri = Uri.parse(url);
+            String path = StringUtils.stripEnd(uri.getPath(), "/");
+            return StringUtils.equalsIgnoreCase(uri.getScheme(), "https")
+                    && StringUtils.equalsIgnoreCase(uri.getHost(), CHANNEL_SEARCH_WEBVIEW_HOST)
+                    && StringUtils.endsWith(path, "/search")
+                    && StringUtils.startsWithAny(path, "/channel/", "/@", "/c/", "/user/");
+        } catch (Exception ex) {
+            Logger.printException(() -> "isChannelSearchWebViewSearchUrl failed", ex);
+            return false;
+        }
+    }
+
+    private static boolean openYouTubeUrlInApp(Context context, Dialog dialog, String url) {
+        try {
+            Uri uri = Uri.parse(url);
+            String scheme = uri.getScheme();
+            if (StringUtils.equalsAnyIgnoreCase(scheme, "vnd.youtube", "youtube")) {
+                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                intent.setPackage(context.getPackageName());
+                context.startActivity(intent);
+                dialog.dismiss();
+                return true;
+            }
+
+            String host = uri.getHost();
+            String path = uri.getPath();
+            if (!StringUtils.equalsAnyIgnoreCase(host, "m.youtube.com", "www.youtube.com", "youtube.com", "youtu.be")
+                    || StringUtils.isBlank(path)) {
+                return false;
+            }
+            if (!path.startsWith("/watch") && !path.startsWith("/shorts/") && !path.startsWith("/playlist")) {
+                return false;
+            }
+
+            String videoId = getYouTubeVideoId(uri);
+            Uri launchUri = StringUtils.isEmpty(videoId)
+                    ? getYouTubeWebLaunchUri(uri)
+                    : Uri.parse(YOUTUBE_VIDEO_SCHEME_URL + videoId);
+
+            Intent intent = new Intent(Intent.ACTION_VIEW, launchUri);
+            intent.setPackage(context.getPackageName());
+            context.startActivity(intent);
+            dialog.dismiss();
+            return true;
+        } catch (Exception ex) {
+            Logger.printException(() -> "openYouTubeUrlInApp failed", ex);
+            return false;
+        }
+    }
+
+    private static Uri getYouTubeWebLaunchUri(Uri uri) {
+        if (StringUtils.equalsIgnoreCase(uri.getHost(), "m.youtube.com")) {
+            return uri.buildUpon().authority("www.youtube.com").build();
+        }
+
+        return uri;
+    }
+
+    private static String getYouTubeVideoId(Uri uri) {
+        String host = uri.getHost();
+        String path = uri.getPath();
+        if (StringUtils.isBlank(path)) {
+            return "";
+        }
+
+        if (StringUtils.equalsIgnoreCase(host, "youtu.be")) {
+            return getValidVideoId(StringUtils.substringBefore(path.substring(1), "/"));
+        }
+        if (path.startsWith("/watch")) {
+            return getValidVideoId(uri.getQueryParameter("v"));
+        }
+        if (path.startsWith("/shorts/")) {
+            return getValidVideoId(StringUtils.substringBefore(path.substring("/shorts/".length()), "/"));
+        }
+
+        return "";
+    }
+
+    private static String getValidVideoId(String videoId) {
+        return videoId != null && videoId.length() == YOUTUBE_VIDEO_ID_LENGTH
+                ? videoId
+                : "";
+    }
+
+    private static String getChannelSearchWebViewUrl(String channelId, String query) {
+        return "https://" + CHANNEL_SEARCH_WEBVIEW_HOST + "/channel/" + channelId + "/search?query="
+                + encodeUrl(query);
+    }
+
+    @SuppressWarnings("CharsetObjectCanBeUsed")
+    private static String encodeUrl(String string) {
+        try {
+            return URLEncoder.encode(string, "UTF-8");
+        } catch (Exception ex) {
+            Logger.printException(() -> "encodeUrl failed", ex);
+            return string;
+        }
+    }
+
     public static boolean hideSearchTermThumbnail() {
         return Settings.HIDE_SEARCH_TERM_THUMBNAIL.get();
     }
@@ -522,7 +1726,61 @@ public class GeneralPatch {
     }
 
     private static final boolean hideImageSearchButton = Settings.HIDE_IMAGE_SEARCH_BUTTON.get();
+    private static final boolean hideSearchBarBackButton = Settings.HIDE_SEARCH_BAR_BACK_BUTTON.get();
     private static final boolean hideVoiceSearchButton = Settings.HIDE_VOICE_SEARCH_BUTTON.get();
+    private static final int SEARCH_BAR_BACK_BUTTON_SPACER_WIDTH_DIP = 8;
+    private static final Map<View, SearchBarBackButtonState> searchBarBackButtonStates =
+            Collections.synchronizedMap(new WeakHashMap<>());
+    private static final Set<View> searchBarViews =
+            Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
+    private static volatile WeakReference<ViewGroup> searchBarBackButtonToolbarRef = new WeakReference<>(null);
+    private static volatile WeakReference<View> searchBarBackButtonViewRef = new WeakReference<>(null);
+    private static volatile boolean searchBarBackButtonActive;
+
+    private static class SearchBarBackButtonState {
+        private final int width;
+        private final int height;
+        private final int minWidth;
+        private final int visibility;
+        private final int paddingLeft;
+        private final int paddingTop;
+        private final int paddingRight;
+        private final int paddingBottom;
+        private final int importantForAccessibility;
+        private final boolean clickable;
+        private final boolean enabled;
+        private final boolean focusable;
+
+        private SearchBarBackButtonState(ImageButton button) {
+            LayoutParams layoutParams = button.getLayoutParams();
+            width = layoutParams.width;
+            height = layoutParams.height;
+            minWidth = button.getMinimumWidth();
+            visibility = button.getVisibility();
+            paddingLeft = button.getPaddingLeft();
+            paddingTop = button.getPaddingTop();
+            paddingRight = button.getPaddingRight();
+            paddingBottom = button.getPaddingBottom();
+            importantForAccessibility = button.getImportantForAccessibility();
+            clickable = button.isClickable();
+            enabled = button.isEnabled();
+            focusable = button.isFocusable();
+        }
+
+        private void restore(ImageButton button) {
+            LayoutParams layoutParams = button.getLayoutParams();
+            layoutParams.width = width;
+            layoutParams.height = height;
+            button.setLayoutParams(layoutParams);
+            button.setMinimumWidth(minWidth);
+            button.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
+            button.setVisibility(visibility);
+            button.setClickable(clickable);
+            button.setEnabled(enabled);
+            button.setFocusable(focusable);
+            button.setImportantForAccessibility(importantForAccessibility);
+        }
+    }
 
     /**
      * If the user does not hide the Image search button but only the Voice search button,
@@ -535,6 +1793,134 @@ public class GeneralPatch {
 
     public static boolean hideImageSearchButton(boolean original) {
         return !hideImageSearchButton && original;
+    }
+
+    public static void setSearchBarBackButtonActive() {
+        searchBarBackButtonActive = true;
+        applySearchBarBackButtonSpacing(searchBarBackButtonToolbarRef.get(), null);
+    }
+
+    public static void setSearchBarBackButtonView(View view) {
+        if (view != null && searchBarViews.add(view)) {
+            view.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+                @Override
+                public void onViewAttachedToWindow(@NonNull View v) {
+                    if (searchBarBackButtonActive) {
+                        applySearchBarBackButtonSpacing(searchBarBackButtonToolbarRef.get(), null);
+                    }
+                }
+
+                @Override
+                public void onViewDetachedFromWindow(@NonNull View v) {
+                    searchBarViews.remove(v);
+                    if (searchBarViews.isEmpty()) {
+                        searchBarBackButtonActive = false;
+                        searchBarBackButtonViewRef = new WeakReference<>(null);
+                        restoreSearchBarBackButtonSpacing(searchBarBackButtonToolbarRef.get());
+                    }
+                }
+            });
+        }
+        searchBarBackButtonViewRef = new WeakReference<>(view);
+        searchBarBackButtonActive = true;
+        applySearchBarBackButtonSpacing(searchBarBackButtonToolbarRef.get(), null);
+    }
+
+    public static void clearSearchBarBackButtonView() {
+        if (searchBarViews.size() <= 1) {
+            searchBarBackButtonActive = false;
+            searchBarBackButtonViewRef = new WeakReference<>(null);
+            searchBarViews.clear();
+            restoreSearchBarBackButtonSpacing(searchBarBackButtonToolbarRef.get());
+        }
+    }
+
+    private static boolean isSearchBarBackButtonActive() {
+        if (!searchBarBackButtonActive) {
+            return false;
+        }
+
+        if (searchBarViews.isEmpty()) {
+            View view = searchBarBackButtonViewRef.get();
+            return view == null || view.isShown() || view.getWindowToken() != null;
+        }
+
+        synchronized (searchBarViews) {
+            for (View view : searchBarViews) {
+                if (view != null && (view.isShown() || view.getWindowToken() != null || view.isAttachedToWindow())) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static ImageButton getToolbarNavigationButton(ViewGroup toolbar, Drawable navigationIcon) {
+        ImageButton fallback = null;
+
+        for (int i = 0, childCount = toolbar.getChildCount(); i < childCount; i++) {
+            View child = toolbar.getChildAt(i);
+            if (child instanceof ImageButton imageButton) {
+                if (fallback == null) {
+                    fallback = imageButton;
+                }
+                if (navigationIcon != null && imageButton.getDrawable() == navigationIcon) {
+                    return imageButton;
+                }
+            }
+        }
+
+        return fallback;
+    }
+
+    private static void restoreSearchBarBackButtonSpacing(ViewGroup toolbar) {
+        if (toolbar == null) {
+            return;
+        }
+
+        ImageButton button = getToolbarNavigationButton(toolbar, null);
+        if (button == null) {
+            return;
+        }
+
+        SearchBarBackButtonState state = searchBarBackButtonStates.remove(button);
+        if (state != null) {
+            state.restore(button);
+        }
+    }
+
+    public static void applySearchBarBackButtonSpacing(ViewGroup toolbar, Drawable navigationIcon) {
+        if (toolbar == null) {
+            return;
+        }
+
+        searchBarBackButtonToolbarRef = new WeakReference<>(toolbar);
+
+        ImageButton button = getToolbarNavigationButton(toolbar, navigationIcon);
+        if (button == null) {
+            return;
+        }
+
+        if (!hideSearchBarBackButton || !isSearchBarBackButtonActive()) {
+            restoreSearchBarBackButtonSpacing(toolbar);
+            return;
+        }
+
+        if (!searchBarBackButtonStates.containsKey(button)) {
+            searchBarBackButtonStates.put(button, new SearchBarBackButtonState(button));
+        }
+
+        LayoutParams layoutParams = button.getLayoutParams();
+        layoutParams.width = Utils.dipToPixels(SEARCH_BAR_BACK_BUTTON_SPACER_WIDTH_DIP);
+        button.setLayoutParams(layoutParams);
+        button.setMinimumWidth(0);
+        button.setPadding(0, 0, 0, 0);
+        button.setVisibility(View.INVISIBLE);
+        button.setClickable(false);
+        button.setEnabled(false);
+        button.setFocusable(false);
+        button.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     }
 
     public static void hideVoiceSearchButton(View view) {
@@ -614,66 +2000,7 @@ public class GeneralPatch {
         imageView.setImageDrawable(drawable);
     }
 
-    private static int settingsDrawableId = 0;
-    private static int settingsCairoDrawableId = 0;
-
-    public static int getCreateButtonDrawableId(int original) {
-        if (!Settings.REPLACE_TOOLBAR_CREATE_BUTTON.get()) {
-            return original;
-        }
-
-        if (settingsDrawableId == 0) {
-            settingsDrawableId = ResourceUtils.getDrawableIdentifier("yt_outline_gear_black_24");
-        }
-
-        if (settingsDrawableId == 0) {
-            return original;
-        }
-
-        // If the user has patched YouTube 19.26.42,
-        // Or spoofed the app version to 19.26.42 or earlier.
-        if (!ExtendedUtils.IS_19_28_OR_GREATER || ExtendedUtils.isSpoofingToLessThan("19.27.00")) {
-            return settingsDrawableId;
-        }
-
-        if (settingsCairoDrawableId == 0) {
-            settingsCairoDrawableId = ResourceUtils.getDrawableIdentifier("yt_outline_gear_cairo_black_24");
-        }
-
-        return settingsCairoDrawableId == 0
-                ? settingsDrawableId
-                : settingsCairoDrawableId;
-    }
-
-    public static void replaceCreateButton(String enumString, View toolbarView) {
-        if (!Settings.REPLACE_TOOLBAR_CREATE_BUTTON.get())
-            return;
-        // Check if the button is a create button.
-        if (!isCreateButton(enumString))
-            return;
-        ImageView imageView = getChildView((ViewGroup) toolbarView, view -> view instanceof ImageView);
-        if (imageView == null)
-            return;
-
-        // Overriding is possible only after OnClickListener is assigned to the create button.
-        Utils.runOnMainThreadDelayed(() -> {
-            if (Settings.REPLACE_TOOLBAR_CREATE_BUTTON_TYPE.get()) {
-                imageView.setOnClickListener(GeneralPatch::openRVXSettings);
-                imageView.setOnLongClickListener(button -> {
-                    openYouTubeSettings(button);
-                    return true;
-                });
-            } else {
-                imageView.setOnClickListener(GeneralPatch::openYouTubeSettings);
-                imageView.setOnLongClickListener(button -> {
-                    openRVXSettings(button);
-                    return true;
-                });
-            }
-        }, 0);
-    }
-
-    private static void openYouTubeSettings(View view) {
+    public static void openYouTubeSettings(View view) {
         Context context = view.getContext();
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setPackage(context.getPackageName());
@@ -682,7 +2009,7 @@ public class GeneralPatch {
         context.startActivity(intent);
     }
 
-    private static void openRVXSettings(View view) {
+    public static void openRVXSettings(View view) {
         Context context = view.getContext();
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setPackage(context.getPackageName());
@@ -690,23 +2017,6 @@ public class GeneralPatch {
         intent.setClassName(context.getPackageName(), "com.google.android.libraries.social.licenses.LicenseActivity");
         context.startActivity(intent);
     }
-
-    /**
-     * The theme of {@link Shell_SettingsActivity} is dark theme.
-     * Since this theme is hardcoded, we should manually specify the theme for the activity.
-     * <p>
-     * Since {@link Shell_SettingsActivity} only invokes {@link SettingsActivity}, finish activity after specifying a theme.
-     *
-     * @param base {@link Shell_SettingsActivity}
-     */
-    public static void setShellActivityTheme(Activity base) {
-        if (!Settings.REPLACE_TOOLBAR_CREATE_BUTTON.get())
-            return;
-
-        base.setTheme(ThemeUtils.getThemeId());
-        Utils.runOnMainThreadDelayed(base::finish, 0);
-    }
-
 
     private static boolean isCreateButton(String enumString) {
         return StringUtils.equalsAny(

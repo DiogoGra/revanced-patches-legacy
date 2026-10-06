@@ -10,7 +10,7 @@
  * Licensed under the GNU General Public License v3.0.
  *
  * ------------------------------------------------------------------------
- * GPLv3 Section 7 – Attribution Notice
+ * GPLv3 Section 7 – Additional Terms & Attribution Requirements
  * ------------------------------------------------------------------------
  *
  * This file contains substantial original work by the author(s) listed above.
@@ -18,24 +18,24 @@
  * In accordance with Section 7 of the GNU General Public License v3.0,
  * the following additional terms apply to this file:
  *
- * 1. Attribution (Section 7(b)): This specific copyright notice and the
- *    list of original authors above must be preserved in any copy or
- *    derivative work. You may add your own copyright notice below it,
+ * 1. Source Credit Preservation (Section 7(b)): This specific copyright notice
+ *    and the list of original authors above must be preserved in any copy
+ *    or derivative work. You may add your own copyright notice below it,
  *    but you may not remove the original one.
  *
- * 2. Origin (Section 7(c)): Modified versions must be clearly marked as
- *    such (e.g., by adding a "Modified by" line or a new copyright notice).
- *    They must not be misrepresented as the original work.
+ * 2. Origin & Modification Marking (Section 7(c)): Modified versions must be
+ *    clearly marked as such (e.g., by adding a "Modified by" line or a new
+ *    copyright notice) and must not be misrepresented as the original work.
  *
- * ------------------------------------------------------------------------
- * Version Control Acknowledgement (Non-binding Request)
- * ------------------------------------------------------------------------
+ * 3. Version Control Attribution (Section 7(b)): Any ports or substantial
+ *    modifications must retain historical authorship credit in version control
+ *    systems (e.g., Git), listing original author(s) appropriately and
+ *    modifiers as committers or co-authors.
  *
- * While not a legal requirement of the GPLv3, the original author(s)
- * respectfully request that ports or substantial modifications retain
- * historical authorship credit in version control systems (e.g., Git),
- * listing original author(s) appropriately and modifiers as committers
- * or co-authors.
+ * 4. User Interface Attribution (Section 7(b)): Any works containing or
+ *    derived from this material must maintain a visible credit or
+ *    acknowledgment to the original author(s) within the application's
+ *    user interface (e.g., in an "About" or "Credits" section).
  */
 
 package app.morphe.extension.youtube.utils;
@@ -44,13 +44,9 @@ import static app.morphe.extension.shared.utils.ResourceUtils.getDrawable;
 import static app.morphe.extension.shared.utils.StringRef.str;
 import static app.morphe.extension.shared.utils.Utils.dipToPixels;
 
-import android.animation.ValueAnimator;
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.LinearGradient;
-import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.RenderEffect;
 import android.graphics.RenderNode;
@@ -72,7 +68,6 @@ import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowManager;
-import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -90,6 +85,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import app.morphe.extension.shared.ui.SheetBottomDialog;
+import app.morphe.extension.shared.ui.ShimmerTextView;
 import app.morphe.extension.shared.utils.Utils;
 
 final class GeminiBottomSheetUi {
@@ -738,7 +734,7 @@ final class GeminiBottomSheetUi {
             ImageButton copyButton = createIconButton(
                     context,
                     "revanced_gemini_copy",
-                    str("revanced_copy")
+                    str("revanced_settings_import_copy")
             );
             copyButton.setOnClickListener(v -> onCopyListener.onCopyRequested(rawText));
             LinearLayout.LayoutParams copyParams = new LinearLayout.LayoutParams(dip36, dip36);
@@ -792,7 +788,7 @@ final class GeminiBottomSheetUi {
             ImageButton copyButton = createIconButton(
                     context,
                     "revanced_gemini_copy",
-                    str("revanced_copy")
+                    str("revanced_settings_import_copy")
             );
             copyButton.setVisibility(showCopyButton ? View.VISIBLE : View.GONE);
             copyButton.setEnabled(showCopyButton);
@@ -1240,7 +1236,7 @@ final class GeminiBottomSheetUi {
 
         LinearLayout buttonsRow = createButtonsRow(context);
         Button cancelButton = createActionButton(context, str("revanced_cancel"), false);
-        Button copyButton = createActionButton(context, str("revanced_copy"), false);
+        Button copyButton = createActionButton(context, str("revanced_settings_import_copy"), false);
         Button subtitlesButton = createActionButton(context, str("revanced_gemini_transcription_parse_button"), true);
 
         final SheetBottomDialog.SlideDialog dialog = SheetBottomDialog.createSlideDialog(context, mainLayout, 180);
@@ -1761,76 +1757,6 @@ final class GeminiBottomSheetUi {
             if (scrollPositionChangedListener != null) {
                 scrollPositionChangedListener.onScrollPositionChanged();
             }
-        }
-    }
-
-    @SuppressLint("AppCompatCustomView")
-    private static final class ShimmerTextView extends TextView {
-        @Nullable
-        private ValueAnimator shimmerAnimator;
-        @Nullable
-        private LinearGradient shimmerGradient;
-        private final Matrix shimmerMatrix = new Matrix();
-
-        private ShimmerTextView(@NonNull Context context) {
-            super(context);
-        }
-
-        void startShimmer() {
-            if (shimmerAnimator != null) {
-                return;
-            }
-            shimmerAnimator = ValueAnimator.ofFloat(-1f, 2f);
-            shimmerAnimator.setDuration(1300L);
-            shimmerAnimator.setInterpolator(new LinearInterpolator());
-            shimmerAnimator.setRepeatCount(ValueAnimator.INFINITE);
-            shimmerAnimator.addUpdateListener(animation -> {
-                if (shimmerGradient == null || getWidth() <= 0) {
-                    return;
-                }
-                float animatedFraction = (float) animation.getAnimatedValue();
-                shimmerMatrix.setTranslate(getWidth() * animatedFraction, 0f);
-                shimmerGradient.setLocalMatrix(shimmerMatrix);
-                invalidate();
-            });
-            rebuildShader();
-            shimmerAnimator.start();
-        }
-
-        void stopShimmer() {
-            if (shimmerAnimator != null) {
-                shimmerAnimator.cancel();
-                shimmerAnimator = null;
-            }
-            getPaint().setShader(null);
-            invalidate();
-        }
-
-        @Override
-        protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-            super.onSizeChanged(w, h, oldw, oldh);
-            rebuildShader();
-        }
-
-        private void rebuildShader() {
-            if (getWidth() <= 0) {
-                return;
-            }
-
-            int baseColor = getCurrentTextColor();
-            int dimColor = withAlpha(baseColor, 105);
-            int brightColor = withAlpha(baseColor, 255);
-            shimmerGradient = new LinearGradient(
-                    -getWidth(),
-                    0f,
-                    0f,
-                    0f,
-                    new int[]{dimColor, brightColor, dimColor},
-                    new float[]{0f, 0.5f, 1f},
-                    Shader.TileMode.CLAMP
-            );
-            getPaint().setShader(shimmerGradient);
-            invalidate();
         }
     }
 

@@ -1,8 +1,50 @@
+/*
+ * Copyright (C) 2026 anddea
+ *
+ * This file is part of the revanced-patches project:
+ * https://github.com/anddea/revanced-patches
+ *
+ * Original author(s):
+ * - anddea (https://github.com/anddea)
+ * - inotia00 (https://github.com/inotia00)
+ *
+ * Licensed under the GNU General Public License v3.0.
+ *
+ * ------------------------------------------------------------------------
+ * GPLv3 Section 7 – Additional Terms & Attribution Requirements
+ * ------------------------------------------------------------------------
+ *
+ * This file contains substantial original work by the author(s) listed above.
+ *
+ * In accordance with Section 7 of the GNU General Public License v3.0,
+ * the following additional terms apply to this file:
+ *
+ * 1. Source Credit Preservation (Section 7(b)): This specific copyright notice
+ *    and the list of original authors above must be preserved in any copy
+ *    or derivative work. You may add your own copyright notice below it,
+ *    but you may not remove the original one.
+ *
+ * 2. Origin & Modification Marking (Section 7(c)): Modified versions must be
+ *    clearly marked as such (e.g., by adding a "Modified by" line or a new
+ *    copyright notice) and must not be misrepresented as the original work.
+ *
+ * 3. Version Control Attribution (Section 7(b)): Any ports or substantial
+ *    modifications must retain historical authorship credit in version control
+ *    systems (e.g., Git), listing original author(s) appropriately and
+ *    modifiers as committers or co-authors.
+ *
+ * 4. User Interface Attribution (Section 7(b)): Any works containing or
+ *    derived from this material must maintain a visible credit or
+ *    acknowledgment to the original author(s) within the application's
+ *    user interface (e.g., in an "About" or "Credits" section).
+ */
+
 package app.morphe.extension.shared.settings;
 
 import static app.morphe.extension.shared.utils.StringRef.str;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -27,12 +69,57 @@ import app.morphe.extension.shared.utils.Utils;
 public abstract class Setting<T> {
 
     /**
+     * Range metadata for numeric settings that should be rendered as an inline slider.
+     *
+     * <p>The metadata lives with the setting so the preference UI, imported values, and values
+     * loaded from older installations all use the same limits.</p>
+     */
+    public record SliderConfig(double min, double max, double step, String unit, boolean logarithmic) {
+        public SliderConfig(double min, double max, double step, String unit) {
+            this(min, max, step, unit, false);
+        }
+
+        public SliderConfig {
+            if (!Double.isFinite(min) || !Double.isFinite(max) || !Double.isFinite(step)
+                    || min >= max || step <= 0 || (logarithmic && min < 0)) {
+                throw new IllegalArgumentException("Invalid slider range");
+            }
+            if (unit == null) {
+                unit = "";
+            }
+        }
+
+        /**
+         * @return whether a numeric value is finite and inside this slider's inclusive range.
+         */
+        public boolean contains(Number value) {
+            if (value == null || !Double.isFinite(value.doubleValue())) {
+                return false;
+            }
+
+            final double numericValue = value.doubleValue();
+            return numericValue >= min && numericValue <= max;
+        }
+    }
+
+    /**
      * Indicates if a {@link Setting} is available to edit and use.
-     * Typically this is dependent upon other BooleanSetting(s) set to 'true',
+     * Typically, this is dependent upon other BooleanSetting(s) set to 'true',
      * but this can be used to call into extension code and check other conditions.
      */
     public interface Availability {
         boolean isAvailable();
+
+        /**
+         * Indicates whether the setting should be included in the settings UI.
+         *
+         * <p>Unavailable settings remain visible and disabled by default so dependency-based
+         * settings can still explain how to enable them. Override this only when the setting has
+         * no meaningful UI on the current device or configuration.</p>
+         */
+        default boolean isVisible() {
+            return true;
+        }
 
         /**
          * @return parent settings (dependencies) of this availability.
@@ -141,6 +228,12 @@ public abstract class Setting<T> {
      */
     public interface ImportExportCallback {
         /**
+         * Called before settings are imported, allowing legacy JSON keys to be migrated.
+         */
+        default void settingsImporting(JSONObject json) throws JSONException {
+        }
+
+        /**
          * Called after all settings have been imported.
          */
         void settingsImported(@Nullable Context context);
@@ -189,12 +282,13 @@ public abstract class Setting<T> {
     }
 
     /**
-     * @return All settings that have been created, sorted by keys.
+     * @return All settings that have been created, sorted by their exported keys.
      * @noinspection Java8ListSort
      */
     private static List<Setting<?>> allLoadedSettingsSorted() {
         //noinspection ComparatorCombinators
-        Collections.sort(SETTINGS, (o1, o2) -> o1.key.compareTo(o2.key));
+        Collections.sort(SETTINGS, (o1, o2) ->
+                o1.getImportExportKey().compareTo(o2.getImportExportKey()));
         return allLoadedSettings();
     }
 
@@ -220,7 +314,7 @@ public abstract class Setting<T> {
 
     /**
      * If this setting is available to edit and use.
-     * Not to be confused with it's status returned from {@link #get()}.
+     * Not to be confused with its status returned from {@link #get()}.
      */
     @Nullable
     private final Availability availability;
@@ -230,6 +324,12 @@ public abstract class Setting<T> {
      */
     @Nullable
     public final StringRef userDialogMessage;
+
+    /**
+     * Optional range used when this numeric setting is rendered as a slider.
+     */
+    @Nullable
+    public final SliderConfig sliderConfig;
 
     // Must be volatile, as some settings are read/write from different threads.
     // Of note, the object value is persistently stored using SharedPreferences (which is thread safe).
@@ -287,12 +387,39 @@ public abstract class Setting<T> {
                    @Nullable String userDialogMessage,
                    @Nullable Availability availability
     ) {
+        this(key, defaultValue, rebootApp, includeWithImportExport, userDialogMessage, availability, null);
+    }
+
+    /**
+     * A setting backed by a shared preference, optionally with inline slider metadata.
+     *
+     * @param key                     The key used to store the value in the shared preferences.
+     * @param defaultValue            The default value of the setting.
+     * @param rebootApp               If the app should be rebooted, if this setting is changed.
+     * @param includeWithImportExport If this setting should be shown in the import/export dialog.
+     * @param userDialogMessage       Confirmation message to display, if the user tries to change the setting from the default value.
+     * @param availability            Condition that must be true, for the setting to be available to configure.
+     * @param sliderConfig             Optional inclusive range for the inline slider.
+     */
+    public Setting(String key,
+                   T defaultValue,
+                   boolean rebootApp,
+                   boolean includeWithImportExport,
+                   @Nullable String userDialogMessage,
+                   @Nullable Availability availability,
+                   @Nullable SliderConfig sliderConfig
+    ) {
         this.key = Objects.requireNonNull(key);
         this.value = this.defaultValue = Objects.requireNonNull(defaultValue);
         this.rebootApp = rebootApp;
         this.includeWithImportExport = includeWithImportExport;
         this.userDialogMessage = (userDialogMessage == null) ? null : new StringRef(userDialogMessage);
         this.availability = availability;
+        if (sliderConfig != null
+                && (!(defaultValue instanceof Number number) || !sliderConfig.contains(number))) {
+            throw new IllegalArgumentException("Slider default is outside its range: " + key);
+        }
+        this.sliderConfig = sliderConfig;
 
         SETTINGS.add(this);
         if (PATH_TO_SETTINGS.put(key, this) != null) {
@@ -301,6 +428,10 @@ public abstract class Setting<T> {
         }
 
         load();
+        if (sliderConfig != null && value instanceof Number number && !sliderConfig.contains(number)) {
+            Logger.printInfo(() -> "Resetting out-of-range slider setting: " + key);
+            resetToDefault();
+        }
     }
 
     /**
@@ -368,8 +499,19 @@ public abstract class Setting<T> {
         setting.setValueFromString(newValue);
 
         // Clear the preference value since default is used, to allow changing
-        // the changing the default for a future release.  Without this after upgrading
+        // the default for a future release. Without this after upgrading
         // the saved value will be whatever was the default when the app was first installed.
+        if (setting.isSetToDefault()) {
+            setting.removeFromPreferences();
+        }
+    }
+
+    /**
+     * Reloads the value from preferences for the Settings preference code.
+     */
+    public static void privateSyncValueFromPreferences(Setting<?> setting) {
+        setting.load();
+
         if (setting.isSetToDefault()) {
             setting.removeFromPreferences();
         }
@@ -442,6 +584,13 @@ public abstract class Setting<T> {
     }
 
     /**
+     * @return if the setting should be included in the settings UI.
+     */
+    public boolean isVisible() {
+        return availability == null || availability.isVisible();
+    }
+
+    /**
      * Get the parent Settings that this setting depends on.
      *
      * @return List of parent Settings, or empty list if no dependencies exist.
@@ -468,17 +617,24 @@ public abstract class Setting<T> {
 
     // region Import / export
 
-    /**
-     * If a setting path has this prefix, then remove it before importing/exporting.
-     */
+    /** Prefixes omitted from import/export keys to keep the JSON concise. */
     private static final String OPTIONAL_REVANCED_SETTINGS_PREFIX = "revanced_";
+    private static final String OPTIONAL_MORPHE_SETTINGS_PREFIX = "morphe_";
 
     /**
-     * The path, minus any 'revanced' prefix to keep json concise.
+     * The path minus an optional project prefix. A Morphe prefix is retained when stripping it
+     * would collide with an existing unprefixed or ReVanced setting.
      */
     private String getImportExportKey() {
         if (key.startsWith(OPTIONAL_REVANCED_SETTINGS_PREFIX)) {
             return key.substring(OPTIONAL_REVANCED_SETTINGS_PREFIX.length());
+        }
+        if (key.startsWith(OPTIONAL_MORPHE_SETTINGS_PREFIX)) {
+            String keyWithoutPrefix = key.substring(OPTIONAL_MORPHE_SETTINGS_PREFIX.length());
+            if (!PATH_TO_SETTINGS.containsKey(keyWithoutPrefix)
+                    && !PATH_TO_SETTINGS.containsKey(OPTIONAL_REVANCED_SETTINGS_PREFIX + keyWithoutPrefix)) {
+                return keyWithoutPrefix;
+            }
         }
         return key;
     }
@@ -511,7 +667,7 @@ public abstract class Setting<T> {
                     throw new IllegalArgumentException("duplicate key found: " + importExportKey);
                 }
 
-                final boolean exportDefaultValues = false; // Enable to see what all settings looks like in the UI.
+                final boolean exportDefaultValues = false; // Enable to see what all settings look like in the UI.
                 //noinspection ConstantValue
                 if (setting.includeWithImportExport && (!setting.isSetToDefault() || exportDefaultValues)) {
                     setting.writeToJSON(json, importExportKey);
@@ -547,13 +703,31 @@ public abstract class Setting<T> {
             }
             JSONObject json = new JSONObject(settingsJsonString);
 
+            removeUnknownPreferenceKeys();
+
+            for (ImportExportCallback callback : importExportCallbacks) {
+                callback.settingsImporting(json);
+            }
+
             boolean rebootSettingChanged = false;
             int numberOfSettingsImported = 0;
             //noinspection rawtypes
             for (Setting setting : SETTINGS) {
                 String key = setting.getImportExportKey();
-                if (json.has(key)) {
-                    Object value = setting.readFromJSON(json, key);
+                String importedKey = json.has(key)
+                        ? key
+                        : json.has(setting.key) ? setting.key : null;
+                if (importedKey != null) {
+                    if (setting.sliderConfig != null
+                            && !isValidSliderImportValue(setting, json.opt(importedKey))) {
+                        Logger.printInfo(() -> "Resetting out-of-range imported slider setting: " + setting.key);
+                        rebootSettingChanged |= !setting.isSetToDefault() && setting.rebootApp;
+                        setting.resetToDefault();
+                        numberOfSettingsImported++;
+                        continue;
+                    }
+
+                    Object value = setting.readFromJSON(json, importedKey);
                     if (!setting.get().equals(value)) {
                         rebootSettingChanged |= setting.rebootApp;
                         //noinspection unchecked
@@ -586,6 +760,60 @@ public abstract class Setting<T> {
             Logger.printException(() -> "Import failure: " + ex.getMessage(), ex); // should never happen
         }
         return false;
+    }
+
+    /**
+     * Validates an imported value before a numeric setting-specific JSON parser can truncate it.
+     * For example, an integer setting must reject {@code 1.5} instead of accepting it as {@code 1}.
+     */
+    private static boolean isValidSliderImportValue(Setting<?> setting, Object rawValue) {
+        final Number number;
+        try {
+            if (setting instanceof IntegerSetting) {
+                number = rawValue instanceof Number value
+                        ? value
+                        : Integer.valueOf((String) rawValue);
+            } else if (setting instanceof LongSetting) {
+                number = rawValue instanceof Number value
+                        ? value
+                        : Long.valueOf((String) rawValue);
+            } else if (setting instanceof FloatSetting) {
+                number = rawValue instanceof Number value
+                        ? value
+                        : Float.valueOf((String) rawValue);
+            } else {
+                return false;
+            }
+        } catch (ClassCastException | NumberFormatException ex) {
+            return false;
+        }
+
+        if ((setting instanceof IntegerSetting || setting instanceof LongSetting)
+                && number.doubleValue() != Math.rint(number.doubleValue())) {
+            return false;
+        }
+
+        assert setting.sliderConfig != null;
+        return setting.sliderConfig.contains(number);
+    }
+
+    /**
+     * Removes stored values for settings that no longer exist in the current extension.
+     * This keeps removed settings from surviving an import and appearing in later exports.
+     */
+    private static void removeUnknownPreferenceKeys() {
+        SharedPreferences.Editor editor = preferences.preferences.edit();
+        boolean changed = false;
+        for (String key : preferences.preferences.getAll().keySet()) {
+            if (!PATH_TO_SETTINGS.containsKey(key)) {
+                Logger.printDebug(() -> "Removing unknown preference key: " + key);
+                editor.remove(key);
+                changed = true;
+            }
+        }
+        if (changed) {
+            editor.apply();
+        }
     }
 
     // End import / export

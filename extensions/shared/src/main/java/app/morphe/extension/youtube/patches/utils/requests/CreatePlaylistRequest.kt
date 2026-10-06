@@ -44,8 +44,8 @@ package app.morphe.extension.youtube.patches.utils.requests
 import androidx.annotation.GuardedBy
 import app.morphe.extension.shared.innertube.client.YouTubeClient
 import app.morphe.extension.shared.innertube.requests.InnerTubeRequestBody.createPlaylistRequestBody
-import app.morphe.extension.shared.innertube.requests.InnerTubeRequestBody.getSetVideoIdRequestBody
 import app.morphe.extension.shared.innertube.requests.InnerTubeRequestBody.getPlaylistResponseConnectionFromRoute
+import app.morphe.extension.shared.innertube.requests.InnerTubeRequestBody.getSetVideoIdRequestBody
 import app.morphe.extension.shared.innertube.requests.InnerTubeRoutes.CREATE_PLAYLIST
 import app.morphe.extension.shared.innertube.requests.InnerTubeRoutes.GET_SET_VIDEO_ID
 import app.morphe.extension.shared.requests.Requester
@@ -63,12 +63,12 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 class CreatePlaylistRequest private constructor(
-    private val videoId: String,
+    private val videoIds: List<String>,
     private val requestHeader: Map<String, String>,
 ) {
     private val future: Future<Pair<String, String>> = Utils.submitOnBackgroundThread {
         fetch(
-            videoId,
+            videoIds,
             requestHeader,
         )
     }
@@ -123,11 +123,30 @@ class CreatePlaylistRequest private constructor(
                 if (!cache.containsKey(videoId)) {
                     Logger.printDebug { "fetchRequestIfNeeded: creating new CreatePlaylistRequest for videoId: $videoId" }
                     cache[videoId] = CreatePlaylistRequest(
-                        videoId,
+                        listOf(videoId),
                         requestHeader,
                     )
                 } else {
                     Logger.printDebug { "fetchRequestIfNeeded: cache already contains CreatePlaylistRequest for videoId: $videoId" }
+                }
+            }
+        }
+
+        @JvmStatic
+        fun fetchRequestIfNeeded(
+            videoIds: List<String>,
+            requestHeader: Map<String, String>,
+        ) {
+            val requestKey = getRequestKey(videoIds)
+            synchronized(cache) {
+                if (!cache.containsKey(requestKey)) {
+                    Logger.printDebug { "fetchRequestIfNeeded: creating new CreatePlaylistRequest for ${videoIds.size} videos" }
+                    cache[requestKey] = CreatePlaylistRequest(
+                        videoIds,
+                        requestHeader,
+                    )
+                } else {
+                    Logger.printDebug { "fetchRequestIfNeeded: cache already contains CreatePlaylistRequest for key: $requestKey" }
                 }
             }
         }
@@ -141,19 +160,29 @@ class CreatePlaylistRequest private constructor(
             }
         }
 
+        @JvmStatic
+        fun getRequestForVideoIds(videoIds: List<String>): CreatePlaylistRequest? {
+            synchronized(cache) {
+                return cache[getRequestKey(videoIds)]
+            }
+        }
+
+        private fun getRequestKey(videoIds: List<String>): String =
+            "batch:" + videoIds.joinToString(",")
+
         private fun handleConnectionError(toastMessage: String, ex: Exception?) {
             Logger.printInfo({ toastMessage }, ex)
         }
 
         private fun sendCreatePlaylistRequest(
-            videoId: String,
+            videoIds: List<String>,
             requestHeader: Map<String, String>,
         ): JSONObject? {
-            Objects.requireNonNull(videoId)
+            Objects.requireNonNull(videoIds)
 
             val startTime = System.currentTimeMillis()
             val clientTypeName = YouTubeClient.ClientType.ANDROID.name
-            Logger.printInfo { "sendCreatePlaylistRequest for videoId: $videoId, using client: $clientTypeName" }
+            Logger.printInfo { "sendCreatePlaylistRequest for ${videoIds.size} videos, using client: $clientTypeName" }
 
             try {
                 val connection = getPlaylistResponseConnectionFromRoute(
@@ -161,7 +190,7 @@ class CreatePlaylistRequest private constructor(
                     requestHeader,
                 )
 
-                val requestBody = createPlaylistRequestBody(videoId = videoId)
+                val requestBody = createPlaylistRequestBody(videoIds = videoIds)
 
                 connection.setFixedLengthStreamingMode(requestBody.size)
                 connection.outputStream.write(requestBody)
@@ -188,7 +217,7 @@ class CreatePlaylistRequest private constructor(
                 Logger.printException({ "sendCreatePlaylistRequest failed" }, ex)
             } finally {
                 Logger.printDebug {
-                    "sendCreatePlaylistRequest for video: " + videoId + " took: " +
+                    "sendCreatePlaylistRequest for videos: " + videoIds.size + " took: " +
                             (System.currentTimeMillis() - startTime) + "ms"
                 }
             }
@@ -298,19 +327,20 @@ class CreatePlaylistRequest private constructor(
         }
 
         private fun fetch(
-            videoId: String,
+            videoIds: List<String>,
             requestHeader: Map<String, String>,
         ): Pair<String, String>? {
-            Logger.printDebug { "fetch starting for videoId: $videoId" }
+            val firstVideoId = videoIds.first()
+            Logger.printDebug { "fetch starting for ${videoIds.size} videos" }
             val createPlaylistJson = sendCreatePlaylistRequest(
-                videoId,
+                videoIds,
                 requestHeader,
             )
             if (createPlaylistJson != null) {
                 val playlistId = parseCreatePlaylistResponse(createPlaylistJson)
                 if (playlistId != null) {
                     val setVideoIdJson = sendSetVideoIdRequest(
-                        videoId,
+                        firstVideoId,
                         playlistId,
                         requestHeader,
                     )

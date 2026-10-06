@@ -1,6 +1,8 @@
 package app.morphe.patches.youtube.utils.playertype
 
 import app.morphe.patcher.Fingerprint
+import app.morphe.patcher.OpcodesFilter
+import app.morphe.patcher.string
 import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
@@ -13,7 +15,6 @@ import app.morphe.patches.youtube.utils.extension.Constants.COMPONENTS_PATH
 import app.morphe.patches.youtube.utils.extension.Constants.SHARED_PATH
 import app.morphe.patches.youtube.utils.extension.Constants.UTILS_PATH
 import app.morphe.patches.youtube.utils.extension.sharedExtensionPatch
-import app.morphe.patches.youtube.utils.fix.litho.lithoLayoutPatch
 import app.morphe.patches.youtube.utils.resourceid.reelWatchPlayer
 import app.morphe.patches.youtube.utils.resourceid.sharedResourceIdPatch
 import app.morphe.util.addInstructionsAtControlFlowLabel
@@ -22,6 +23,7 @@ import app.morphe.util.findMethodOrThrow
 import app.morphe.util.fingerprint.matchOrThrow
 import app.morphe.util.fingerprint.methodOrThrow
 import app.morphe.util.getReference
+import app.morphe.util.indexOfFirstInstruction
 import app.morphe.util.indexOfFirstInstructionOrThrow
 import app.morphe.util.indexOfFirstLiteralInstructionOrThrow
 import app.morphe.util.indexOfFirstStringInstructionOrThrow
@@ -33,6 +35,7 @@ import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.reference.FieldReference
+import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
 
 private const val EXTENSION_PLAYER_TYPE_HOOK_CLASS_DESCRIPTOR =
@@ -54,7 +57,7 @@ val playerTypeHookPatch = bytecodePatch(
         sharedExtensionPatch,
         sharedResourceIdPatch,
         lithoFilterPatch,
-        lithoLayoutPatch,
+        legacyPlayerStatePatch,
     )
 
     execute {
@@ -132,7 +135,35 @@ val playerTypeHookPatch = bytecodePatch(
 
         // region patch for set video state
 
-        videoStateFingerprint.matchOrThrow().let {
+        val controlStateType = Fingerprint(
+            accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+            parameters = listOf(),
+            returnType = "Ljava/lang/String;",
+            filters = listOf(
+                string("videoState"),
+                string("isBuffering")
+            )
+        ).originalClassDef.type
+
+        val dynamicVideoStateFingerprint = Fingerprint(
+            returnType = "V",
+            accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+            parameters = listOf(controlStateType),
+            filters = OpcodesFilter.opcodesToFilters(
+                Opcode.IF_EQZ,
+                Opcode.IGET_OBJECT,
+                Opcode.IGET_OBJECT,
+                Opcode.IF_NE,
+            ),
+            custom = { method, _ ->
+                method.indexOfFirstInstruction {
+                    opcode == Opcode.INVOKE_VIRTUAL &&
+                            getReference<MethodReference>()?.name == "equals"
+                } >= 0
+            },
+        )
+
+        dynamicVideoStateFingerprint.let {
             it.method.apply {
                 val endIndex = it.instructionMatches.first().index + 1
                 val videoStateFieldName =

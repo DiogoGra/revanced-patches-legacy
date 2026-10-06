@@ -1,3 +1,54 @@
+/*
+ * Copyright (C) 2024-2026 anddea
+ *
+ * This file is part of the revanced-patches project:
+ * https://github.com/anddea/revanced-patches
+ *
+ * Original author(s):
+ * - anddea (https://github.com/anddea)
+ * - Francesco Marastoni (https://github.com/Francesco146)
+ * - inotia00 (https://github.com/inotia00)
+ *
+ * Licensed under the GNU General Public License v3.0.
+ *
+ * ------------------------------------------------------------------------
+ * GPLv3 Section 7 – Additional Terms & Attribution Requirements
+ * ------------------------------------------------------------------------
+ *
+ * This file contains substantial original work by the author(s) listed above.
+ *
+ * In accordance with Section 7 of the GNU General Public License v3.0,
+ * the following additional terms apply to this file:
+ *
+ * 1. Source Credit Preservation (Section 7(b)): This specific copyright notice
+ *    and the list of original authors above must be preserved in any copy
+ *    or derivative work. You may add your own copyright notice below it,
+ *    but you may not remove the original one.
+ *
+ * 2. Origin & Modification Marking (Section 7(c)): Modified versions must be
+ *    clearly marked as such (e.g., by adding a "Modified by" line or a new
+ *    copyright notice) and must not be misrepresented as the original work.
+ *
+ * 3. Version Control Attribution (Section 7(b)): Any ports or substantial
+ *    modifications must retain historical authorship credit in version control
+ *    systems (e.g., Git), listing original author(s) appropriately and
+ *    modifiers as committers or co-authors.
+ *
+ * 4. User Interface Attribution (Section 7(b)): Any works containing or
+ *    derived from this material must maintain a visible credit or
+ *    acknowledgment to the original author(s) within the application's
+ *    user interface (e.g., in an "About" or "Credits" section).
+ */
+
+/*
+ * Portions of this file are adapted from Morphe:
+ * Copyright 2026 Morphe.
+ * https://github.com/MorpheApp/morphe-patches
+ *
+ * See the included NOTICE file for GPLv3 Section 7 terms that apply to Morphe contributions.
+ */
+
+
 package app.morphe.patches.youtube.shorts.components
 
 import app.morphe.patcher.Fingerprint
@@ -6,21 +57,23 @@ import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.removeInstructions
+import app.morphe.patcher.methodCall
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.patch.resourcePatch
 import app.morphe.patcher.util.proxy.mutableTypes.MutableClass
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
+import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod.Companion.toMutable
 import app.morphe.patcher.util.smali.ExternalLabel
 import app.morphe.patches.shared.litho.addLithoFilter
 import app.morphe.patches.shared.litho.lithoFilterPatch
 import app.morphe.patches.shared.mainactivity.injectOnCreateMethodCall
 import app.morphe.patches.shared.textcomponent.hookSpannableString
 import app.morphe.patches.shared.textcomponent.textComponentPatch
-import app.morphe.patches.youtube.player.overlaybuttons.geminiButton
 import app.morphe.patches.youtube.player.fullscreen.openVideosFullscreenHookPatch
+import app.morphe.patches.youtube.player.overlaybuttons.geminiButton
 import app.morphe.patches.youtube.utils.bottomSheetMenuItemBuilderFingerprint
-import app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBLE_PACKAGE
+import app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBILITY_YOUTUBE
 import app.morphe.patches.youtube.utils.engagement.engagementPanelHookPatch
 import app.morphe.patches.youtube.utils.extension.Constants.COMPONENTS_PATH
 import app.morphe.patches.youtube.utils.extension.Constants.EXTENSION_PATH
@@ -37,7 +90,6 @@ import app.morphe.patches.youtube.utils.navigation.navigationBarHookPatch
 import app.morphe.patches.youtube.utils.patch.PatchList.HIDE_FEED_FLYOUT_MENU
 import app.morphe.patches.youtube.utils.patch.PatchList.SHORTS_COMPONENTS
 import app.morphe.patches.youtube.utils.playertype.playerTypeHookPatch
-import app.morphe.patches.youtube.utils.playservice.*
 import app.morphe.patches.youtube.utils.playservice.is_18_31_or_greater
 import app.morphe.patches.youtube.utils.playservice.is_18_34_or_greater
 import app.morphe.patches.youtube.utils.playservice.is_18_49_or_greater
@@ -47,6 +99,15 @@ import app.morphe.patches.youtube.utils.playservice.is_19_25_or_greater
 import app.morphe.patches.youtube.utils.playservice.is_19_34_or_greater
 import app.morphe.patches.youtube.utils.playservice.is_20_07_or_greater
 import app.morphe.patches.youtube.utils.playservice.is_20_09_or_greater
+import app.morphe.patches.youtube.utils.playservice.is_20_16_or_greater
+import app.morphe.patches.youtube.utils.playservice.is_20_18_or_greater
+import app.morphe.patches.youtube.utils.playservice.is_20_40_or_greater
+import app.morphe.patches.youtube.utils.playservice.is_21_04_or_greater
+import app.morphe.patches.youtube.utils.playservice.is_21_05_or_greater
+import app.morphe.patches.youtube.utils.playservice.is_21_07_or_greater
+import app.morphe.patches.youtube.utils.playservice.is_21_10_or_greater
+import app.morphe.patches.youtube.utils.playservice.is_21_17_or_greater
+import app.morphe.patches.youtube.utils.playservice.is_21_25_or_greater
 import app.morphe.patches.youtube.utils.playservice.versionCheckPatch
 import app.morphe.patches.youtube.utils.recyclerview.recyclerViewTreeObserverHook
 import app.morphe.patches.youtube.utils.recyclerview.recyclerViewTreeObserverPatch
@@ -60,7 +121,6 @@ import app.morphe.patches.youtube.utils.resourceid.reelFeedbackPlay
 import app.morphe.patches.youtube.utils.resourceid.reelForcedMuteButton
 import app.morphe.patches.youtube.utils.resourceid.reelPlayerFooter
 import app.morphe.patches.youtube.utils.resourceid.reelPlayerRightPivotV2Size
-import app.morphe.patches.youtube.utils.resourceid.reelRightDislikeIcon
 import app.morphe.patches.youtube.utils.resourceid.reelRightLikeIcon
 import app.morphe.patches.youtube.utils.resourceid.rightComment
 import app.morphe.patches.youtube.utils.resourceid.sharedResourceIdPatch
@@ -72,10 +132,14 @@ import app.morphe.patches.youtube.utils.toolbar.toolBarHookPatch
 import app.morphe.patches.youtube.utils.videoIdFingerprintShorts
 import app.morphe.patches.youtube.video.information.hookShortsVideoInformation
 import app.morphe.patches.youtube.video.information.videoInformationPatch
-import app.morphe.patches.youtube.video.playbackstart.*
+import app.morphe.patches.youtube.video.playbackstart.ModernShortsPlaybackStartIntentFingerprint
+import app.morphe.patches.youtube.video.playbackstart.PLAYBACK_START_DESCRIPTOR_CLASS_DESCRIPTOR
+import app.morphe.patches.youtube.video.playbackstart.playbackStartDescriptorPatch
+import app.morphe.patches.youtube.video.playbackstart.playbackStartVideoIdReference
+import app.morphe.patches.youtube.video.playbackstart.shortsPlaybackStartIntentFingerprint
+import app.morphe.patches.youtube.video.playbackstart.shortsPlaybackStartIntentLegacyFingerprint
 import app.morphe.patches.youtube.video.videoid.hookPlayerResponseVideoId
 import app.morphe.patches.youtube.video.videoid.videoIdPatch
-import app.morphe.util.*
 import app.morphe.util.REGISTER_TEMPLATE_REPLACEMENT
 import app.morphe.util.ResourceGroup
 import app.morphe.util.cloneMutable
@@ -83,11 +147,11 @@ import app.morphe.util.containsLiteralInstruction
 import app.morphe.util.containsStringInstruction
 import app.morphe.util.copyResources
 import app.morphe.util.doRecursively
+import app.morphe.util.findInstructionIndicesReversedOrThrow
 import app.morphe.util.findMethodOrThrow
 import app.morphe.util.findMutableMethodOf
 import app.morphe.util.fingerprint.injectLiteralInstructionBooleanCall
 import app.morphe.util.fingerprint.matchOrThrow
-import app.morphe.util.fingerprint.methodCall
 import app.morphe.util.fingerprint.methodOrThrow
 import app.morphe.util.fingerprint.resolvable
 import app.morphe.util.getReference
@@ -100,12 +164,21 @@ import app.morphe.util.indexOfFirstLiteralInstructionOrThrow
 import app.morphe.util.indexOfFirstStringInstructionOrThrow
 import app.morphe.util.or
 import app.morphe.util.replaceLiteralInstructionCall
+import app.morphe.util.returnLate
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
 import com.android.tools.smali.dexlib2.iface.Method
-import com.android.tools.smali.dexlib2.iface.instruction.*
+import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.RegisterRangeInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.WideLiteralInstruction
 import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
+import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
+import com.android.tools.smali.dexlib2.immutable.ImmutableMethodParameter
 import com.android.tools.smali.dexlib2.util.MethodUtil
 import org.w3c.dom.Element
 
@@ -261,7 +334,7 @@ private const val EXTENSION_CUSTOM_ACTIONS_CLASS_DESCRIPTOR =
     "$SHORTS_PATH/CustomActionsPatch;"
 
 private val shortsCustomActionsResourcesPatch = resourcePatch {
-    compatibleWith(COMPATIBLE_PACKAGE)
+    compatibleWith(COMPATIBILITY_YOUTUBE)
 
     dependsOn(geminiButton)
 
@@ -270,6 +343,7 @@ private val shortsCustomActionsResourcesPatch = resourcePatch {
             "youtube/overlaybuttons/rounded",
             ResourceGroup(
                 "drawable",
+                "revanced_vot_bold_button_icon.xml",
                 "revanced_vot_button_icon.xml",
             )
         )
@@ -354,11 +428,12 @@ private val shortsCustomActionsPatch = bytecodePatch(
                 val bottomSheetMenuObject =
                     (getInstruction<ReferenceInstruction>(bottomSheetMenuInitializeIndex).reference as MethodReference).parameterTypes[0]!!
 
-                val elementTransformerFlagIndex =
-                    indexOfFirstInstructionReversedOrThrow(bottomSheetMenuInitializeIndex) {
-                        opcode == Opcode.AND_INT_LIT16 &&
-                                (this as WideLiteralInstruction).wideLiteral == 0x1000L
-                    }
+                // The modern renderer takes a separate path for menu items with this flag.
+                // Pass the flag along so the extension can retain a normal item as its template.
+                val elementTransformerFlagIndex = indexOfFirstInstructionReversedOrThrow(bottomSheetMenuInitializeIndex) {
+                    opcode == Opcode.AND_INT_LIT16 &&
+                            (this as WideLiteralInstruction).wideLiteral == 0x1000L
+                }
 
                 val bottomSheetMenuListIndex = it.instructionMatches.first().index
                 val bottomSheetMenuListField =
@@ -366,8 +441,7 @@ private val shortsCustomActionsPatch = bytecodePatch(
 
                 val setFlyoutMenuObjectIndex = indexOfFirstInstructionReversedOrThrow(addListIndex) {
                     opcode == Opcode.IGET_OBJECT &&
-                            getReference<FieldReference>()?.toString() ==
-                            bottomSheetMenuListField.toString()
+                            getReference<FieldReference>()?.toString() == bottomSheetMenuListField.toString()
                 }
                 val elementTransformerFlagRegister =
                     getInstruction<TwoRegisterInstruction>(elementTransformerFlagIndex).registerA
@@ -421,45 +495,75 @@ private val shortsCustomActionsPatch = bytecodePatch(
                 val bottomSheetMenuItemBuilderMethod = bottomSheetMenuItemBuilderFingerprint
                     .methodOrThrow()
 
-                val newParameter =
-                    bottomSheetMenuItemBuilderMethod.parameters + listOf(customActionClass)
+                if (is_21_07_or_greater) {
+                    val clickActionIndex = bottomSheetMenuItemBuilderMethod.indexOfFirstInstructionOrThrow {
+                        opcode == Opcode.IPUT_OBJECT &&
+                                getReference<FieldReference>()?.let { fieldReference ->
+                                    fieldReference.name == "j" &&
+                                            fieldReference.type == "Ljava/lang/Runnable;"
+                                } == true
+                    }
+                    val runnableField =
+                        bottomSheetMenuItemBuilderMethod.getInstruction<ReferenceInstruction>(clickActionIndex).reference as FieldReference
 
-                it.classDef.methods.add(
-                    bottomSheetMenuItemBuilderMethod
-                        .cloneMutable(
-                            accessFlags = AccessFlags.PUBLIC or AccessFlags.FINAL,
-                            name = "buildFlyoutMenu",
-                            registerCount = bottomSheetMenuItemBuilderMethod.implementation!!.registerCount + 1,
-                            parameters = newParameter,
-                        ).apply {
-                            val drawableIndex = indexOfFirstInstructionOrThrow {
-                                opcode == Opcode.INVOKE_DIRECT &&
-                                        getReference<MethodReference>()?.returnType == "Landroid/graphics/drawable/Drawable;"
-                            }
-                            val drawableRegister =
-                                getInstruction<OneRegisterInstruction>(drawableIndex + 1).registerA
+                    val iconIndex = bottomSheetMenuItemBuilderMethod.indexOfFirstInstructionOrThrow {
+                        opcode == Opcode.IPUT_OBJECT &&
+                                getReference<FieldReference>()?.type == "Landroid/graphics/drawable/Drawable;"
+                    }
+                    val iconField =
+                        bottomSheetMenuItemBuilderMethod.getInstruction<ReferenceInstruction>(iconIndex).reference as FieldReference
 
-                            addInstructions(
-                                drawableIndex + 2, """
-                                    invoke-virtual {p2}, $customActionClass->getDrawable()Landroid/graphics/drawable/Drawable;
-                                    move-result-object v$drawableRegister
-                                    """
-                            )
+                    val titleField = this@execute.classDefBy(iconField.definingClass).fields.first {
+                        it.type == "Ljava/lang/String;"
+                    }
 
-                            val charSequenceIndex = indexOfSpannedCharSequenceInstruction(this)
-                            val charSequenceRegister =
-                                getInstruction<OneRegisterInstruction>(charSequenceIndex + 1).registerA
+                    val itemBuilderIndex = indexOfFirstInstructionOrThrow {
+                        val ref = getReference<MethodReference>()
+                        opcode == Opcode.INVOKE_VIRTUAL &&
+                                ref?.parameterTypes?.size == 1 &&
+                                ref.parameterTypes[0] == bottomSheetMenuObject &&
+                                ref.returnType == getObjectReference.definingClass
+                    }
+                    val itemBuilderReference =
+                        getInstruction<ReferenceInstruction>(itemBuilderIndex).reference as MethodReference
 
-                            val insertIndex = charSequenceIndex + 2
-
-                            if (HIDE_FEED_FLYOUT_MENU.included == true)
-                                removeInstructions(insertIndex, 2)
-
-                            addInstructions(
-                                insertIndex, """
+                    it.classDef.methods.add(
+                        ImmutableMethod(
+                            it.classDef.type,
+                            "buildFlyoutMenu",
+                            listOf(
+                                ImmutableMethodParameter(bottomSheetMenuObject.toString(), null, "menuItem"),
+                                ImmutableMethodParameter(customActionClass.type, null, "customAction")
+                            ),
+                            getObjectReference.definingClass,
+                            AccessFlags.PUBLIC.value or AccessFlags.FINAL.value,
+                            null,
+                            null,
+                            MutableMethodImplementation(6)
+                        ).toMutable().apply {
+                            addInstructionsWithLabels(
+                                0,
+                                """
+                                    invoke-virtual {p0, p1}, $bottomSheetMenuClass->${itemBuilderReference.name}(${bottomSheetMenuObject})${getObjectReference.definingClass}
+                                    move-result-object v0
+                                    invoke-virtual {v0}, ${getObjectReference.definingClass}->isPresent()Z
+                                    move-result v1
+                                    if-eqz v1, :done
+                                    invoke-virtual {v0}, ${getObjectReference.definingClass}->get()Ljava/lang/Object;
+                                    move-result-object v1
+                                    check-cast v1, ${runnableField.definingClass}
                                     invoke-virtual {p2}, $customActionClass->getLabel()Ljava/lang/String;
-                                    move-result-object v$charSequenceRegister
-                                    """
+                                    move-result-object v2
+                                    iput-object v2, v1, ${titleField.definingClass}->${titleField.name}:${titleField.type}
+                                    invoke-virtual {p2}, $customActionClass->getDrawable()Landroid/graphics/drawable/Drawable;
+                                    move-result-object v2
+                                    iput-object v2, v1, $iconField
+                                    invoke-virtual {p2}, $customActionClass->getOnClickActionWithFlyoutMenuDismiss()Ljava/lang/Runnable;
+                                    move-result-object v2
+                                    iput-object v2, v1, $runnableField
+                                    :done
+                                    return-object v0
+                                """
                             )
 
                             val clickActionIndex = indexOfFirstInstructionOrThrow {
@@ -484,7 +588,74 @@ private val shortsCustomActionsPatch = bytecodePatch(
                                     """
                             )
                         }
-                )
+                    )
+                } else {
+                    val newParameter =
+                        bottomSheetMenuItemBuilderMethod.parameters + listOf(customActionClass)
+
+                    it.classDef.methods.add(
+                        bottomSheetMenuItemBuilderMethod
+                            .cloneMutable(
+                                accessFlags = AccessFlags.PUBLIC or AccessFlags.FINAL,
+                                name = "buildFlyoutMenu",
+                                definingClass = it.classDef.type,
+                                registerCount = bottomSheetMenuItemBuilderMethod.implementation!!.registerCount + 1,
+                                parameters = newParameter,
+                            ).apply {
+                                val drawableIndex = indexOfFirstInstructionOrThrow {
+                                    opcode == Opcode.INVOKE_DIRECT &&
+                                            getReference<MethodReference>()?.returnType == "Landroid/graphics/drawable/Drawable;"
+                                }
+                                val drawableRegister =
+                                    getInstruction<OneRegisterInstruction>(drawableIndex + 1).registerA
+
+                                addInstructions(
+                                    drawableIndex + 2, """
+                                        invoke-virtual {p2}, $customActionClass->getDrawable()Landroid/graphics/drawable/Drawable;
+                                        move-result-object v$drawableRegister
+                                        """
+                                )
+
+                                val charSequenceIndex = indexOfSpannedCharSequenceInstruction(this)
+                                val charSequenceRegister =
+                                    getInstruction<OneRegisterInstruction>(charSequenceIndex + 1).registerA
+
+                                val insertIndex = charSequenceIndex + 2
+
+                                if (HIDE_FEED_FLYOUT_MENU.included == true)
+                                    removeInstructions(insertIndex, 2)
+
+                                addInstructions(
+                                    insertIndex, """
+                                        invoke-virtual {p2}, $customActionClass->getLabel()Ljava/lang/String;
+                                        move-result-object v$charSequenceRegister
+                                        """
+                                )
+
+                                val clickActionIndex = indexOfFirstInstructionOrThrow {
+                                    opcode == Opcode.IPUT_OBJECT &&
+                                            getReference<FieldReference>()?.let { fieldReference ->
+                                                fieldReference.name == "j" &&
+                                                        fieldReference.type == "Ljava/lang/Runnable;"
+                                            } == true
+                                }
+                                val clickActionInstruction =
+                                    getInstruction<TwoRegisterInstruction>(clickActionIndex)
+                                val clickActionRegister = clickActionInstruction.registerA
+                                val flyoutMenuItemRegister = clickActionInstruction.registerB
+                                val clickActionReference =
+                                    getInstruction<ReferenceInstruction>(clickActionIndex).reference
+
+                                addInstructions(
+                                    clickActionIndex + 1, """
+                                        invoke-virtual {p2}, $customActionClass->getOnClickActionWithFlyoutMenuDismiss()Ljava/lang/Runnable;
+                                        move-result-object v$clickActionRegister
+                                        iput-object v$clickActionRegister, v$flyoutMenuItemRegister, $clickActionReference
+                                        """
+                                )
+                            }
+                    )
+                }
             }
         }
 
@@ -570,6 +741,153 @@ private val shortsNavigationBarPatch = bytecodePatch(
 private const val EXTENSION_REPEAT_STATE_CLASS_DESCRIPTOR =
     "$SHORTS_PATH/ShortsRepeatStatePatch;"
 
+val shortsAutoplayPatch = bytecodePatch(
+    description = "shortsAutoplayPatch",
+) {
+    dependsOn(
+        settingsPatch,
+        versionCheckPatch,
+    )
+
+    compatibleWith(COMPATIBILITY_YOUTUBE)
+
+    execute {
+        if (!is_20_16_or_greater) return@execute
+
+        // Main activity is used to check if app is in pip mode.
+        YouTubeActivityOnCreateFingerprint.method.addInstruction(
+            0,
+            "invoke-static/range { p0 .. p0 }, $EXTENSION_REPEAT_STATE_CLASS_DESCRIPTOR->" +
+                    "setMainActivity(Landroid/app/Activity;)V",
+        )
+
+        var reelEnumClass : String
+
+        ReelEnumConstructorFingerprint.let {
+            reelEnumClass = it.originalClassDef.type
+
+            it.method.addInstructions(
+                it.instructionMatches.last().index,
+                """
+                    # Pass the first enum value to extension.
+                    # Any enum value of this type will work.
+                    sget-object v0, $reelEnumClass->a:$reelEnumClass
+                    invoke-static { v0 }, $EXTENSION_REPEAT_STATE_CLASS_DESCRIPTOR->setYTShortsRepeatEnum(Ljava/lang/Enum;)V
+                """
+            )
+        }
+
+        ReelPlaybackRepeatFingerprint.method.apply {
+            // The behavior enums are looked up from an ordinal value to an enum type.
+            findInstructionIndicesReversedOrThrow(
+                if (is_21_25_or_greater) {
+                    methodCall(
+                        returnType = reelEnumClass,
+                        parameters = listOf("L", "L")
+                    )
+                } else if (is_21_10_or_greater) {
+                    methodCall(
+                        returnType = reelEnumClass,
+                        parameters = listOf("L")
+                    )
+                } else {
+                    methodCall(
+                        definingClass = reelEnumClass,
+                        returnType = reelEnumClass,
+                        parameters = listOf("I")
+                    )
+                }
+            ).forEach { index ->
+                val register = getInstruction<OneRegisterInstruction>(index + 1).registerA
+
+                addInstructions(
+                    index + 2,
+                    """
+                        invoke-static {v$register}, $EXTENSION_REPEAT_STATE_CLASS_DESCRIPTOR->changeShortsRepeatBehavior(Ljava/lang/Enum;)Ljava/lang/Enum;
+                        move-result-object v$register
+                    """
+                )
+            }
+        }
+
+        if (is_21_17_or_greater) return@execute
+
+        // As of YouTube 20.09, Google has removed the code for 'Autoplay' and 'Pause' from this method.
+        // Manually restore the removed 'Autoplay' code.
+        // Variable names are only a rough guess of what these methods do.
+        val userActionMethodReference = ReelPlaybackFingerprint.instructionMatches[1]
+            .getInstruction<ReferenceInstruction>().reference as MethodReference
+        val reelSequenceControllerMethodReference = ReelPlaybackFingerprint.instructionMatches[2]
+            .getInstruction<ReferenceInstruction>().reference as MethodReference
+
+        ReelPlaybackRepeatFingerprint.method.apply {
+            // Find the first call modified by extension code above.
+            val extensionReturnResultIndex = indexOfFirstInstructionOrThrow {
+                opcode == Opcode.INVOKE_STATIC &&
+                        getReference<MethodReference>()?.definingClass == EXTENSION_REPEAT_STATE_CLASS_DESCRIPTOR
+            } + 1
+            val enumRegister = getInstruction<OneRegisterInstruction>(extensionReturnResultIndex).registerA
+            val getReelSequenceControllerIndex = indexOfFirstInstructionOrThrow {
+                val reference = getReference<FieldReference>()
+                opcode == Opcode.IGET_OBJECT &&
+                        reference?.definingClass == definingClass &&
+                        reference.type == reelSequenceControllerMethodReference.definingClass
+            }
+            val getReelSequenceControllerReference = getInstruction<ReferenceInstruction>(
+                getReelSequenceControllerIndex).reference
+
+            // Add a helper method to avoid finding multiple free registers.
+            // If enum is autoplay then method performs autoplay and returns null,
+            // otherwise returns the same enum.
+            val helperClass = definingClass
+            val helperName = "patch_handleAutoPlay"
+            val helperReturnType = "Ljava/lang/Enum;"
+            val helperMethod = ImmutableMethod(
+                helperClass,
+                helperName,
+                listOf(ImmutableMethodParameter("Ljava/lang/Enum;", null, null)),
+                helperReturnType,
+                AccessFlags.PRIVATE.value,
+                null,
+                null,
+                MutableMethodImplementation(7),
+            ).toMutable().apply {
+                addInstructionsWithLabels(
+                    0,
+                    """
+                        invoke-static { p1 }, $EXTENSION_REPEAT_STATE_CLASS_DESCRIPTOR->isAutoPlay(Ljava/lang/Enum;)Z
+                        move-result v0
+                        if-eqz v0, :ignore
+                        new-instance v0, ${userActionMethodReference.definingClass}
+                        const/4 v1, 0x3
+                        const/4 v2, 0x0
+                        invoke-direct { v0, v1, v2, v2 }, $userActionMethodReference
+                        iget-object v3, p0, $getReelSequenceControllerReference
+                        invoke-virtual { v3, v0 }, $reelSequenceControllerMethodReference
+                        const/4 v4, 0x0
+                        return-object v4
+                        :ignore
+                        return-object p1
+                    """
+                )
+            }
+            ReelPlaybackRepeatFingerprint.classDef.methods.add(helperMethod)
+
+            addInstructionsWithLabels(
+                extensionReturnResultIndex + 1,
+                """
+                    invoke-direct { p0, v$enumRegister }, $helperClass->$helperName(Ljava/lang/Enum;)$helperReturnType
+                    move-result-object v$enumRegister
+                    if-nez v$enumRegister, :ignore
+                    return-void     # Autoplay was performed.
+                    :ignore
+                    nop
+                """
+            )
+        }
+    }
+}
+
 private val shortsRepeatPatch = bytecodePatch(
     description = "shortsRepeatPatch"
 ) {
@@ -578,6 +896,8 @@ private val shortsRepeatPatch = bytecodePatch(
             mainActivityResolvePatch,
             versionCheckPatch,
         )
+
+        if (is_20_16_or_greater) return@execute
 
         injectOnCreateMethodCall(
             EXTENSION_REPEAT_STATE_CLASS_DESCRIPTOR,
@@ -594,12 +914,19 @@ private val shortsRepeatPatch = bytecodePatch(
         }
 
         lateinit var insertMethod: MutableMethod
+        lateinit var insertClassDef: MutableClass
         var insertMethodFound = false
 
         if (is_20_16_or_greater) {
-            insertMethod = reelPlaybackRepeatFingerprint2016.methodOrThrow()
+            reelPlaybackRepeatFingerprint2016.matchOrThrow().let {
+                insertMethod = it.method
+                insertClassDef = it.classDef
+            }
         } else if (is_18_49_or_greater) {
-            insertMethod = reelPlaybackRepeatFingerprint.methodOrThrow()
+            reelPlaybackRepeatFingerprint.matchOrThrow().let {
+                insertMethod = it.method
+                insertClassDef = it.classDef
+            }
         } else {
             val isInsertMethod: Method.() -> Boolean = {
                 parameters.size == 1 &&
@@ -615,8 +942,8 @@ private val shortsRepeatPatch = bytecodePatch(
                     classDef.methods.forEach { method ->
                         if (method.isInsertMethod()) {
                             insertMethodFound = true
-                            insertMethod = mutableClassDefBy(classDef)
-                                .findMutableMethodOf(method)
+                            insertClassDef = mutableClassDefBy(classDef)
+                            insertMethod = insertClassDef.findMutableMethodOf(method)
                         }
                     }
                 }
@@ -626,15 +953,29 @@ private val shortsRepeatPatch = bytecodePatch(
         val enumMethod =
             reelEnumStaticFingerprint.methodOrThrow(reelEnumConstructorFingerprint)
 
-        findMethodOrThrow(EXTENSION_REPEAT_STATE_CLASS_DESCRIPTOR) {
-            name == "getShortsLoopBehaviorEnum"
-        }.addInstructions(
-            0, """
-                invoke-static/range { p0 .. p0 }, $enumMethod
-                move-result-object p0
-                return-object p0
-                """
-        )
+        reelEnumConstructorFingerprint.methodOrThrow().apply {
+            implementation!!.instructions
+                .withIndex()
+                .filter { (_, instruction) ->
+                    val reference = (instruction as? ReferenceInstruction)?.reference
+                    instruction.opcode == Opcode.SPUT_OBJECT &&
+                            reference is FieldReference &&
+                            reference.type == enumMethod.definingClass
+                }
+                .map { (index, instruction) ->
+                    index to (instruction as ReferenceInstruction).reference
+                }
+                .reversed()
+                .forEach { (index, reference) ->
+                    addInstructions(
+                        index + 1,
+                        """
+                            sget-object v0, $reference
+                            invoke-static {v0}, $EXTENSION_REPEAT_STATE_CLASS_DESCRIPTOR->setYTShortsRepeatEnumLegacy(Ljava/lang/Enum;)V
+                            """
+                    )
+                }
+        }
 
         insertMethod.apply {
             implementation!!.instructions
@@ -661,8 +1002,7 @@ private val shortsRepeatPatch = bytecodePatch(
         }
 
         // As of YouTube 20.09, Google has removed the code for 'Autoplay' and 'Pause' from this method.
-        // Manually add the 'Autoplay' code that Google removed.
-        // Tested on YouTube 20.10.
+        // Manually restore the removed 'Autoplay' code.
         if (is_20_09_or_greater) {
             val (directReference, virtualReference) = with(
                 reelPlaybackFingerprint.methodOrThrow(
@@ -682,36 +1022,57 @@ private val shortsRepeatPatch = bytecodePatch(
             }
 
             insertMethod.apply {
-                val extensionIndex = indexOfFirstInstructionOrThrow {
+                val extensionReturnResultIndex = indexOfFirstInstructionOrThrow {
                     opcode == Opcode.INVOKE_STATIC &&
                             getReference<MethodReference>()?.definingClass == EXTENSION_REPEAT_STATE_CLASS_DESCRIPTOR
-                }
+                } + 1
                 val enumRegister =
-                    getInstruction<OneRegisterInstruction>(extensionIndex + 1).registerA
-                val freeIndex = indexOfFirstInstructionOrThrow(extensionIndex) {
-                    opcode == Opcode.SGET_OBJECT &&
-                            getReference<FieldReference>()?.name != "a"
-                }
-                val freeRegister = getInstruction<OneRegisterInstruction>(freeIndex).registerA
-                val getIndex = indexOfFirstInstructionOrThrow(extensionIndex) {
+                    getInstruction<OneRegisterInstruction>(extensionReturnResultIndex).registerA
+                val getIndex = indexOfFirstInstructionOrThrow {
                     val reference = getReference<FieldReference>()
                     opcode == Opcode.IGET_OBJECT &&
                             reference?.definingClass == definingClass &&
                             reference.type == virtualReference.definingClass
                 }
                 val getReference = getInstruction<ReferenceInstruction>(getIndex).reference
+                val helperClass = definingClass
+                val helperName = "patch_handleAutoPlay"
+                val helperReturnType = "Ljava/lang/Enum;"
+                val helperMethod = ImmutableMethod(
+                    helperClass,
+                    helperName,
+                    listOf(ImmutableMethodParameter("Ljava/lang/Enum;", null, null)),
+                    helperReturnType,
+                    AccessFlags.PRIVATE.value,
+                    null,
+                    null,
+                    MutableMethodImplementation(7),
+                ).toMutable().apply {
+                    addInstructionsWithLabels(
+                        0, """
+                            invoke-static {p1}, $EXTENSION_REPEAT_STATE_CLASS_DESCRIPTOR->isAutoPlay(Ljava/lang/Enum;)Z
+                            move-result v0
+                            if-eqz v0, :ignore
+                            new-instance v0, ${directReference.definingClass}
+                            const/4 v1, 0x3
+                            const/4 v2, 0x0
+                            invoke-direct {v0, v1, v2, v2}, $directReference
+                            iget-object v3, p0, $getReference
+                            invoke-virtual {v3, v0}, $virtualReference
+                            const/4 v4, 0x0
+                            return-object v4
+                            :ignore
+                            return-object p1
+                            """
+                    )
+                }
+                insertClassDef.methods.add(helperMethod)
 
                 addInstructionsWithLabels(
-                    extensionIndex + 2, """
-                        invoke-static {v$enumRegister}, $EXTENSION_REPEAT_STATE_CLASS_DESCRIPTOR->isAutoPlay(Ljava/lang/Enum;)Z
-                        move-result v$freeRegister
-                        if-eqz v$freeRegister, :ignore
-                        new-instance v0, ${directReference.definingClass}
-                        const/4 v1, 0x3
-                        const/4 v2, 0x0
-                        invoke-direct {v0, v1, v2, v2}, $directReference
-                        iget-object v3, p0, $getReference
-                        invoke-virtual {v3, v0}, $virtualReference
+                    extensionReturnResultIndex + 1, """
+                        invoke-direct {p0, v$enumRegister}, $helperClass->$helperName(Ljava/lang/Enum;)$helperReturnType
+                        move-result-object v$enumRegister
+                        if-nez v$enumRegister, :ignore
                         return-void
                         :ignore
                         nop
@@ -823,17 +1184,19 @@ private val shortsToolBarPatch = bytecodePatch(
     description = "shortsToolBarPatch"
 ) {
     execute {
-        shortsToolBarFingerprint.matchOrThrow().let {
-            it.method.apply {
-                val insertIndex = it.instructionMatches.first().index
-                val insertRegister = getInstruction<TwoRegisterInstruction>(insertIndex).registerA
+        if (!is_20_40_or_greater) {
+            shortsToolBarFingerprint.matchOrThrow().let {
+                it.method.apply {
+                    val insertIndex = it.instructionMatches.first().index
+                    val insertRegister = getInstruction<TwoRegisterInstruction>(insertIndex).registerA
 
-                addInstructions(
-                    insertIndex, """
-                        invoke-static {v$insertRegister}, $SHORTS_CLASS_DESCRIPTOR->hideShortsToolBar(Z)Z
-                        move-result v$insertRegister
-                        """
-                )
+                    addInstructions(
+                        insertIndex, """
+                            invoke-static {v$insertRegister}, $SHORTS_CLASS_DESCRIPTOR->hideShortsToolBar(Z)Z
+                            move-result v$insertRegister
+                            """
+                    )
+                }
             }
         }
     }
@@ -854,7 +1217,7 @@ val shortsComponentPatch = bytecodePatch(
     SHORTS_COMPONENTS.title,
     SHORTS_COMPONENTS.summary,
 ) {
-    compatibleWith(COMPATIBLE_PACKAGE)
+    compatibleWith(COMPATIBILITY_YOUTUBE)
 
     dependsOn(
         settingsPatch,
@@ -862,6 +1225,7 @@ val shortsComponentPatch = bytecodePatch(
         shortsCustomActionsResourcesPatch,
 
         shortsAnimationPatch,
+        shortsAutoplayPatch,
         shortsCustomActionsPatch,
         shortsNavigationBarPatch,
         shortsRepeatPatch,
@@ -945,37 +1309,17 @@ val shortsComponentPatch = bytecodePatch(
             settingArray += "SETTINGS: SHORTS_REPEAT_STATE_BACKGROUND"
         }
 
-        if (is_19_34_or_greater && !is_20_18_or_greater) {
-            settingArray += "SETTINGS: SHORTS_TIME_STAMP"
+        settingArray += if (is_19_34_or_greater && !is_20_18_or_greater) {
+            "SETTINGS: SHORTS_TIME_STAMP"
         } else {
-            settingArray += "SETTINGS: SHORTS_PLAY_PAUSE_BUTTON_BACKGROUND"
+            "SETTINGS: SHORTS_PLAY_PAUSE_BUTTON_BACKGROUND"
         }
+
+        if (!is_20_40_or_greater) settingArray += "SETTINGS: SHORTS_HIDE_TOOLBAR"
 
         // region patch for hide comments button (non-litho)
 
         shortsButtonFingerprint.hideButton(rightComment, "hideShortsCommentsButton", false)
-
-        // endregion
-
-        // region patch for hide dislike button (non-litho)
-
-        shortsButtonFingerprint.methodOrThrow().apply {
-            if (is_20_18_or_greater) return@apply
-            val constIndex =
-                indexOfFirstLiteralInstructionOrThrow(reelRightDislikeIcon)
-            val constRegister = getInstruction<OneRegisterInstruction>(constIndex).registerA
-
-            val jumpIndex = indexOfFirstInstructionOrThrow(constIndex, Opcode.CONST_CLASS) + 2
-
-            addInstructionsWithLabels(
-                constIndex + 1, """
-                    invoke-static {}, $SHORTS_CLASS_DESCRIPTOR->hideShortsDislikeButton()Z
-                    move-result v$constRegister
-                    if-nez v$constRegister, :hide
-                    const v$constRegister, $reelRightDislikeIcon
-                    """, ExternalLabel("hide", getInstruction(jumpIndex))
-            )
-        }
 
         // endregion
 
@@ -1019,6 +1363,8 @@ val shortsComponentPatch = bytecodePatch(
                         """, ExternalLabel("hide", getInstruction(jumpIndex))
                 )
             }
+        } else if (is_21_05_or_greater) {
+            // YouTube 21.05+ no longer exposes the legacy sound-button dimension resource.
         } else if (reelPlayerRightPivotV2Size != -1L) {
             // Invoke Sound button dimen into extension.
             val smaliInstruction = """
@@ -1161,7 +1507,15 @@ val shortsComponentPatch = bytecodePatch(
                 nop
             """
 
-        if (is_19_25_or_greater) {
+        if (is_21_04_or_greater) {
+            ModernShortsPlaybackStartIntentFingerprint.method.addInstructionsWithLabels(
+                0,
+                """
+                    move-object/from16 v0, p1
+                    ${extensionInstructions(0, 1)}
+                    """
+            )
+        } else if (is_19_25_or_greater) {
             shortsPlaybackStartIntentFingerprint.methodOrThrow().addInstructionsWithLabels(
                 0,
                 """
@@ -1187,7 +1541,7 @@ val shortsComponentPatch = bytecodePatch(
 
         // endregion
 
-        // region Disable experimental Shorts flags.
+        // region Disable experimental Shorts flags
 
         // Flags might be present in earlier targets, but they are not found in 19.47.53.
         // If these flags are forced on, the experimental layout is still not used, and

@@ -1,11 +1,12 @@
 package app.morphe.patches.youtube.layout.translations
 
 import app.morphe.patcher.patch.bytecodePatch
+import app.morphe.patcher.patch.filePathOption
 import app.morphe.patcher.patch.resourcePatch
 import app.morphe.patcher.patch.stringOption
 import app.morphe.patches.shared.translations.APP_LANGUAGES
 import app.morphe.patches.shared.translations.baseTranslationsPatch
-import app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBLE_PACKAGE
+import app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBILITY_YOUTUBE
 import app.morphe.patches.youtube.utils.patch.PatchList.TRANSLATIONS_FOR_YOUTUBE
 import app.morphe.patches.youtube.utils.settings.ResourceUtils.addPreference
 import app.morphe.patches.youtube.utils.settings.settingsPatch
@@ -14,41 +15,25 @@ import app.morphe.patches.youtube.utils.settings.settingsPatch
 private val SUPPORTED_TRANSLATIONS = setOf(
     "ar",
     "az-rAZ",
-    "be-rBY",
-    "bg-rBG",
+    "bn",
     "cs-rCZ",
-    "da-rDK",
     "de-rDE",
     "el-rGR",
-    "en-rGB",
-    "en-rUS",
     "es-rES",
-    "es-rUS",
     "fa-rIR",
-    "fil-rPH",
     "fr-rFR",
-    "ga-rIE",
     "hu-rHU",
-    "id-rID",
     "in",
     "it-rIT",
     "iw-rIL",
     "ja-rJP",
     "ko-rKR",
-    "lo-rLA",
-    "my-rMM",
-    "nl-rNL",
-    "pa-rIN",
     "pl-rPL",
     "pt-rBR",
     "ru-rRU",
-    "sk-rSK",
-    "sv-rSE",
-    "ta-rIN",
+    "th-rTH",
     "tr-rTR",
     "uk-rUA",
-    "ur-rPK",
-    "uz-rUZ",
     "vi-rVN",
     "zh-rCN",
     "zh-rTW",
@@ -70,10 +55,10 @@ val translationsPatch = resourcePatch(
     TRANSLATIONS_FOR_YOUTUBE.title,
     TRANSLATIONS_FOR_YOUTUBE.summary,
 ) {
-    compatibleWith(COMPATIBLE_PACKAGE)
+    compatibleWith(COMPATIBILITY_YOUTUBE)
     dependsOn(translationsBytecodePatch, settingsPatch)
 
-    val customTranslations by stringOption(
+    val customTranslations by filePathOption(
         key = "customTranslations",
         default = "",
         title = "Custom translations",
@@ -81,7 +66,6 @@ val translationsPatch = resourcePatch(
             The path to the 'strings.xml' file.
             Please note that applying the 'strings.xml' file will overwrite all existing translations.
             """.trimIndent(),
-        required = true,
     )
 
     val selectedTranslations by stringOption(

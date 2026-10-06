@@ -52,11 +52,13 @@ package app.morphe.extension.youtube.patches.utils;
 import static app.morphe.extension.shared.utils.StringRef.str;
 import static app.morphe.extension.shared.utils.Utils.runOnMainThreadDelayed;
 import static app.morphe.extension.youtube.shared.RootView.getContext;
+import static app.morphe.extension.youtube.settings.YouTubeActivityHook.USE_BOLD_ICONS;
 import static app.morphe.extension.youtube.utils.VideoUtils.launchVideoExternalDownloader;
 import static app.morphe.extension.youtube.utils.VideoUtils.openPlaylist;
 import static app.morphe.extension.youtube.utils.VideoUtils.reloadVideo;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.widget.LinearLayout;
 
@@ -66,11 +68,14 @@ import androidx.annotation.NonNull;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.commons.lang3.BooleanUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import app.morphe.extension.shared.innertube.utils.AuthUtils;
 import app.morphe.extension.shared.ui.CustomDialog;
@@ -167,7 +172,7 @@ public class PlaylistPatch {
      * Injection point.
      */
     public static void removeFromQueue(@Nullable String setVideoId) {
-        if (StringUtils.isNotEmpty(setVideoId)) {
+        if (!TextUtils.isEmpty(setVideoId)) {
             synchronized (lastVideoIds) {
                 String videoId = lastVideoIds.inverseBidiMap().get(setVideoId);
                 if (videoId != null) {
@@ -211,6 +216,66 @@ public class PlaylistPatch {
 
                 buildBottomSheetDialog(customActionsEntries);
             }
+        }
+    }
+
+    /**
+     * Creates a fresh temporary queue from the supplied videos and opens it.
+     *
+     * @param searchVideoIds video IDs in the order in which they should appear in the queue
+     */
+    public static void addVideosToQueueAndOpen(@NonNull String[] searchVideoIds) {
+        if (AuthUtils.isNotLoggedIn()) {
+            handleCheckError(checkFailedAuth);
+            return;
+        }
+        if (getContext() == null) {
+            handleCheckError(checkFailedQueue);
+            return;
+        }
+
+        Set<String> uniqueVideoIds = new LinkedHashSet<>();
+        for (String searchVideoId : searchVideoIds) {
+            if (!TextUtils.isEmpty(searchVideoId) && searchVideoId.length() == 11) {
+                uniqueVideoIds.add(searchVideoId);
+            }
+        }
+        if (uniqueVideoIds.isEmpty()) {
+            handleCheckError(checkFailedVideoId);
+            return;
+        }
+
+        List<String> videoIds = new ArrayList<>(uniqueVideoIds);
+        String firstVideoId = videoIds.get(0);
+        Map<String, String> requestHeader = AuthUtils.getRequestHeader();
+        try {
+            Logger.printDebug(() -> "Creating temporary queue from " + videoIds.size() + " videos");
+            CreatePlaylistRequest.fetchRequestIfNeeded(videoIds, requestHeader);
+            runOnMainThreadDelayed(() -> {
+                CreatePlaylistRequest request = CreatePlaylistRequest.getRequestForVideoIds(videoIds);
+                if (request != null) {
+                    Pair<String, String> playlistIds = request.getPlaylistId();
+                    if (playlistIds != null) {
+                        String createdPlaylistId = playlistIds.getFirst();
+                        String setVideoId = playlistIds.getSecond();
+                        if (!TextUtils.isEmpty(createdPlaylistId) && !TextUtils.isEmpty(setVideoId)) {
+                            playlistId = createdPlaylistId;
+                            synchronized (lastVideoIds) {
+                                lastVideoIds.clear();
+                                lastVideoIds.put(firstVideoId, setVideoId);
+                            }
+                            EditPlaylistRequest.clear();
+                            showToast(fetchSucceededCreate);
+                            openQueue();
+                            return;
+                        }
+                    }
+                }
+                showToast(fetchFailedCreate);
+            }, DELAY_MILLISECONDS);
+        } catch (Exception ex) {
+            Logger.printException(() -> "addVideosToQueueAndOpen failure", ex);
+            showToast(fetchFailedCreate);
         }
     }
 
@@ -328,7 +393,7 @@ public class PlaylistPatch {
             return;
         }
         String currentVideoId = videoId;
-        if (StringUtils.isEmpty(currentVideoId)) {
+        if (TextUtils.isEmpty(currentVideoId)) {
             handleCheckError(checkFailedVideoId);
             return;
         }
@@ -364,7 +429,7 @@ public class PlaylistPatch {
                                 // onCancelClick
                                 null,
                                 // neutralButtonText
-                                str("revanced_queue_manager_video_information_copy"),
+                                str("revanced_settings_import_copy"),
                                 // onNeutralClick
                                 () -> Utils.setClipboard(
                                         message,
@@ -422,7 +487,7 @@ public class PlaylistPatch {
 
     private static void saveToPlaylist(@Nullable String libraryId, @Nullable String libraryTitle) {
         try {
-            if (StringUtils.isEmpty(libraryId)) {
+            if (TextUtils.isEmpty(libraryId)) {
                 handleCheckError(checkFailedPlaylistId);
                 return;
             }
@@ -494,7 +559,7 @@ public class PlaylistPatch {
             return;
         }
         if (openVideo) {
-            if (StringUtils.isEmpty(currentVideoId)) {
+            if (TextUtils.isEmpty(currentVideoId)) {
                 handleCheckError(checkFailedVideoId);
                 return;
             }
@@ -525,42 +590,50 @@ public class PlaylistPatch {
         ADD_TO_QUEUE(
                 "revanced_queue_manager_add_to_queue",
                 "yt_outline_list_add_black_24",
+                "yt_outline_experimental_playlist_add_vd_theme_24",
                 () -> fetchQueue(false, false, false, false)
         ),
         ADD_TO_QUEUE_AND_OPEN_QUEUE(
                 "revanced_queue_manager_add_to_queue_and_open_queue",
                 "yt_outline_list_add_black_24",
+                "yt_outline_experimental_playlist_add_vd_theme_24",
                 () -> fetchQueue(false, true, false, false)
         ),
         ADD_TO_QUEUE_AND_PLAY_VIDEO(
                 "revanced_queue_manager_add_to_queue_and_play_video",
                 "yt_outline_list_play_arrow_black_24",
+                "yt_outline_experimental_playlist_vd_theme_24",
                 () -> fetchQueue(false, true, true, false)
         ),
         // The circle reload icon is missing on 19.28, while this 24dp repeat icon exists on 19.28 and 20.51.
         ADD_TO_QUEUE_AND_RELOAD_VIDEO(
                 "revanced_queue_manager_add_to_queue_and_reload_video",
                 "yt_outline_arrow_repeat_black_24",
+                "yt_outline_experimental_replay_vd_theme_24",
                 () -> fetchQueue(false, true, true, true)
         ),
         REMOVE_FROM_QUEUE(
                 "revanced_queue_manager_remove_from_queue",
                 "yt_outline_trash_can_black_24",
+                "yt_outline_experimental_circle_slash_vd_theme_24",
                 () -> fetchQueue(true, false, false, false)
         ),
         REMOVE_FROM_QUEUE_AND_OPEN_QUEUE(
                 "revanced_queue_manager_remove_from_queue_and_open_queue",
                 "yt_outline_trash_can_black_24",
+                "yt_outline_experimental_circle_slash_vd_theme_24",
                 () -> fetchQueue(true, true, false, false)
         ),
         REMOVE_FROM_QUEUE_AND_RELOAD_VIDEO(
                 "revanced_queue_manager_remove_from_queue_and_reload_video",
                 "yt_outline_arrow_repeat_black_24",
+                "yt_outline_experimental_replay_vd_theme_24",
                 () -> fetchQueue(true, true, true, true)
         ),
         OPEN_QUEUE(
                 "revanced_queue_manager_open_queue",
                 "yt_outline_list_view_black_24",
+                "yt_outline_experimental_queue_vd_theme_24",
                 PlaylistPatch::openQueue
         ),
         // For some reason, the 'playlist/delete' endpoint is unavailable.
@@ -572,6 +645,7 @@ public class PlaylistPatch {
         SAVE_QUEUE(
                 "revanced_queue_manager_save_queue",
                 "yt_outline_bookmark_black_24",
+                "yt_outline_experimental_bookmark_vd_theme_24",
                 PlaylistPatch::saveToPlaylist
         ),
         SUMMARIZE_VIDEO(
@@ -582,11 +656,13 @@ public class PlaylistPatch {
         SHOW_ORIGINAL_VIDEO_INFORMATION(
                 "revanced_queue_manager_show_original_video_information",
                 "yt_outline_info_circle_black_24",
+                "yt_outline_experimental_info_circle_black_24",
                 PlaylistPatch::fetchVideoDetails
         ),
         EXTERNAL_DOWNLOADER(
-                "revanced_queue_manager_external_downloader",
+                "revanced_shorts_custom_actions_external_downloader_label",
                 "yt_outline_download_black_24",
+                "yt_outline_experimental_download_black_24",
                 PlaylistPatch::downloadVideo
         );
 
@@ -599,7 +675,16 @@ public class PlaylistPatch {
         public final Runnable onClickAction;
 
         QueueManager(@NonNull String label, @NonNull String icon, @NonNull Runnable onClickAction) {
-            this.drawableId = ResourceUtils.getDrawableIdentifier(icon);
+            this(label, icon, icon, onClickAction);
+        }
+
+        /**
+         * Uses the icon style selected by YouTube's bold-icons feature flag and user override.
+         */
+        QueueManager(@NonNull String label, @NonNull String icon, @NonNull String boldIcon,
+                     @NonNull Runnable onClickAction) {
+            this.drawableId = ResourceUtils.getDrawableIdentifier(
+                    USE_BOLD_ICONS ? boldIcon : icon);
             this.label = ResourceUtils.getString(label);
             this.onClickAction = onClickAction;
         }

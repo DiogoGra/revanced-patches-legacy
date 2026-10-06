@@ -29,6 +29,7 @@ import app.morphe.extension.shared.utils.Logger;
 import app.morphe.extension.shared.utils.Utils;
 import app.morphe.extension.youtube.settings.Settings;
 import app.morphe.extension.youtube.shared.VideoInformation;
+import app.morphe.extension.youtube.shared.VideoState;
 import app.morphe.extension.youtube.sponsorblock.objects.CategoryBehaviour;
 import app.morphe.extension.youtube.sponsorblock.objects.SegmentCategory;
 import app.morphe.extension.youtube.sponsorblock.objects.SponsorSegment;
@@ -60,8 +61,13 @@ public class SponsorBlockUtils {
                 case DialogInterface.BUTTON_NEGATIVE ->
                         newSponsorSegmentStartMillis = newSponsorSegmentDialogShownMillis;
                 // End.
-                case DialogInterface.BUTTON_POSITIVE ->
-                        newSponsorSegmentEndMillis = newSponsorSegmentDialogShownMillis;
+                case DialogInterface.BUTTON_POSITIVE -> {
+                    final long videoLength = VideoInformation.getVideoLength();
+                    newSponsorSegmentEndMillis =
+                            VideoState.getCurrent() == VideoState.ENDED && videoLength > 0
+                                    ? videoLength
+                                    : newSponsorSegmentDialogShownMillis;
+                }
             }
             dialog.dismiss();
         }
@@ -281,7 +287,7 @@ public class SponsorBlockUtils {
                 Utils.showToastShort(str("revanced_sb_new_segment_mark_locations_first"));
             } else if (hasStart && !hasEnd) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(SponsorBlockViewController.getOverLaysViewGroupContext())
-                        .setTitle(str("revanced_sb_new_segment_highlight_title"))
+                        .setTitle(str("revanced_sb_new_segment_highlight_submit"))
                         .setMessage(str("revanced_sb_new_segment_highlight_content",
                                 formatSegmentTime(newSponsorSegmentStartMillis)))
                         .setNegativeButton(android.R.string.cancel, null)

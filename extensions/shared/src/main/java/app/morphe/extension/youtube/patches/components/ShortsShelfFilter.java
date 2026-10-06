@@ -1,3 +1,14 @@
+/*
+ * Portions of this file are ported from Morphe:
+ * Copyright 2026 Morphe.
+ * https://github.com/MorpheApp/morphe-patches
+ *
+ * Original hard forked code:
+ * https://github.com/ReVanced/revanced-patches/commit/724e6d61b2ecd868c1a9a37d465a688e83a74799
+ *
+ * See the included NOTICE file for GPLv3 Section 7 terms that apply to Morphe contributions.
+ */
+
 package app.morphe.extension.youtube.patches.components;
 
 import org.apache.commons.lang3.StringUtils;
@@ -10,7 +21,9 @@ import app.morphe.extension.shared.utils.Logger;
 import app.morphe.extension.shared.utils.StringTrieSearch;
 import app.morphe.extension.youtube.settings.Settings;
 import app.morphe.extension.youtube.shared.EngagementPanel;
+import app.morphe.extension.youtube.shared.NavigationBar;
 import app.morphe.extension.youtube.shared.NavigationBar.NavigationButton;
+import app.morphe.extension.youtube.shared.PlayerType;
 import app.morphe.extension.youtube.shared.RootView;
 
 @SuppressWarnings({"unused", "deprecation"})
@@ -90,6 +103,18 @@ public final class ShortsShelfFilter extends Filter {
     @Override
     public boolean isFiltered(String path, String identifier, String allValue, byte[] buffer,
                               StringFilterGroup matchedGroup, FilterContentType contentType, int contentIndex) {
+        return isFiltered(feedGroup.matches(allValue), path, buffer, matchedGroup, contentType, contentIndex);
+    }
+
+    @Override
+    public boolean isFiltered(Object contextSource, String identifier, String accessibility, String path, byte[] buffer,
+                              StringFilterGroup matchedGroup, FilterContentType contentType, int contentIndex) {
+        return isFiltered(String.valueOf(contextSource).contains(CONVERSATION_CONTEXT_FEED_IDENTIFIER),
+                path, buffer, matchedGroup, contentType, contentIndex);
+    }
+
+    private boolean isFiltered(boolean isHomeFeedOrRelatedVideo, String path, byte[] buffer,
+                               StringFilterGroup matchedGroup, FilterContentType contentType, int contentIndex) {
         final boolean playerActive = RootView.isPlayerActive();
         final boolean descriptionActive = EngagementPanel.isDescription();
         final boolean searchBarActive = RootView.isSearchBarActive();
@@ -106,28 +131,41 @@ public final class ShortsShelfFilter extends Filter {
         );
         if (contentType == FilterContentType.PATH) {
             if (matchedGroup == compactFeedVideoPath) {
-                return hideShelves && compactFeedVideoBuffer.check(buffer).isFiltered();
+                return hideShelves
+                        // When a video is autoplaying in the feed, no new components are drawn on the screen.
+                        // Therefore, filtering is skipped when the current PlayerType is [INLINE_MINIMAL].
+                        && PlayerType.getCurrent() != PlayerType.INLINE_MINIMAL
+                        // The litho path of the feed video is 'video_lockup_with_attachment.e'.
+                        // It appears [shortsCompactFeedVideoBuffer] is used after 20 seconds during autoplay in the feed in YouTube 20.44.38.
+                        // If the Shorts shelf is hidden on the Home feed, the video in the feed will be hidden after 20 seconds have passed since autoplay began in the feed.
+                        // See: https://github.com/MorpheApp/morphe-patches/issues/773.
+                        && compactFeedVideoBuffer.check(buffer).isFiltered();
             } else if (matchedGroup == shelfHeaderPath) {
-                // Because the header is used in watch history and possibly other places, check for the index,
-                // which is 0 when the shelf header is used for Shorts.
+                // Shelf header reused in history/channel/etc.
+                // Shorts header is always index 0.
                 if (contentIndex != 0) {
                     return false;
                 }
-                if (!channelProfileShelfHeader.check(buffer).isFiltered()) {
-                    return false;
+                if (!isHomeFeedOrRelatedVideo) {
+                    return !NavigationBar.isSearchBarActive() && channelProfileShelfHeader.check(buffer).isFiltered();
                 }
-                return !feedGroup.matches(allValue);
+                return hideShelves;
             }
         } else if (contentType == FilterContentType.IDENTIFIER) {
             // Feed/search identifier components.
             if (matchedGroup == shelfHeaderIdentifier) {
+                // Shelf header reused in history/channel/etc.
+                // Shorts header is always index 0.
+                if (contentIndex != 0) {
+                    return false;
+                }
                 // Check ConversationContext to not hide shelf header in channel profile
                 // This value does not exist in the shelf header in the channel profile
-                if (!feedGroup.matches(allValue)) {
+                if (!isHomeFeedOrRelatedVideo) {
                     return false;
                 }
             } else if (matchedGroup == channelProfile) {
-                return true;
+                return !NavigationBar.isSearchBarActive();
             }
             return hideShelves;
         }
@@ -182,15 +220,28 @@ public final class ShortsShelfFilter extends Filter {
             return hideHomeAndRelatedVideos;
         }
 
-        switch (browseId) {
-            case BROWSE_ID_HISTORY, BROWSE_ID_LIBRARY, BROWSE_ID_NOTIFICATION_INBOX -> {
-                return hideHistory;
+        switch (selectedNavButton) {
+            case SEARCH -> {
+                return hideSearch;
             }
-            case BROWSE_ID_SUBSCRIPTIONS -> {
+            case SUBSCRIPTIONS -> {
                 return hideSubscriptions;
             }
+            case LIBRARY -> {
+                return hideHistory;
+            }
             default -> {
-                return hideHomeAndRelatedVideos;
+                switch (browseId) {
+                    case BROWSE_ID_HISTORY, BROWSE_ID_LIBRARY, BROWSE_ID_NOTIFICATION_INBOX -> {
+                        return hideHistory;
+                    }
+                    case BROWSE_ID_SUBSCRIPTIONS -> {
+                        return hideSubscriptions;
+                    }
+                    default -> {
+                        return hideHomeAndRelatedVideos;
+                    }
+                }
             }
         }
     }

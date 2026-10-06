@@ -7,7 +7,7 @@ import app.morphe.patcher.extensions.InstructionExtensions.replaceInstruction
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.patch.resourcePatch
 import app.morphe.patcher.patch.stringOption
-import app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBLE_PACKAGE
+import app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBILITY_YOUTUBE
 import app.morphe.patches.youtube.utils.extension.Constants.EXTENSION_PATH
 import app.morphe.patches.youtube.utils.extension.Constants.PATCH_STATUS_CLASS_DESCRIPTOR
 import app.morphe.patches.youtube.utils.patch.PatchList.SPONSORBLOCK
@@ -28,9 +28,14 @@ import app.morphe.patches.youtube.video.information.videoInformationPatch
 import app.morphe.patches.youtube.video.information.videoTimeHook
 import app.morphe.util.ResourceGroup
 import app.morphe.util.copyResources
-import app.morphe.util.*
+import app.morphe.util.doRecursively
 import app.morphe.util.fingerprint.matchOrThrow
 import app.morphe.util.fingerprint.methodOrThrow
+import app.morphe.util.getReference
+import app.morphe.util.indexOfFirstInstructionOrThrow
+import app.morphe.util.indexOfFirstInstructionReversedOrThrow
+import app.morphe.util.indexOfFirstLiteralInstructionOrThrow
+import app.morphe.util.updatePatchStatus
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
@@ -70,7 +75,6 @@ val sponsorBlockBytecodePatch = bytecodePatch(
             EXTENSION_SEGMENT_PLAYBACK_CONTROLLER_CLASS_DESCRIPTOR,
             "initialize"
         )
-
 
         seekbarOnDrawFingerprint.methodOrThrow(seekbarFingerprint).apply {
             // Get left and right of seekbar rectangle
@@ -189,7 +193,7 @@ val sponsorBlockPatch = resourcePatch(
     SPONSORBLOCK.title,
     SPONSORBLOCK.summary,
 ) {
-    compatibleWith(COMPATIBLE_PACKAGE)
+    compatibleWith(COMPATIBILITY_YOUTUBE)
 
     dependsOn(
         playerControlsPatch,
@@ -242,8 +246,10 @@ val sponsorBlockPatch = resourcePatch(
                 "revanced_sb_edit.xml",
                 "revanced_sb_forward.xml",
                 "revanced_sb_logo.xml",
+                "revanced_sb_logo_bold.xml",
                 "revanced_sb_publish.xml",
-                "revanced_sb_voting.xml"
+                "revanced_sb_voting.xml",
+                "revanced_sb_voting_bold.xml",
             )
         ).forEach { resourceGroup ->
             copyResources("youtube/sponsorblock/outline", resourceGroup)
@@ -261,7 +267,7 @@ val sponsorBlockPatch = resourcePatch(
         }
 
         /**
-         * merge xml nodes from the host to their real xml files
+         * merge XML nodes from the host to their real XML files
          */
         addTopControl(
             "youtube/sponsorblock/shared",

@@ -9,9 +9,11 @@
 package app.morphe.extension.youtube.patches.player;
 
 import static app.morphe.extension.shared.utils.StringRef.str;
-import static app.morphe.extension.shared.utils.Utils.validateValue;
 import static app.morphe.extension.youtube.patches.player.MiniplayerPatch.MiniplayerType.DEFAULT;
 import static app.morphe.extension.youtube.patches.player.MiniplayerPatch.MiniplayerType.DISABLED;
+import static app.morphe.extension.youtube.patches.player.MiniplayerPatch.MiniplayerType.MINIMAL;
+import static app.morphe.extension.youtube.patches.player.MiniplayerPatch.MiniplayerType.MINIMAL_BAR;
+import static app.morphe.extension.youtube.patches.player.MiniplayerPatch.MiniplayerType.MINIMAL_BAR_2;
 import static app.morphe.extension.youtube.patches.player.MiniplayerPatch.MiniplayerType.MODERN_1;
 import static app.morphe.extension.youtube.patches.player.MiniplayerPatch.MiniplayerType.MODERN_2;
 import static app.morphe.extension.youtube.patches.player.MiniplayerPatch.MiniplayerType.MODERN_3;
@@ -21,10 +23,13 @@ import static app.morphe.extension.youtube.utils.ExtendedUtils.IS_19_21_OR_GREAT
 import static app.morphe.extension.youtube.utils.ExtendedUtils.IS_19_26_OR_GREATER;
 import static app.morphe.extension.youtube.utils.ExtendedUtils.IS_19_29_OR_GREATER;
 import static app.morphe.extension.youtube.utils.ExtendedUtils.IS_19_34_OR_GREATER;
+import static app.morphe.extension.youtube.utils.ExtendedUtils.IS_21_17_OR_GREATER;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.View;
@@ -35,8 +40,11 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import app.morphe.extension.shared.settings.Setting;
+import app.morphe.extension.shared.settings.preference.SeekBarPreference;
 import app.morphe.extension.shared.utils.Logger;
 import app.morphe.extension.shared.utils.ResourceUtils;
 import app.morphe.extension.shared.utils.Utils;
@@ -76,7 +84,19 @@ public final class MiniplayerPatch {
         /**
          * Half broken miniplayer, and in 20.02 and earlier is declared as type 4.
          */
-        MODERN_5(null, 5);
+        MODERN_5(null, 5),
+        /**
+         * Modern 4, reshaped into the classic minimal bar.
+         *
+         * @see MinimalMiniplayerPatch
+         */
+        MINIMAL_BAR(null, 4),
+        /**
+         * Same bar, but drawn on the video instead of beside it.
+         *
+         * @see MinimalMiniplayerPatch
+         */
+        MINIMAL_BAR_2(null, 4);
 
         /**
          * Legacy tablet hook value.
@@ -126,15 +146,7 @@ public final class MiniplayerPatch {
             // YT seems to use a minimum height to calculate the minimum miniplayer width based on the video.
             // 170 seems to be the smallest that can be used and using less makes no difference.
             final int WIDTH_DIP_MIN = 170; // Seems to be the smallest that works.
-            final int HORIZONTAL_PADDING_DIP = 15; // Estimated padding.
-            // Round down to the nearest 5 pixels, to keep any error toasts easier to read.
-            final int estimatedWidthDipMax = 5 * ((deviceDipWidth - HORIZONTAL_PADDING_DIP) / 5);
-            // On some ultra low end devices the pixel width and density are the same number,
-            // which causes the estimate to always give a value of 1.
-            // Fix this by using a fixed size of double the min width.
-            final int WIDTH_DIP_MAX = estimatedWidthDipMax <= WIDTH_DIP_MIN
-                    ? 2 * WIDTH_DIP_MIN
-                    : estimatedWidthDipMax;
+            final int WIDTH_DIP_MAX = getWidthDipMax(deviceDipWidth);
             Logger.printDebug(() -> "Screen dip width: " + deviceDipWidth + " maxWidth: " + WIDTH_DIP_MAX);
 
             int dipWidth = Settings.MINIPLAYER_WIDTH_DIP.get();
@@ -155,6 +167,18 @@ public final class MiniplayerPatch {
         }
     }
 
+    private static int getWidthDipMax(int deviceDipWidth) {
+        final int HORIZONTAL_PADDING_DIP = 15; // Estimated padding.
+        // Round down to the nearest 5 pixels, to keep any error toasts easier to read.
+        final int estimatedWidthDipMax = 5 * ((deviceDipWidth - HORIZONTAL_PADDING_DIP) / 5);
+        // On some ultra high-end devices the pixel width and density are the same number,
+        // which causes the estimate to always give a value of 1.
+        // Fix this by using a fixed size of double the min width.
+        return estimatedWidthDipMax <= 170
+                ? 2 * 170
+                : estimatedWidthDipMax;
+    }
+
     /**
      * Modern subtitle overlay for {@link MiniplayerType#MODERN_2}.
      * Resource is not present in older targets, and this field will be zero.
@@ -168,6 +192,15 @@ public final class MiniplayerPatch {
     private static final MiniplayerType CURRENT_TYPE = Settings.MINIPLAYER_TYPE.get();
 
     /**
+     * Current miniplayer type captured for this app process.
+     *
+     * @return the selected miniplayer type
+     */
+    public static MiniplayerType getCurrentMiniplayerType() {
+        return CURRENT_TYPE;
+    }
+
+    /**
      * Cannot turn off double tap with modern 2 or 3 with later targets,
      * as forcing it off breakings tapping the miniplayer.
      */
@@ -176,8 +209,15 @@ public final class MiniplayerPatch {
             IS_19_29_OR_GREATER ||
                     (CURRENT_TYPE.isModern() && Settings.MINIPLAYER_DOUBLE_TAP_ACTION.get());
 
-    private static final boolean DRAG_AND_DROP_ENABLED =
-            CURRENT_TYPE.isModern() && Settings.MINIPLAYER_DRAG_AND_DROP.get();
+    /**
+     * The minimal bar is docked and answers for its own gestures, so everything about dragging
+     * the miniplayer is left at its untouched value no matter what the settings still hold.
+     */
+    private static final boolean MINIMAL_BAR_SELECTED =
+            CURRENT_TYPE == MINIMAL_BAR || CURRENT_TYPE == MINIMAL_BAR_2;
+
+    private static final boolean DRAG_AND_DROP_ENABLED = CURRENT_TYPE.isModern()
+            && (MINIMAL_BAR_SELECTED || Settings.MINIPLAYER_DRAG_AND_DROP.get());
 
     private static final boolean HIDE_OVERLAY_BUTTONS_ENABLED =
             Settings.MINIPLAYER_HIDE_OVERLAY_BUTTONS.get()
@@ -187,16 +227,25 @@ public final class MiniplayerPatch {
             (CURRENT_TYPE == MODERN_1 || CURRENT_TYPE == MODERN_3 || CURRENT_TYPE == MODERN_4)
                     && Settings.MINIPLAYER_HIDE_SUBTEXT.get();
 
-    // 19.25 is last version that has forward/back buttons for phones,
-    // but buttons still show for tablets/foldable devices and they don't work well so always hide.
+    // 19.25 is last version that has "forward"/"back" buttons for phones,
+    // but buttons still show for tablets/foldable devices, and they don't work well so always hide.
     private static final boolean HIDE_REWIND_FORWARD_ENABLED = CURRENT_TYPE == MODERN_1
             && (IS_19_34_OR_GREATER || Settings.MINIPLAYER_HIDE_REWIND_FORWARD.get());
 
     private static final boolean MINIPLAYER_ROUNDED_CORNERS_ENABLED =
             CURRENT_TYPE.isModern() && Settings.MINIPLAYER_ROUNDED_CORNERS.get();
 
-    private static final boolean MINIPLAYER_HORIZONTAL_DRAG_ENABLED =
-            DRAG_AND_DROP_ENABLED && Settings.MINIPLAYER_HORIZONTAL_DRAG.get();
+    private static final boolean MINIPLAYER_HORIZONTAL_DRAG_ENABLED = DRAG_AND_DROP_ENABLED
+            && (MINIMAL_BAR_SELECTED || Settings.MINIPLAYER_HORIZONTAL_DRAG.get());
+
+    private static final Map<Integer, String> MINIMAL_PLAYER_DRAWABLES = Map.of(
+            ResourceUtils.getStringIdentifier("accessibility_pause"),
+            "yt_fill_pause_vd_theme_24",
+            ResourceUtils.getStringIdentifier("accessibility_play"),
+            "yt_fill_play_arrow_vd_theme_24",
+            ResourceUtils.getStringIdentifier("accessibility_replay"),
+            "yt_outline_replay_arrow_vd_theme_24"
+    );
 
     /**
      * Remove a broken and always present subtitle text that is only
@@ -205,23 +254,45 @@ public final class MiniplayerPatch {
     private static final boolean HIDE_BROKEN_MODERN_2_SUBTITLE =
             CURRENT_TYPE == MODERN_2 && !IS_19_21_OR_GREATER;
 
-    private static final int OPACITY_LEVEL;
+    private static final int OPACITY_LEVEL = SeekBarPreference.clampToRange(Settings.MINIPLAYER_OPACITY) * 255 / 100;
 
-    static {
-        final int opacity = validateValue(
-                Settings.MINIPLAYER_OPACITY,
-                0,
-                100,
-                "revanced_miniplayer_opacity_invalid_toast"
-        );
+    /**
+     * Everything about dragging the miniplayer around, which a docked bar does not do.
+     */
+    private static boolean isDraggableMiniplayer() {
+        MiniplayerType type = Settings.MINIPLAYER_TYPE.get();
 
-        OPACITY_LEVEL = (opacity * 255) / 100;
+        return type.isModern() && type != MINIMAL_BAR && type != MINIMAL_BAR_2;
+    }
+
+    public static final class MiniplayerDragAndDropAvailability implements Setting.Availability {
+        @Override
+        public boolean isAvailable() {
+            return isDraggableMiniplayer();
+        }
+
+        @Override
+        public List<Setting<?>> getParentSettings() {
+            return List.of(Settings.MINIPLAYER_TYPE);
+        }
+    }
+
+    public static final class MiniplayerMinimalBar2Availability implements Setting.Availability {
+        @Override
+        public boolean isAvailable() {
+            return Settings.MINIPLAYER_TYPE.get() == MINIMAL_BAR_2;
+        }
+
+        @Override
+        public List<Setting<?>> getParentSettings() {
+            return List.of(Settings.MINIPLAYER_TYPE);
+        }
     }
 
     public static final class MiniplayerHorizontalDragAvailability implements Setting.Availability {
         @Override
         public boolean isAvailable() {
-            return Settings.MINIPLAYER_TYPE.get().isModern() && Settings.MINIPLAYER_DRAG_AND_DROP.get();
+            return isDraggableMiniplayer() && Settings.MINIPLAYER_DRAG_AND_DROP.get();
         }
 
         @Override
@@ -236,7 +307,7 @@ public final class MiniplayerPatch {
     public static final class MiniplayerHorizontalDragPlaybackAvailability implements Setting.Availability {
         @Override
         public boolean isAvailable() {
-            return Settings.MINIPLAYER_TYPE.get().isModern()
+            return isDraggableMiniplayer()
                     && Settings.MINIPLAYER_DRAG_AND_DROP.get();
         }
 
@@ -252,7 +323,7 @@ public final class MiniplayerPatch {
     public static final class MiniplayerHorizontalRepositioningAvailability implements Setting.Availability {
         @Override
         public boolean isAvailable() {
-            return Settings.MINIPLAYER_TYPE.get().isModern()
+            return isDraggableMiniplayer()
                     && Settings.MINIPLAYER_DRAG_AND_DROP.get();
         }
 
@@ -290,7 +361,8 @@ public final class MiniplayerPatch {
         @Override
         public boolean isAvailable() {
             MiniplayerType type = Settings.MINIPLAYER_TYPE.get();
-            return type == MODERN_1 || type == MODERN_2 || type == MODERN_3 || type == MODERN_4;
+            return type == MODERN_1 || type == MODERN_2 || type == MODERN_3 || type == MODERN_4
+                    || type == MINIMAL_BAR || type == MINIMAL_BAR_2;
         }
 
         @Override
@@ -367,6 +439,12 @@ public final class MiniplayerPatch {
      * Injection point.
      */
     public static int getModernMiniplayerOverrideType(int original) {
+        if (CURRENT_TYPE == MINIMAL) {
+            // In newer app targets the minimal player can show the wrong icon if modern 4 is allowed.
+            // Forcing to modern 1 seems to work.
+            return Objects.requireNonNull(MODERN_1.modernPlayerType);
+        }
+
         Integer modernValue = CURRENT_TYPE.modernPlayerType;
         return modernValue == null
                 ? original
@@ -419,7 +497,6 @@ public final class MiniplayerPatch {
         return DRAG_AND_DROP_ENABLED;
     }
 
-
     /**
      * Injection point.
      */
@@ -429,6 +506,13 @@ public final class MiniplayerPatch {
         }
 
         return MINIPLAYER_ROUNDED_CORNERS_ENABLED;
+    }
+
+    /**
+     * Injection point.
+     */
+    public static boolean getHorizontalDrag() {
+        return !MINIPLAYER_HORIZONTAL_DRAG_ENABLED;
     }
 
     /**
@@ -477,7 +561,7 @@ public final class MiniplayerPatch {
      * offscreen, in order to prevent miniplayer from being shown itself during the user's navigation across the app.
      */
     public static Rect blockOffscreenMiniplayerHorizontalReposition(Rect currentRect, Rect previousRect) {
-        if (!Settings.MINIPLAYER_DISABLE_HORIZONTAL_REPOSITION.get()) {
+        if (MINIMAL_BAR_SELECTED || !Settings.MINIPLAYER_DISABLE_HORIZONTAL_REPOSITION.get()) {
             miniplayerOffscreenState = 0;
             return currentRect;
         }
@@ -566,6 +650,7 @@ public final class MiniplayerPatch {
      * Injection point.
      */
     public static void hideMiniplayerExpandClose(View view) {
+        MinimalMiniplayerPatch.setModernOverlayButton(view);
         Utils.hideViewByRemovingFromParentUnderCondition(HIDE_OVERLAY_BUTTONS_ENABLED, view);
     }
 
@@ -573,6 +658,7 @@ public final class MiniplayerPatch {
      * Injection point.
      */
     public static void hideMiniplayerActionButton(View view) {
+        MinimalMiniplayerPatch.setModernOverlayButton(view);
         if (CURRENT_TYPE == MODERN_4) {
             Utils.hideViewByRemovingFromParentUnderCondition(HIDE_OVERLAY_BUTTONS_ENABLED, view);
         }
@@ -618,6 +704,51 @@ public final class MiniplayerPatch {
             }
         } catch (Exception ex) {
             Logger.printException(() -> "playerOverlayGroupCreated failure", ex);
+        }
+    }
+
+    /**
+     * Injection point.
+     */
+    public static boolean allowBoldIcons(boolean original) {
+        if (CURRENT_TYPE == MINIMAL) {
+            // Minimal player does not have the correct pause/play icon (it's too large).
+            // Use the non-bold icons instead.
+            return false;
+        }
+
+        return original;
+    }
+
+    /**
+     * Injection point.
+     * <p>
+     * Fixes the fullscreen button tint when the minimal miniplayer type is selected.
+     * The minimal type applies a theme where {@code ytOverlayButtonPrimary} resolves to gray
+     * instead of white, making the fullscreen button appear gray.
+     */
+    public static void fixMinimalMiniplayerFullscreenButtonTint(View view) {
+        if (CURRENT_TYPE != MINIMAL) return;
+
+        if (view instanceof ImageView imageView) {
+            imageView.setImageTintList(ColorStateList.valueOf(0xFFFFFFFF));
+        }
+    }
+
+    /**
+     * Injection point.
+     */
+    public static void overrideMiniplayerActionButtonDrawable(ImageView view, int contentDescriptionId) {
+        if (!IS_21_17_OR_GREATER || CURRENT_TYPE != MINIMAL) {
+            return;
+        }
+
+        String drawableName = MINIMAL_PLAYER_DRAWABLES.get(contentDescriptionId);
+        if (drawableName != null) {
+            Drawable drawable = ResourceUtils.getDrawable(drawableName);
+            if (drawable != null) {
+                view.setImageDrawable(drawable);
+            }
         }
     }
 }

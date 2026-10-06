@@ -84,4 +84,26 @@ public abstract class Filter {
                               StringFilterGroup matchedGroup, FilterContentType contentType, int contentIndex) {
         return true;
     }
+
+    /**
+     * Called by the modern 20.22+ litho bridge.
+     * Subclasses can override this when they need the raw conversion context or accessibility text.
+     * The default implementation preserves the existing modern behavior for filters that only depend
+     * on path or buffer matching.
+     */
+    public boolean isFiltered(Object contextSource, String identifier, String accessibility, String path, byte[] buffer,
+                              StringFilterGroup matchedGroup, FilterContentType contentType, int contentIndex) {
+        return isFiltered(path, accessibility, "", buffer, matchedGroup, contentType, contentIndex);
+    }
+
+    /**
+     * Whether the v20.21 legacy bridge should provide this filter with per-component accessibility
+     * and buffer data through the modern {@link #isFiltered(Object, String, String, String, byte[],
+     * StringFilterGroup, FilterContentType, int)} callback.
+     *
+     * @return {@code true} only for filters that require the modern per-component data.
+     */
+    public boolean useModernFilterDataInLegacyBridge() {
+        return false;
+    }
 }

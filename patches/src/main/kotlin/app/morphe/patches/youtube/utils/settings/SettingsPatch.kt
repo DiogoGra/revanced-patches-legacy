@@ -1,3 +1,45 @@
+/*
+ * Copyright (C) 2026 anddea
+ *
+ * This file is part of the revanced-patches project:
+ * https://github.com/anddea/revanced-patches
+ *
+ * Original author(s):
+ * - anddea (https://github.com/anddea)
+ * - inotia00 (https://github.com/inotia00)
+ * - KobeW50 (https://github.com/KobeW50)
+ *
+ * Licensed under the GNU General Public License v3.0.
+ *
+ * ------------------------------------------------------------------------
+ * GPLv3 Section 7 – Additional Terms & Attribution Requirements
+ * ------------------------------------------------------------------------
+ *
+ * This file contains substantial original work by the author(s) listed above.
+ *
+ * In accordance with Section 7 of the GNU General Public License v3.0,
+ * the following additional terms apply to this file:
+ *
+ * 1. Source Credit Preservation (Section 7(b)): This specific copyright notice
+ *    and the list of original authors above must be preserved in any copy
+ *    or derivative work. You may add your own copyright notice below it,
+ *    but you may not remove the original one.
+ *
+ * 2. Origin & Modification Marking (Section 7(c)): Modified versions must be
+ *    clearly marked as such (e.g., by adding a "Modified by" line or a new
+ *    copyright notice) and must not be misrepresented as the original work.
+ *
+ * 3. Version Control Attribution (Section 7(b)): Any ports or substantial
+ *    modifications must retain historical authorship credit in version control
+ *    systems (e.g., Git), listing original author(s) appropriately and
+ *    modifiers as committers or co-authors.
+ *
+ * 4. User Interface Attribution (Section 7(b)): Any works containing or
+ *    derived from this material must maintain a visible credit or
+ *    acknowledgment to the original author(s) within the application's
+ *    user interface (e.g., in an "About" or "Credits" section).
+ */
+
 package app.morphe.patches.youtube.utils.settings
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
@@ -9,24 +51,34 @@ import app.morphe.patcher.patch.resourcePatch
 import app.morphe.patcher.patch.stringOption
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod.Companion.toMutable
+import app.morphe.patches.shared.BOLD_ICONS_FEATURE_FLAG
+import app.morphe.patches.shared.boldIconsFeatureFlagMethodFingerprint
 import app.morphe.patches.shared.extension.Constants.EXTENSION_THEME_UTILS_CLASS_DESCRIPTOR
 import app.morphe.patches.shared.extension.Constants.EXTENSION_UTILS_CLASS_DESCRIPTOR
 import app.morphe.patches.shared.mainactivity.injectConstructorMethodCall
-import app.morphe.patches.shared.mainactivity.injectOnCreateMethodCall
+import app.morphe.patches.shared.misc.settings.YOUTUBE_SETTINGS_ENTRY_KEY
+import app.morphe.patches.shared.misc.settings.customSettingsNameInstructions
 import app.morphe.patches.shared.settings.baseSettingsPatch
+import app.morphe.patches.youtube.layout.hide.settingsmenu.PreferenceScreenSyntheticFingerprint
+import app.morphe.patches.youtube.utils.CAIRO_FRAGMENT_FEATURE_FLAG
 import app.morphe.patches.youtube.utils.cairoFragmentConfigFingerprint
-import app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBLE_PACKAGE
+import app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBILITY_YOUTUBE
+import app.morphe.patches.youtube.utils.extension.Constants.GENERAL_CLASS_DESCRIPTOR
 import app.morphe.patches.youtube.utils.extension.Constants.UTILS_PATH
 import app.morphe.patches.youtube.utils.extension.sharedExtensionPatch
 import app.morphe.patches.youtube.utils.fix.attributes.themeAttributesPatch
+import app.morphe.patches.youtube.utils.fix.contentprovider.fixContentProviderPatch
 import app.morphe.patches.youtube.utils.fix.playbackspeed.playbackSpeedWhilePlayingPatch
+import app.morphe.patches.youtube.utils.fix.preference.fixPreferenceIconPatch
 import app.morphe.patches.youtube.utils.fix.splash.darkModeSplashScreenPatch
 import app.morphe.patches.youtube.utils.mainactivity.mainActivityResolvePatch
 import app.morphe.patches.youtube.utils.patch.PatchList.SETTINGS_FOR_YOUTUBE
-import app.morphe.patches.youtube.utils.playservice.is_19_34_or_greater
+import app.morphe.patches.youtube.utils.playservice.is_19_28_or_greater
+import app.morphe.patches.youtube.utils.playservice.is_20_31_or_greater
+import app.morphe.patches.youtube.utils.playservice.is_21_12_or_greater
 import app.morphe.patches.youtube.utils.playservice.versionCheckPatch
+import app.morphe.patches.youtube.utils.resourceid.settingsFragment
 import app.morphe.patches.youtube.utils.resourceid.sharedResourceIdPatch
-import app.morphe.patches.youtube.utils.settings.ResourceUtils.YOUTUBE_SETTINGS_PATH
 import app.morphe.patches.youtube.utils.settingsFragmentSyntheticFingerprint
 import app.morphe.util.FilesCompat
 import app.morphe.util.ResourceGroup
@@ -38,16 +90,20 @@ import app.morphe.util.findElementByAttributeValueOrThrow
 import app.morphe.util.findInstructionIndicesReversedOrThrow
 import app.morphe.util.fingerprint.methodCall
 import app.morphe.util.fingerprint.methodOrThrow
+import app.morphe.util.getFreeRegisterProvider
 import app.morphe.util.getReference
 import app.morphe.util.indexOfFirstInstructionOrThrow
+import app.morphe.util.indexOfFirstLiteralInstructionOrThrow
+import app.morphe.util.insertLiteralOverride
 import app.morphe.util.insertNode
 import app.morphe.util.removeStringsElements
-import app.morphe.util.returnEarly
 import app.morphe.util.valueOrThrow
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
+import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethodParameter
@@ -66,10 +122,10 @@ private const val EXTENSION_CLASS_DESCRIPTOR =
 
 private lateinit var bytecodeContext: BytecodePatchContext
 
-internal fun getBytecodeContext() = bytecodeContext
-
 internal var cairoFragmentDisabled = false
+    private set
 
+@Suppress("DEPRECATION")
 private val settingsBytecodePatch = bytecodePatch(
     description = "settingsBytecodePatch"
 ) {
@@ -83,19 +139,11 @@ private val settingsBytecodePatch = bytecodePatch(
 
     execute {
         bytecodeContext = this
+        cairoFragmentDisabled = false
 
-        // region fix cairo fragment.
+        // region fix cairo fragment
 
-        /**
-         * Disable Cairo fragment settings.
-         * 1. Fix - When spoofing the app version to 19.20 or earlier, the app crashes or the Notifications tab is inaccessible.
-         * 2. Fix - Preference 'Playback' is hidden.
-         * 3. Some settings that were in Preference 'General' are moved to Preference 'Playback'.
-         */
-        // Cairo fragment have been widely rolled out in YouTube 19.34+.
-        if (is_19_34_or_greater) {
-            // Instead of disabling all Cairo fragment configs,
-            // Just disable 'Load Cairo fragment xml' and 'Set style to Cairo preference'.
+        if (is_19_28_or_greater) {
             fun MutableMethod.disableCairoFragmentConfig() {
                 val cairoFragmentConfigMethodCall = cairoFragmentConfigFingerprint
                     .methodCall()
@@ -105,34 +153,68 @@ private val settingsBytecodePatch = bytecodePatch(
                 } + 2
                 val insertRegister =
                     getInstruction<OneRegisterInstruction>(insertIndex - 1).registerA
+                val invokeInstruction = if (insertRegister < 16) {
+                    "invoke-static { v$insertRegister }"
+                } else {
+                    "invoke-static/range { v$insertRegister .. v$insertRegister }"
+                }
 
-                addInstruction(insertIndex, "const/4 v$insertRegister, 0x0")
+                addInstructions(
+                    insertIndex,
+                    """
+                        $invokeInstruction, $EXTENSION_CLASS_DESCRIPTOR->disableCairoSettingsFragment(Z)Z
+                        move-result v$insertRegister
+                    """
+                )
             }
 
             try {
                 arrayOf(
                     // Load cairo fragment xml.
-                    settingsFragmentSyntheticFingerprint
-                        .methodOrThrow(),
+                    settingsFragmentSyntheticFingerprint.method,
                     // Set style to cairo preference.
-                    settingsFragmentStylePrimaryFingerprint
-                        .methodOrThrow(),
+                    settingsFragmentStylePrimaryFingerprint.method,
                     settingsFragmentStyleSecondaryFingerprint
-                        .methodOrThrow(settingsFragmentStylePrimaryFingerprint),
+                        .match(settingsFragmentStylePrimaryFingerprint.classDef)
+                        .method,
                 ).forEach { method ->
                     method.disableCairoFragmentConfig()
                 }
                 cairoFragmentDisabled = true
             } catch (_: Exception) {
-                cairoFragmentConfigFingerprint
-                    .methodOrThrow()
-                    .returnEarly()
+                cairoFragmentConfigFingerprint.methodOrThrow().insertLiteralOverride(
+                    CAIRO_FRAGMENT_FEATURE_FLAG,
+                    "$EXTENSION_CLASS_DESCRIPTOR->disableCairoSettingsFragment(Z)Z"
+                )
 
-                printWarn("Failed to restore 'Playback' settings. 'Autoplay next video' setting may not appear in the YouTube settings.")
+                printWarn("Failed to patch targeted Cairo settings fragment configs. Falling back to the global Cairo fragment config hook.")
+            }
+
+            runCatching {
+                settingsFragmentSyntheticFingerprint.method.apply {
+                    val index = indexOfFirstLiteralInstructionOrThrow(settingsFragment)
+                    val register = getInstruction<OneRegisterInstruction>(index).registerA
+
+                    addInstructions(
+                        index + 1, """
+                            invoke-static {v$register}, $GENERAL_CLASS_DESCRIPTOR->useLegacySettingsFragment(I)I
+                            move-result v$register
+                            """
+                    )
+                }
+            }.onFailure {
+                printWarn("Failed to hook legacy settings fragment. 'Restore old settings menu' may not restore the old settings XML.")
             }
         }
 
-        // endregion.
+        if (is_20_31_or_greater && !is_21_12_or_greater) {
+            boldIconsFeatureFlagMethodFingerprint.method.insertLiteralOverride(
+                BOLD_ICONS_FEATURE_FLAG,
+                "$EXTENSION_CLASS_DESCRIPTOR->useBoldIcons(Z)Z"
+            )
+        }
+
+        // endregion
 
         // apply the current theme of the settings page
         themeSetterSystemFingerprint.methodOrThrow().apply {
@@ -146,9 +228,9 @@ private val settingsBytecodePatch = bytecodePatch(
             }
         }
 
-        injectOnCreateMethodCall(
-            EXTENSION_INITIALIZATION_CLASS_DESCRIPTOR,
-            "onCreate"
+        GlobalConfigGroupFingerprint.method.addInstruction(
+            GlobalConfigGroupFingerprint.instructionMatches.last().index,
+            "invoke-static { }, $EXTENSION_INITIALIZATION_CLASS_DESCRIPTOR->onGlobalConfigUpdated()V"
         )
         injectConstructorMethodCall(
             EXTENSION_UTILS_CLASS_DESCRIPTOR,
@@ -225,36 +307,43 @@ private val settingsBytecodePatch = bytecodePatch(
                 )
             }.let(methods::add)
         }
+
+        PreferenceScreenSyntheticFingerprint.let {
+            it.method.apply {
+                // Reuse the method's own getPreferenceScreen call.
+                val getPreferenceScreenIndex = it.instructionMatches[1].index
+                val fragmentRegister =
+                    getInstruction<FiveRegisterInstruction>(getPreferenceScreenIndex).registerC
+                val getPreferenceScreenReference =
+                    getInstruction<ReferenceInstruction>(getPreferenceScreenIndex).reference
+
+                // fragmentRegister must survive, because the settings menu filter patch
+                // adds its own call on it after these instructions.
+                val insertIndex = it.instructionMatches.last().index
+                val registerProvider = getFreeRegisterProvider(insertIndex, 3, fragmentRegister)
+                val screenRegister = registerProvider.getFreeRegister()
+                val preferenceRegister = registerProvider.getFreeRegister()
+                val nameRegister = registerProvider.getFreeRegister()
+
+                addInstructionsAtControlFlowLabel(
+                    insertIndex,
+                    customSettingsNameInstructions(
+                        preferenceKey = YOUTUBE_SETTINGS_ENTRY_KEY,
+                        getPreferenceScreen = """
+                            invoke-virtual { v$fragmentRegister }, $getPreferenceScreenReference
+                            move-result-object v$screenRegister
+                        """,
+                        screenRegister = screenRegister,
+                        preferenceRegister = preferenceRegister,
+                        nameRegister = nameRegister
+                    )
+                )
+            }
+        }
     }
 }
 
-private const val DEFAULT_ELEMENT = "@string/parent_tools_key"
 private const val DEFAULT_LABEL = "RVX"
-
-private val SETTINGS_ELEMENTS_MAP = mapOf(
-    "Parent settings" to DEFAULT_ELEMENT,
-    "General" to "@string/general_key",
-    "Account" to "@string/account_switcher_key",
-    "Data saving" to "@string/data_saving_settings_key",
-    "Autoplay" to "@string/auto_play_key",
-    "Video quality preferences" to "@string/video_quality_settings_key",
-    "Background" to "@string/offline_key",
-    "Watch on TV" to "@string/pair_with_tv_key",
-    "Manage all history" to "@string/history_key",
-    "Your data in YouTube" to "@string/your_data_key",
-    "Privacy" to "@string/privacy_key",
-    "History & privacy" to "@string/privacy_key",
-    "Try experimental new features" to "@string/premium_early_access_browse_page_key",
-    "Purchases and memberships" to "@string/subscription_product_setting_key",
-    "Billing & payments" to "@string/billing_and_payment_key",
-    "Billing and payments" to "@string/billing_and_payment_key",
-    "Notifications" to "@string/notification_key",
-    "Connected apps" to "@string/connected_accounts_browse_page_key",
-    "Live chat" to "@string/live_chat_key",
-    "Captions" to "@string/captions_key",
-    "Accessibility" to "@string/accessibility_settings_key",
-    "About" to "@string/about_key"
-)
 
 private lateinit var settingsLabel: String
 
@@ -262,22 +351,22 @@ val settingsPatch = resourcePatch(
     SETTINGS_FOR_YOUTUBE.title,
     SETTINGS_FOR_YOUTUBE.summary,
 ) {
-    compatibleWith(COMPATIBLE_PACKAGE)
+    compatibleWith(COMPATIBILITY_YOUTUBE)
 
     dependsOn(
         settingsBytecodePatch,
         darkModeSplashScreenPatch,
+        fixPreferenceIconPatch,
         playbackSpeedWhilePlayingPatch,
         themeAttributesPatch,
-    )
 
-    val insertPosition = stringOption(
-        key = "insertPosition",
-        default = DEFAULT_ELEMENT,
-        values = SETTINGS_ELEMENTS_MAP,
-        title = "Insert position",
-        description = "The settings menu name that the RVX settings menu should be above.",
-        required = true,
+        /* contentProviderNullMapEntryReproPatch is for crash reproduction,
+        can be left uncommented if fixContentProviderPatch is enabled.
+        Uncomment contentProviderNullMapEntryReproPatch and
+        comment fixContentProviderPatch below to reproduce crash.
+        */
+        // contentProviderNullMapEntryReproPatch,
+        fixContentProviderPatch,
     )
 
     val rvxSettingsLabel = stringOption(
@@ -297,9 +386,6 @@ val settingsPatch = resourcePatch(
          * check patch options
          */
         settingsLabel = rvxSettingsLabel
-            .valueOrThrow()
-
-        val insertKey = insertPosition
             .valueOrThrow()
 
         ResourceUtils.setContext(this)
@@ -367,6 +453,8 @@ val settingsPatch = resourcePatch(
                 "revanced_preference_search_result_group_header.xml",
                 "revanced_preference_search_result_list.xml",
                 "revanced_preference_search_result_regular.xml",
+                "revanced_preference_search_result_range_slider.xml",
+                "revanced_preference_search_result_slider.xml",
                 "revanced_preference_search_result_switch.xml",
                 "revanced_settings_preferences_category.xml",
                 "revanced_settings_with_toolbar.xml",
@@ -388,8 +476,47 @@ val settingsPatch = resourcePatch(
          */
         ResourceUtils.addPreferenceFragment(
             "revanced_settings",
-            insertKey,
             "com.google.android.libraries.social.licenses.LicenseActivity"
+        )
+
+        val generalExperimentalSettings = mutableListOf(
+            "PREFERENCE_SCREEN: GENERAL",
+            "SETTINGS: THEME_SETTINGS",
+            "PREFERENCE_CATEGORY: GENERAL_EXPERIMENTAL_FLAGS",
+            "SETTINGS: RESTORE_OLD_SETTINGS_MENUS",
+        )
+        if (is_20_31_or_greater && !is_21_12_or_greater) {
+            generalExperimentalSettings += "SETTINGS: DISABLE_BOLD_ICONS"
+        }
+        ResourceUtils.addPreference(
+            generalExperimentalSettings.toTypedArray(),
+            SETTINGS_FOR_YOUTUBE
+        )
+
+        document(ResourceUtils.YOUTUBE_SETTINGS_PATH).use { document ->
+            val tags = document.getElementsByTagName("Preference")
+            val preferences = List(tags.length) { tags.item(it) as Element }
+
+            if (preferences.none { it.getAttribute("android:key") == "@string/playback_key" }) {
+                preferences
+                    .find { it.getAttribute("android:key") == "@string/auto_play_key" }
+                    ?.let { node ->
+                        node.insertNode("Preference", node) {
+                            for (index in 0 until node.attributes.length) {
+                                with(node.attributes.item(index)) {
+                                    setAttribute(nodeName, nodeValue)
+                                }
+                            }
+                            setAttribute("android:key", "@string/playback_key")
+                        }
+                    }
+            }
+        }
+
+        val xmlDirectory = get("res").resolve("xml")
+        FilesCompat.copy(
+            xmlDirectory.resolve("settings_fragment.xml"),
+            xmlDirectory.resolve("settings_fragment_legacy.xml")
         )
 
         /**
@@ -477,7 +604,7 @@ val settingsPatch = resourcePatch(
              * The Preference key for 'Playback' is '@string/playback_key'.
              * Copy the node to add the Preference 'Playback' to the legacy settings fragment.
              */
-            document(YOUTUBE_SETTINGS_PATH).use { document ->
+            document(ResourceUtils.YOUTUBE_SETTINGS_PATH).use { document ->
                 val tags = document.getElementsByTagName("Preference")
                 List(tags.length) { tags.item(it) as Element }
                     .find { it.getAttribute("android:key") == "@string/auto_play_key" }

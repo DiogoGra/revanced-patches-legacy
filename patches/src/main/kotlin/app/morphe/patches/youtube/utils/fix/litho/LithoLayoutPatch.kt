@@ -1,3 +1,14 @@
+/*
+ * Portions of this file are ported from Morphe:
+ * Copyright 2026 Morphe.
+ * https://github.com/MorpheApp/morphe-patches
+ *
+ * Original hard forked code:
+ * https://github.com/ReVanced/revanced-patches/commit/724e6d61b2ecd868c1a9a37d465a688e83a74799
+ *
+ * See the included NOTICE file for GPLv3 Section 7 terms that apply to Morphe contributions.
+ */
+
 package app.morphe.patches.youtube.utils.fix.litho
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
@@ -8,8 +19,10 @@ import app.morphe.patches.shared.mainactivity.injectOnBackPressedMethodCall
 import app.morphe.patches.youtube.utils.extension.Constants.UTILS_PATH
 import app.morphe.patches.youtube.utils.playservice.is_20_16_or_greater
 import app.morphe.patches.youtube.utils.scrollTopParentFingerprint
+import app.morphe.util.addInstructionsAtControlFlowLabel
 import app.morphe.util.fingerprint.matchOrThrow
 import app.morphe.util.getWalkerMethod
+import app.morphe.util.insertLiteralOverride
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 
 private const val EXTENSION_DOUBLE_BACK_TO_CLOSE_CLASS_DESCRIPTOR =
@@ -46,11 +59,26 @@ val lithoLayoutPatch = bytecodePatch(
         }
 
         // Inject the methods which stop of ScrollView
-        val fingerprint = if (is_20_16_or_greater) scrollTopFingerprint2016 else scrollTopFingerprint
-        fingerprint.matchOrThrow(scrollTopParentFingerprint).let {
-            val insertIndex = it.instructionMatches.last().index
+        if (!is_20_16_or_greater) {
+            scrollTopFingerprint.matchOrThrow(scrollTopParentFingerprint).let {
+                val insertIndex = it.instructionMatches.last().index
 
-            it.method.injectScrollView(insertIndex, "onStopScrollView")
+                it.method.injectScrollView(insertIndex, "onStopScrollView")
+            }
+        } else {
+            recyclerViewTopScrollingFingerprint.let {
+                it.method.addInstructionsAtControlFlowLabel(
+                    it.instructionMatches.last().index + 1,
+                    "invoke-static {}, $EXTENSION_DOUBLE_BACK_TO_CLOSE_CLASS_DESCRIPTOR->onStopScrollView()V"
+                )
+            }
+
+            backToRefreshFeatureFlagFingerprint.matchAll().forEach {
+                it.method.insertLiteralOverride(
+                    it.instructionMatches.first().index,
+                    "$EXTENSION_DOUBLE_BACK_TO_CLOSE_CLASS_DESCRIPTOR->allowBackButtonToScrollToTopOfFeed(Z)Z"
+                )
+            }
         }
 
         // endregion

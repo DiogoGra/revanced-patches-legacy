@@ -35,6 +35,7 @@ import app.morphe.util.indexOfFirstInstruction
 import app.morphe.util.indexOfFirstInstructionOrThrow
 import app.morphe.util.indexOfFirstInstructionReversedOrThrow
 import app.morphe.util.returnEarly
+import app.morphe.util.updatePatchStatus
 import app.morphe.util.valueOrThrow
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction21c
@@ -223,7 +224,7 @@ fun gmsCoreSupportPatch(
             }
         }
 
-        // region Collection of transformations that are applied to all strings.
+        // region Collection of transformations that are applied to all strings
 
         fun commonTransform(referencedString: String): String? =
             when (referencedString) {
@@ -385,7 +386,7 @@ fun gmsCoreSupportPatch(
                     val reference =
                         getReference<MethodReference>() ?: return@indexOfFirstInstruction false
 
-                    reference.toString() == "Lapp/morphe/extension/shared/Utils;->setContext(Landroid/content/Context;)V"
+                    reference.toString() == "Lapp/morphe/extension/shared/utils/Utils;->setContext(Landroid/content/Context;)V"
                 }
 
                 // Add after setContext call, because this patch needs the context.
@@ -410,6 +411,8 @@ fun gmsCoreSupportPatch(
                 name == methodName
             }.returnEarly(value)
         }
+
+        updatePatchStatus("$PATCHES_PATH/PatchStatus;", "GmsCoreSupport")
 
         executeBlock()
     }

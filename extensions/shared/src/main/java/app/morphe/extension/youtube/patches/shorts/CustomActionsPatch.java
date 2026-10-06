@@ -1,9 +1,52 @@
+/*
+ * Copyright (C) 2024-2026 anddea
+ *
+ * This file is part of the revanced-patches project:
+ * https://github.com/anddea/revanced-patches
+ *
+ * Original author(s):
+ * - anddea (https://github.com/anddea)
+ * - Francesco Marastoni (https://github.com/Francesco146)
+ * - inotia00 (https://github.com/inotia00)
+ *
+ * Licensed under the GNU General Public License v3.0.
+ *
+ * ------------------------------------------------------------------------
+ * GPLv3 Section 7 – Additional Terms & Attribution Requirements
+ * ------------------------------------------------------------------------
+ *
+ * This file contains substantial original work by the author(s) listed above.
+ *
+ * In accordance with Section 7 of the GNU General Public License v3.0,
+ * the following additional terms apply to this file:
+ *
+ * 1. Source Credit Preservation (Section 7(b)): This specific copyright notice
+ *    and the list of original authors above must be preserved in any copy
+ *    or derivative work. You may add your own copyright notice below it,
+ *    but you may not remove the original one.
+ *
+ * 2. Origin & Modification Marking (Section 7(c)): Modified versions must be
+ *    clearly marked as such (e.g., by adding a "Modified by" line or a new
+ *    copyright notice) and must not be misrepresented as the original work.
+ *
+ * 3. Version Control Attribution (Section 7(b)): Any ports or substantial
+ *    modifications must retain historical authorship credit in version control
+ *    systems (e.g., Git), listing original author(s) appropriately and
+ *    modifiers as committers or co-authors.
+ *
+ * 4. User Interface Attribution (Section 7(b)): Any works containing or
+ *    derived from this material must maintain a visible credit or
+ *    acknowledgment to the original author(s) within the application's
+ *    user interface (e.g., in an "About" or "Credits" section).
+ */
+
 package app.morphe.extension.youtube.patches.shorts;
 
 import static app.morphe.extension.shared.utils.ResourceUtils.getString;
 import static app.morphe.extension.shared.utils.StringRef.str;
 import static app.morphe.extension.youtube.patches.components.ShortsCustomActionsFilter.isShortsFlyoutMenuVisible;
 import static app.morphe.extension.youtube.shared.RootView.isShortsActive;
+import static app.morphe.extension.youtube.settings.YouTubeActivityHook.USE_BOLD_ICONS;
 import static app.morphe.extension.youtube.utils.ExtendedUtils.isSpoofingToLessThan;
 
 import android.content.Context;
@@ -19,7 +62,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import app.morphe.extension.youtube.utils.GeminiManager;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.ref.WeakReference;
@@ -29,6 +71,7 @@ import java.util.Objects;
 
 import app.morphe.extension.shared.settings.BooleanSetting;
 import app.morphe.extension.shared.utils.Logger;
+import app.morphe.extension.shared.utils.ResourceType;
 import app.morphe.extension.shared.utils.ResourceUtils;
 import app.morphe.extension.shared.utils.Utils;
 import app.morphe.extension.youtube.patches.components.ShortsCustomActionsFilter;
@@ -36,6 +79,7 @@ import app.morphe.extension.youtube.patches.utils.PatchStatus;
 import app.morphe.extension.youtube.patches.voiceovertranslation.VoiceOverTranslationPatch;
 import app.morphe.extension.youtube.settings.Settings;
 import app.morphe.extension.youtube.utils.ExtendedUtils;
+import app.morphe.extension.youtube.utils.GeminiManager;
 import app.morphe.extension.youtube.utils.VideoUtils;
 
 @SuppressWarnings("unused")
@@ -43,9 +87,9 @@ public final class CustomActionsPatch {
     private static final boolean IS_SPOOFING_TO_YOUTUBE_2023 =
             isSpoofingToLessThan("19.00.00");
     private static final boolean SHORTS_CUSTOM_ACTIONS_FLYOUT_MENU_ENABLED =
-            !IS_SPOOFING_TO_YOUTUBE_2023 && Settings.ENABLE_SHORTS_CUSTOM_ACTIONS_FLYOUT_MENU.get();
+            isFlyoutMenuEnabled();
     private static final boolean SHORTS_CUSTOM_ACTIONS_TOOLBAR_ENABLED =
-            Settings.ENABLE_SHORTS_CUSTOM_ACTIONS_TOOLBAR.get();
+            isToolbarEnabled();
 
     private static final int arrSize = CustomAction.values().length;
     private static final Map<CustomAction, Object> flyoutMenuMap = new LinkedHashMap<>(arrSize);
@@ -99,7 +143,7 @@ public final class CustomActionsPatch {
         Map<LinearLayout, Runnable> actionsMap = new LinkedHashMap<>(arrSize);
 
         for (CustomAction customAction : CustomAction.values()) {
-            if (customAction.settings.get()) {
+            if (customAction.isAvailable()) {
                 String title = customAction.getLabel();
                 int iconId = customAction.getDrawableId();
                 Runnable action = customAction.getOnClickAction();
@@ -112,6 +156,7 @@ public final class CustomActionsPatch {
         ExtendedUtils.showBottomSheetDialog(mContext, mainLayout, actionsMap);
     }
 
+    @SuppressWarnings("deprecation")
     private static boolean isMoreButton(String enumString) {
         return StringUtils.equalsAny(
                 enumString,
@@ -123,8 +168,10 @@ public final class CustomActionsPatch {
     /**
      * Injection point. Stores only a normal menu item as the template for custom actions.
      *
-     * <p>Server-rendered Shorts menus use a separate path for element-transformer items.
-     * Those rows cannot be safely cloned with a custom label and icon on legacy clients.</p>
+     * <p>The modern Shorts flyout renderer has a separate path for element-transformer items.
+     * Such an item may look like the native Captions row, but it cannot be rebuilt with a custom
+     * label and icon. A server-side menu change can make that item the first supported entry, so
+     * it must not become the template for cloned custom-action rows.</p>
      */
     public static void setFlyoutMenuObject(Object bottomSheetMenuObject,
                                            boolean isElementTransformer) {
@@ -153,7 +200,7 @@ public final class CustomActionsPatch {
             return;
         }
         for (CustomAction customAction : CustomAction.values()) {
-            if (customAction.settings.get()) {
+            if (customAction.isAvailable()) {
                 addFlyoutMenu(bottomSheetMenuClass, bottomSheetMenuList, customAction);
             }
         }
@@ -268,16 +315,6 @@ public final class CustomActionsPatch {
         return false;
     }
 
-    private static int getEnabledCustomActionsCount() {
-        int count = 0;
-        for (CustomAction customAction : CustomAction.values()) {
-            if (customAction.settings.get()) {
-                count++;
-            }
-        }
-        return count;
-    }
-
     /**
      * Injection point.
      */
@@ -296,6 +333,32 @@ public final class CustomActionsPatch {
         });
     }
 
+    private static int getEnabledCustomActionsCount() {
+        int count = 0;
+        for (CustomAction customAction : CustomAction.values()) {
+            if (customAction.isAvailable()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Custom action hooks must remain inactive when no action can be used. In particular, the
+     * Shorts VOT action has its own setting but must also respect the global VOT setting.
+     */
+    public static boolean isFlyoutMenuEnabled() {
+        return !IS_SPOOFING_TO_YOUTUBE_2023
+                && Settings.ENABLE_SHORTS_CUSTOM_ACTIONS_FLYOUT_MENU.get()
+                && getEnabledCustomActionsCount() > 0;
+    }
+
+    /** @see #isFlyoutMenuEnabled() */
+    public static boolean isToolbarEnabled() {
+        return Settings.ENABLE_SHORTS_CUSTOM_ACTIONS_TOOLBAR.get()
+                && getEnabledCustomActionsCount() > 0;
+    }
+
     private static void hideFlyoutMenu() {
         if (!SHORTS_CUSTOM_ACTIONS_FLYOUT_MENU_ENABLED) {
             return;
@@ -307,7 +370,7 @@ public final class CustomActionsPatch {
 
         final int touchOutsideId = ResourceUtils.getIdentifier(
                 "touch_outside",
-                ResourceUtils.ResourceType.ID,
+                ResourceType.ID,
                 recyclerView.getContext()
         );
         if (touchOutsideId != 0) {
@@ -328,7 +391,11 @@ public final class CustomActionsPatch {
 
         // Dismiss View [R.id.touch_outside] is the 1st ChildView of the 4th ParentView.
         // This only shows in phone layout.
-        Utils.clickView(parentView4th.getChildAt(0));
+        View dismissView = parentView4th.getChildAt(0);
+        if (dismissView != null) {
+            Utils.clickView(dismissView);
+            return;
+        }
 
         // In tablet layout there is no Dismiss View, instead we just hide all two parent views.
         parentView3rd.setVisibility(View.GONE);
@@ -339,6 +406,7 @@ public final class CustomActionsPatch {
         COPY_URL(
                 Settings.SHORTS_CUSTOM_ACTIONS_COPY_VIDEO_URL,
                 "yt_outline_link_black_24",
+                "yt_outline_experimental_link_vd_theme_24",
                 () -> VideoUtils.copyUrl(
                         VideoUtils.getVideoUrl(
                                 ShortsCustomActionsFilter.getShortsVideoId(),
@@ -356,7 +424,8 @@ public final class CustomActionsPatch {
         ),
         COPY_URL_WITH_TIMESTAMP(
                 Settings.SHORTS_CUSTOM_ACTIONS_COPY_VIDEO_URL_TIMESTAMP,
-                "yt_outline_arrow_time_black_24",
+                "yt_outline_stopwatch_black_24",
+                "yt_outline_experimental_stopwatch_black_24",
                 () -> VideoUtils.copyUrl(
                         VideoUtils.getVideoUrl(
                                 ShortsCustomActionsFilter.getShortsVideoId(),
@@ -375,6 +444,7 @@ public final class CustomActionsPatch {
         EXTERNAL_DOWNLOADER(
                 Settings.SHORTS_CUSTOM_ACTIONS_EXTERNAL_DOWNLOADER,
                 "yt_outline_download_black_24",
+                "yt_outline_experimental_download_vd_theme_24",
                 () -> VideoUtils.launchVideoExternalDownloader(
                         ShortsCustomActionsFilter.getShortsVideoId()
                 )
@@ -382,6 +452,7 @@ public final class CustomActionsPatch {
         OPEN_VIDEO(
                 Settings.SHORTS_CUSTOM_ACTIONS_OPEN_VIDEO,
                 "yt_outline_youtube_logo_icon_black_24",
+                "yt_outline_experimental_youtube_black_24",
                 () -> VideoUtils.openVideo(
                         ShortsCustomActionsFilter.getShortsVideoId(),
                         true
@@ -390,7 +461,20 @@ public final class CustomActionsPatch {
         SPEED_DIALOG(
                 Settings.SHORTS_CUSTOM_ACTIONS_SPEED_DIALOG,
                 "yt_outline_play_arrow_half_circle_black_24",
+                "yt_outline_experimental_play_circle_half_dashed_black_24",
                 () -> VideoUtils.showPlaybackSpeedDialog(contextRef.get(), Settings.SHORTS_CUSTOM_ACTIONS_SPEED_DIALOG_TYPE)
+        ),
+        REPEAT_STATE(
+                Settings.SHORTS_CUSTOM_ACTIONS_REPEAT_STATE,
+                "yt_outline_arrow_repeat_1_black_24",
+                "yt_outline_experimental_repeat1_vd_theme_24",
+                () -> {
+                    boolean enabled = !Settings.SHORTS_AUTOPLAY.get();
+                    Settings.SHORTS_AUTOPLAY.save(enabled);
+                    Utils.showToastShort(str(enabled
+                            ? "revanced_shorts_autoplay_enabled_toast"
+                            : "revanced_shorts_autoplay_disabled_toast"));
+                }
         ),
         GEMINI(
                 Settings.SHORTS_CUSTOM_ACTIONS_GEMINI,
@@ -419,6 +503,7 @@ public final class CustomActionsPatch {
         VOICE_OVER_TRANSLATION(
                 Settings.SHORTS_CUSTOM_ACTIONS_VOICE_OVER_TRANSLATION,
                 "revanced_vot_button_icon",
+                "revanced_vot_bold_button_icon",
                 () -> {
                     if (!PatchStatus.VoiceOverTranslation()) {
                         return;
@@ -434,11 +519,6 @@ public final class CustomActionsPatch {
                         VideoUtils.showVotBottomSheetDialog(context);
                     }
                 }
-        ),
-        REPEAT_STATE(
-                Settings.SHORTS_CUSTOM_ACTIONS_REPEAT_STATE,
-                "yt_outline_arrow_repeat_1_black_24",
-                () -> VideoUtils.showShortsRepeatDialog(contextRef.get())
         );
 
         @NonNull
@@ -462,7 +542,7 @@ public final class CustomActionsPatch {
                      @NonNull String icon,
                      @NonNull Runnable onClickAction
         ) {
-            this(settings, icon, onClickAction, null);
+            this(settings, icon, icon, onClickAction, null);
         }
 
         CustomAction(@NonNull BooleanSetting settings,
@@ -470,12 +550,50 @@ public final class CustomActionsPatch {
                      @NonNull Runnable onClickAction,
                      @Nullable Runnable onLongClickAction
         ) {
-            this.drawable = Objects.requireNonNull(ResourceUtils.getDrawable(icon));
-            this.drawableId = ResourceUtils.getDrawableIdentifier(icon);
+            this(settings, icon, icon, onClickAction, onLongClickAction);
+        }
+
+        CustomAction(@NonNull BooleanSetting settings,
+                     @NonNull String icon,
+                     @NonNull String boldIcon,
+                     @NonNull Runnable onClickAction
+        ) {
+            this(settings, icon, boldIcon, onClickAction, null);
+        }
+
+        /**
+         * Uses the icon style selected by YouTube's bold-icons feature flag and user override.
+         */
+        CustomAction(@NonNull BooleanSetting settings,
+                     @NonNull String icon,
+                     @NonNull String boldIcon,
+                     @NonNull Runnable onClickAction,
+                     @Nullable Runnable onLongClickAction
+        ) {
+            String selectedIcon = USE_BOLD_ICONS ? boldIcon : icon;
+            Drawable drawable = ResourceUtils.getDrawable(selectedIcon);
+            if (drawable == null && !selectedIcon.equals(icon)) {
+                // Bold resource names differ between supported YouTube versions. Use the normal
+                // icon when a version does not provide the selected bold variant.
+                selectedIcon = icon;
+                drawable = ResourceUtils.getDrawable(selectedIcon);
+            }
+            this.drawable = Objects.requireNonNull(drawable);
+            this.drawableId = ResourceUtils.getDrawableIdentifier(selectedIcon);
             this.label = getString(settings.key + "_label");
             this.settings = settings;
             this.onClickAction = onClickAction;
             this.onLongClickAction = onLongClickAction;
+        }
+
+        public boolean isAvailable() {
+            if (this == GEMINI) {
+                return PatchStatus.Gemini() && settings.get();
+            }
+            if (this == VOICE_OVER_TRANSLATION) {
+                return PatchStatus.VoiceOverTranslation() && settings.get();
+            }
+            return settings.get();
         }
 
         @NonNull

@@ -45,7 +45,7 @@ package app.morphe.patches.youtube.general.dpi
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.bytecodePatch
-import app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBLE_PACKAGE
+import app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBILITY_YOUTUBE
 import app.morphe.patches.youtube.utils.patch.PatchList.CUSTOM_DPI
 import app.morphe.patches.youtube.utils.settings.ResourceUtils.addPreference
 import app.morphe.patches.youtube.utils.settings.settingsPatch
@@ -59,7 +59,7 @@ val customDpiPatch = bytecodePatch(
     CUSTOM_DPI.title,
     CUSTOM_DPI.summary,
 ) {
-    compatibleWith(COMPATIBLE_PACKAGE)
+    compatibleWith(COMPATIBILITY_YOUTUBE)
 
     dependsOn(settingsPatch)
 
@@ -89,6 +89,7 @@ val customDpiPatch = bytecodePatch(
         addPreference(
             arrayOf(
                 "PREFERENCE_SCREEN: GENERAL",
+                "SETTINGS: THEME_SETTINGS",
                 "PREFERENCE_CATEGORY: GENERAL_LAYOUT",
                 "SETTINGS: CUSTOM_DPI"
             ),

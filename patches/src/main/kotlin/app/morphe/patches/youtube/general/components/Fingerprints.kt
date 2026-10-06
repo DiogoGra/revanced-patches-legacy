@@ -1,16 +1,31 @@
+/*
+ * Portions of this file are ported from Morphe:
+ * Copyright 2026 Morphe.
+ * https://github.com/MorpheApp/morphe-patches
+ *
+ * Original hard forked code:
+ * https://github.com/ReVanced/revanced-patches/commit/724e6d61b2ecd868c1a9a37d465a688e83a74799
+ *
+ * See the included NOTICE file for GPLv3 Section 7 terms that apply to Morphe contributions.
+ */
+
 package app.morphe.patches.youtube.general.components
 
+import app.morphe.patcher.Fingerprint
+import app.morphe.patcher.InstructionLocation.MatchAfterImmediately
+import app.morphe.patcher.literal
+import app.morphe.patcher.methodCall
+import app.morphe.patcher.opcode
+import app.morphe.patches.shared.mapping.ResourceType
+import app.morphe.patches.shared.mapping.resourceLiteral
 import app.morphe.patches.youtube.utils.resourceid.accountSwitcherAccessibility
 import app.morphe.patches.youtube.utils.resourceid.compactLink
 import app.morphe.patches.youtube.utils.resourceid.compactListItem
 import app.morphe.patches.youtube.utils.resourceid.editSettingsAction
 import app.morphe.patches.youtube.utils.resourceid.fab
-import app.morphe.patches.youtube.utils.resourceid.pairWithTVKey
 import app.morphe.patches.youtube.utils.resourceid.toolTipContentView
 import app.morphe.patches.youtube.utils.resourceid.ytCallToAction
 import app.morphe.util.fingerprint.legacyFingerprint
-import app.morphe.util.getReference
-import app.morphe.util.indexOfFirstInstructionReversed
 import app.morphe.util.or
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
@@ -85,37 +100,6 @@ internal val pipNotificationFingerprint = legacyFingerprint(
     literals = listOf(editSettingsAction),
 )
 
-internal val preferenceScreenFingerprint = legacyFingerprint(
-    name = "preferenceScreenFingerprint",
-    returnType = "V",
-    accessFlags = AccessFlags.PUBLIC or AccessFlags.FINAL,
-    parameters = emptyList(),
-    strings = listOf(":android:show_fragment_args"),
-    customFingerprint = { method, classDef ->
-        AccessFlags.SYNTHETIC.isSet(classDef.accessFlags) &&
-                indexOfPreferenceScreenInstruction(method) >= 0
-    }
-)
-
-internal fun indexOfPreferenceScreenInstruction(method: Method) =
-    method.indexOfFirstInstructionReversed {
-        val reference = getReference<MethodReference>()
-        opcode == Opcode.INVOKE_VIRTUAL &&
-                reference?.returnType == "Landroidx/preference/PreferenceScreen;" &&
-                reference.parameterTypes.isEmpty()
-    }
-
-internal val preferencePairWithTVFingerprint = legacyFingerprint(
-    name = "preferencePairWithTVFingerprint",
-    returnType = "V",
-    accessFlags = AccessFlags.PUBLIC or AccessFlags.FINAL,
-    parameters = listOf("Ljava/lang/Object;"),
-    literals = listOf(pairWithTVKey),
-    customFingerprint = { method, classDef ->
-        AccessFlags.SYNTHETIC.isSet(classDef.accessFlags)
-    }
-)
-
 internal val tooltipContentFullscreenFingerprint = legacyFingerprint(
     name = "tooltipContentFullscreenFingerprint",
     returnType = "V",
@@ -130,20 +114,27 @@ internal val tooltipContentViewFingerprint = legacyFingerprint(
     literals = listOf(toolTipContentView),
 )
 
-internal const val TRANSLUCENT_STATUS_BAR_PRIMARY_FEATURE_FLAG = 45400535L
-internal const val TRANSLUCENT_STATUS_BAR_SECONDARY_FEATURE_FLAG = 45632194L
-
-internal val translucentStatusBarPrimaryFeatureFlagFingerprint = legacyFingerprint(
-    name = "translucentStatusBarPrimaryFeatureFlagFingerprint",
-    accessFlags = AccessFlags.PUBLIC or AccessFlags.FINAL,
-    returnType = "Z",
-    literals = listOf(TRANSLUCENT_STATUS_BAR_PRIMARY_FEATURE_FLAG)
+internal object SyncButtonFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PROTECTED, AccessFlags.FINAL),
+    filters = listOf(
+        resourceLiteral(ResourceType.LAYOUT, "sync_button"),
+        methodCall(
+            opcode = Opcode.INVOKE_VIRTUAL,
+            name = "inflate",
+            returnType = "Landroid/view/View;",
+        ),
+        opcode(Opcode.MOVE_RESULT_OBJECT, location = MatchAfterImmediately())
+    )
 )
 
-internal val translucentStatusBarSecondaryFeatureFlagFingerprint = legacyFingerprint(
-    name = "translucentStatusBarSecondaryFeatureFlagFingerprint",
-    accessFlags = AccessFlags.PUBLIC or AccessFlags.FINAL,
-    returnType = "Z",
-    literals = listOf(TRANSLUCENT_STATUS_BAR_SECONDARY_FEATURE_FLAG)
+internal object CommentReplyPaddingFeatureFlagFingerprint : Fingerprint(
+    filters = listOf(
+        literal(45752241)
+    )
 )
 
+internal object IncognitoSearchPaddingFeatureFlagFingerprint : Fingerprint(
+    filters = listOf(
+        literal(45724388)
+    )
+)

@@ -1,10 +1,10 @@
 /*
- * Copyright (C) anddea
+ * Copyright (C) 2026 anddea
  *
  * This file is part of the revanced-patches project:
  * https://github.com/anddea/revanced-patches
  *
- * Original author(s) (alphabetical order):
+ * Original author(s):
  * - anddea (https://github.com/anddea)
  * - inotia00 (https://github.com/inotia00)
  * - Jav1x (https://github.com/Jav1x)
@@ -12,7 +12,7 @@
  * Licensed under the GNU General Public License v3.0.
  *
  * ------------------------------------------------------------------------
- * GPLv3 Section 7(b) – Attribution Notice
+ * GPLv3 Section 7 – Additional Terms & Attribution Requirements
  * ------------------------------------------------------------------------
  *
  * This file contains substantial original work by the author(s) listed above.
@@ -20,31 +20,43 @@
  * In accordance with Section 7 of the GNU General Public License v3.0,
  * the following additional terms apply to this file:
  *
- * 1. Attribution (Section 7(b)): This specific copyright notice and the
- *    list of original authors above must be preserved in any copy or
- *    derivative work. You may add your own copyright notice below it,
+ * 1. Source Credit Preservation (Section 7(b)): This specific copyright notice
+ *    and the list of original authors above must be preserved in any copy
+ *    or derivative work. You may add your own copyright notice below it,
  *    but you may not remove the original one.
  *
- * 2. Origin (Section 7(c)): Modified versions must be clearly marked as
- *    such (e.g., by adding a "Modified by" line or a new copyright notice).
- *    They must not be misrepresented as the original work.
+ * 2. Origin & Modification Marking (Section 7(c)): Modified versions must be
+ *    clearly marked as such (e.g., by adding a "Modified by" line or a new
+ *    copyright notice) and must not be misrepresented as the original work.
  *
- * ------------------------------------------------------------------------
- * Version Control Acknowledgement (Non-binding Request)
- * ------------------------------------------------------------------------
+ * 3. Version Control Attribution (Section 7(b)): Any ports or substantial
+ *    modifications must retain historical authorship credit in version control
+ *    systems (e.g., Git), listing original author(s) appropriately and
+ *    modifiers as committers or co-authors.
  *
- * While not a legal requirement of the GPLv3, the original author(s)
- * respectfully request that ports or substantial modifications retain
- * historical authorship credit in version control systems (e.g., Git),
- * listing original author(s) appropriately and modifiers as committers
- * or co-authors.
+ * 4. User Interface Attribution (Section 7(b)): Any works containing or
+ *    derived from this material must maintain a visible credit or
+ *    acknowledgment to the original author(s) within the application's
+ *    user interface (e.g., in an "About" or "Credits" section).
+ */
+
+/*
+ * Portions of this file are ported from Morphe:
+ * Copyright 2026 Morphe.
+ * https://github.com/MorpheApp/morphe-patches
+ * https://github.com/MorpheApp/morphe-patches/pull/2282
+ *
+ * Original hard forked code:
+ * https://github.com/ReVanced/revanced-patches/commit/724e6d61b2ecd868c1a9a37d465a688e83a74799
+ *
+ * See the included NOTICE file for GPLv3 Section 7 terms that apply to Morphe contributions.
  */
 
 package app.morphe.extension.youtube.utils;
 
 import static app.morphe.extension.shared.utils.BaseThemeUtils.getDialogBackgroundColor;
+import static app.morphe.extension.shared.utils.ResourceUtils.getDrawable;
 import static app.morphe.extension.shared.utils.ResourceUtils.getString;
-import static app.morphe.extension.shared.utils.ResourceUtils.getStringArray;
 import static app.morphe.extension.shared.utils.StringRef.str;
 import static app.morphe.extension.shared.utils.Utils.dipToPixels;
 import static app.morphe.extension.youtube.patches.video.CustomPlaybackSpeedPatch.PLAYBACK_SPEED_MAXIMUM;
@@ -64,13 +76,16 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.RoundRectShape;
 import android.media.AudioManager;
+import android.os.SystemClock;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.Gravity;
@@ -83,6 +98,7 @@ import android.view.animation.TranslateAnimation;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.GridLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SeekBar;
@@ -91,8 +107,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
-import com.google.android.libraries.youtube.innertube.model.media.VideoQuality;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -105,6 +119,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import app.morphe.extension.shared.settings.BooleanSetting;
@@ -115,13 +130,14 @@ import app.morphe.extension.shared.utils.IntentUtils;
 import app.morphe.extension.shared.utils.Logger;
 import app.morphe.extension.shared.utils.ResourceUtils;
 import app.morphe.extension.shared.utils.Utils;
-import app.morphe.extension.youtube.patches.shorts.ShortsRepeatStatePatch.ShortsLoopBehavior;
+import app.morphe.extension.youtube.patches.video.CustomPlaybackAudioPitchPatch;
 import app.morphe.extension.youtube.patches.video.CustomPlaybackSpeedPatch;
 import app.morphe.extension.youtube.patches.video.CustomPlaybackSpeedPatch.PlaybackSpeedMenuType;
 import app.morphe.extension.youtube.patches.video.PlaybackSpeedPatch;
-import app.morphe.extension.youtube.patches.voiceovertranslation.VoiceOverTranslationPatch;
 import app.morphe.extension.youtube.patches.video.VideoQualityPatch;
+import app.morphe.extension.youtube.patches.video.VideoQualityPatch.VideoQualityInterface;
 import app.morphe.extension.youtube.patches.video.VideoQualityPatch.VideoQualityMenuInterface;
+import app.morphe.extension.youtube.patches.voiceovertranslation.VoiceOverTranslationPatch;
 import app.morphe.extension.youtube.settings.Settings;
 import app.morphe.extension.youtube.settings.preference.ExternalDownloaderPlaylistPreference;
 import app.morphe.extension.youtube.settings.preference.ExternalDownloaderVideoLongPressPreference;
@@ -130,7 +146,7 @@ import app.morphe.extension.youtube.shared.PlaylistIdPrefix;
 import app.morphe.extension.youtube.shared.RootView;
 import app.morphe.extension.youtube.shared.VideoInformation;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"deprecation", "unused"})
 public class VideoUtils extends IntentUtils {
     /**
      * Scale used to convert user speed to {@link android.widget.ProgressBar#setProgress(int)}.
@@ -177,7 +193,7 @@ public class VideoUtils extends IntentUtils {
         builder.append(videoId);
         final long currentVideoTimeInSeconds = VideoInformation.getVideoTimeInSeconds();
         if (withTimestamp && currentVideoTimeInSeconds > 0) {
-            builder.append("?t=");
+            builder.append(builder.indexOf("?") >= 0 ? "&t=" : "?t=");
             builder.append(currentVideoTimeInSeconds);
         }
         return builder.toString();
@@ -405,36 +421,6 @@ public class VideoUtils extends IntentUtils {
         }
     }
 
-    public static void showShortsRepeatDialog(@NonNull Context context) {
-        final EnumSetting<ShortsLoopBehavior> setting = Settings.CHANGE_SHORTS_REPEAT_STATE;
-        final String settingsKey = setting.key;
-
-        final String entryKey = settingsKey + "_entries";
-        final String entryValueKey = settingsKey + "_entry_values";
-        final String[] mEntries = getStringArray(entryKey);
-        final String[] mEntryValues = getStringArray(entryValueKey);
-
-        LinearLayout mainLayout = ExtendedUtils.prepareMainLayout(context);
-        Map<LinearLayout, Runnable> actionsMap = new LinkedHashMap<>(mEntryValues.length);
-        String currentValue = setting.get().name();
-        int checkIconId = ResourceUtils.getDrawableIdentifier("quantum_ic_check_white_24");
-
-        for (int i = 0; i < mEntryValues.length; i++) {
-            String label = mEntries[i];
-            String enumValue = mEntryValues[i];
-
-            int index = i;
-            Runnable action = () -> {
-                for (ShortsLoopBehavior behavior : ShortsLoopBehavior.values())
-                    if (behavior.ordinal() == index) setting.save(behavior);
-            };
-            LinearLayout itemLayout = ExtendedUtils.createItemLayout(context, label, currentValue.equals(enumValue) ? checkIconId : 0);
-            actionsMap.putIfAbsent(itemLayout, action);
-            mainLayout.addView(itemLayout);
-        }
-        ExtendedUtils.showBottomSheetDialog(context, mainLayout, actionsMap);
-    }
-
     public static String getFormattedQualityString(@Nullable String prefix) {
         return prefix == null ? qualityString : String.format("%s\u2009•\u2009%s", prefix, qualityString);
     }
@@ -552,8 +538,8 @@ public class VideoUtils extends IntentUtils {
 
     public static void showCustomVideoQualityFlyoutMenu(Context context) {
         try {
-            VideoQuality[] currentQualities = VideoQualityPatch.getCurrentQualities();
-            VideoQuality currentQuality = VideoQualityPatch.getCurrentQuality();
+            VideoQualityInterface[] currentQualities = VideoQualityPatch.getCurrentQualities();
+            VideoQualityInterface currentQuality = VideoQualityPatch.getCurrentQuality();
             if (currentQualities == null || currentQuality == null) {
                 Logger.printDebug(() -> "Cannot show qualities dialog, videoQualities is null");
                 return;
@@ -571,7 +557,7 @@ public class VideoUtils extends IntentUtils {
 
             // -1 adjustment for automatic quality at first index.
             int listViewSelectedIndex = -1;
-            for (VideoQuality quality : currentQualities) {
+            for (VideoQualityInterface quality : currentQualities) {
                 if (quality.patch_getQualityName().equals(currentQuality.patch_getQualityName())) {
                     break;
                 }
@@ -579,7 +565,7 @@ public class VideoUtils extends IntentUtils {
             }
 
             List<String> qualityLabels = new ArrayList<>(currentQualities.length - 1);
-            for (VideoQuality availableQuality : currentQualities) {
+            for (VideoQualityInterface availableQuality : currentQualities) {
                 if (availableQuality.patch_getResolution() != AUTOMATIC_VIDEO_QUALITY_VALUE) {
                     qualityLabels.add(availableQuality.patch_getQualityName());
                 }
@@ -683,7 +669,7 @@ public class VideoUtils extends IntentUtils {
             listView.setOnItemClickListener((parent, view, which, id) -> {
                 try {
                     final int originalIndex = which + 1; // Adjust for automatic.
-                    VideoQuality selectedQuality = currentQualities[originalIndex];
+                    VideoQualityInterface selectedQuality = currentQualities[originalIndex];
                     Logger.printDebug(() -> "User clicked on quality: " + selectedQuality);
 
                     if (VideoQualityPatch.shouldRememberVideoQuality()) {
@@ -813,6 +799,7 @@ public class VideoUtils extends IntentUtils {
      * values. The dialog updates the displayed speed in real-time and applies changes to the
      * video playback. The dialog is dismissed if the player enters Picture-in-Picture (PiP) mode.
      */
+    @SuppressWarnings("ExtractMethodRecommender")
     public static void showCustomModernPlaybackSpeedDialog(Context context) {
         try {
             // Create main layout.
@@ -821,27 +808,43 @@ public class VideoUtils extends IntentUtils {
 
             // Preset size constants.
             final int dip4 = dipToPixels(4);
+            final int dip6 = dipToPixels(6);
             final int dip8 = dipToPixels(8);
+            final int dip10 = dipToPixels(10);
             final int dip12 = dipToPixels(12);
+            final int dip16 = dipToPixels(16);
             final int dip20 = dipToPixels(20);
             final int dip32 = dipToPixels(32);
             final int dip60 = dipToPixels(60);
+            final boolean isPitchEnabled = Settings.ENABLE_PLAYBACK_AUDIO_PITCH.get();
 
-            // Display current playback speed.
             TextView currentSpeedText = new TextView(context);
             float currentSpeed = VideoInformation.getPlaybackSpeed();
-            // Initially show with only 0 minimum digits, so 1.0 shows as 1x.
             currentSpeedText.setText(formatSpeedStringX(currentSpeed));
-            currentSpeedText.setTextColor(ThemeUtils.getAppForegroundColor());
-            currentSpeedText.setTextSize(16);
-            currentSpeedText.setTypeface(Typeface.DEFAULT_BOLD);
-            currentSpeedText.setGravity(Gravity.CENTER);
-            LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            textParams.setMargins(0, dip20, 0, 0);
-            currentSpeedText.setLayoutParams(textParams);
-            // Add current speed text view to main layout.
-            mainLayout.addView(currentSpeedText);
+
+            if (isPitchEnabled) {
+                // Display current playback speed header (icon, title aligned start, value aligned end).
+                Drawable speedIcon = getDrawable("morphe_ic_slow_motion_video");
+                LinearLayout speedHeader = createSectionHeader(
+                        context,
+                        speedIcon,
+                        getString("revanced_preference_category_playback_speed"),
+                        currentSpeedText,
+                        true
+                );
+                mainLayout.addView(speedHeader);
+            } else {
+                // When pitch is disabled, only show centered speed value with no header text or icon.
+                currentSpeedText.setTextColor(ThemeUtils.getAppForegroundColor());
+                currentSpeedText.setTextSize(16);
+                currentSpeedText.setTypeface(Typeface.DEFAULT_BOLD);
+                currentSpeedText.setGravity(Gravity.CENTER);
+                LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                textParams.setMargins(0, dip20, 0, dip12);
+                currentSpeedText.setLayoutParams(textParams);
+                mainLayout.addView(currentSpeedText);
+            }
 
             // Create horizontal layout for slider and +/- buttons.
             LinearLayout sliderLayout = new LinearLayout(context);
@@ -912,6 +915,14 @@ public class VideoUtils extends IntentUtils {
             plusButton.setOnClickListener(v -> userSelectedSpeed.apply(
                     (float) (VideoInformation.getPlaybackSpeed() + SPEED_ADJUSTMENT_CHANGE)));
 
+            // Observer to keep speed text and slider reactive
+            Runnable onSpeedChanged = () -> {
+                float speed = VideoInformation.getPlaybackSpeed();
+                currentSpeedText.setText(formatSpeedStringX(speed, 2));
+                speedSlider.setProgress(speedToProgressValue(speed));
+            };
+            VideoInformation.addOnPlaybackSpeedChangeListener(onSpeedChanged);
+
             // Create GridLayout for preset speed buttons.
             GridLayout gridLayout = new GridLayout(context);
             gridLayout.setColumnCount(5); // 5 columns for speed buttons.
@@ -922,74 +933,262 @@ public class VideoUtils extends IntentUtils {
             gridParams.setMargins(dip4, dip12, dip4, dip12); // Speed buttons container.
             gridLayout.setLayoutParams(gridParams);
 
-            // For button use 1 digit minimum.
-            speedFormatter.setMinimumFractionDigits(1);
+            synchronized (speedFormatter) {
+                // For button use 1 digit minimum.
+                speedFormatter.setMinimumFractionDigits(1);
 
-            // Add buttons for each preset playback speed.
-            for (float speed : CustomPlaybackSpeedPatch.getPlaybackSpeeds()) {
-                // Container for button and optional label.
-                FrameLayout buttonContainer = new FrameLayout(context);
+                // Add buttons for each preset playback speed.
+                for (float speed : CustomPlaybackSpeedPatch.getPlaybackSpeeds()) {
+                    // Container for button and optional label.
+                    FrameLayout buttonContainer = new FrameLayout(context);
 
-                // Set layout parameters for each grid cell.
-                GridLayout.LayoutParams containerParams = new GridLayout.LayoutParams();
-                containerParams.width = 0; // Equal width for columns.
-                containerParams.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1, 1f);
-                containerParams.setMargins(dip4, 0, dip4, 0); // Button margins.
-                containerParams.height = dip60; // Fixed height for button and label.
-                buttonContainer.setLayoutParams(containerParams);
+                    // Set layout parameters for each grid cell.
+                    GridLayout.LayoutParams containerParams = new GridLayout.LayoutParams();
+                    containerParams.width = 0; // Equal width for columns.
+                    containerParams.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1, 1f);
+                    containerParams.setMargins(dip4, 0, dip4, 0); // Button margins.
+                    containerParams.height = dip60; // Fixed height for button and label.
+                    buttonContainer.setLayoutParams(containerParams);
 
-                // Create speed button.
-                Button speedButton = new Button(context, null, 0);
-                speedButton.setText(speedFormatter.format(speed));
-                speedButton.setTextColor(ThemeUtils.getAppForegroundColor());
-                speedButton.setTextSize(12);
-                speedButton.setAllCaps(false);
-                speedButton.setGravity(Gravity.CENTER);
+                    // Create speed button.
+                    Button speedButton = new Button(context, null, 0);
+                    speedButton.setText(speedFormatter.format(speed));
+                    speedButton.setTextColor(ThemeUtils.getAppForegroundColor());
+                    speedButton.setTextSize(12);
+                    speedButton.setAllCaps(false);
+                    speedButton.setGravity(Gravity.CENTER);
 
-                ShapeDrawable buttonBackground = new ShapeDrawable(new RoundRectShape(
-                        Utils.createCornerRadii(20), null, null));
-                buttonBackground.getPaint().setColor(getAdjustedBackgroundColor(false));
-                speedButton.setBackground(buttonBackground);
-                speedButton.setPadding(dip4, dip4, dip4, dip4);
+                    ShapeDrawable buttonBackground = new ShapeDrawable(new RoundRectShape(
+                            Utils.createCornerRadii(20), null, null));
+                    buttonBackground.getPaint().setColor(getAdjustedBackgroundColor(false));
+                    speedButton.setBackground(buttonBackground);
+                    speedButton.setPadding(dip4, dip4, dip4, dip4);
 
-                // Center button vertically and stretch horizontally in container.
-                FrameLayout.LayoutParams buttonParams = new FrameLayout.LayoutParams(
-                        FrameLayout.LayoutParams.MATCH_PARENT, dip32, Gravity.CENTER);
-                speedButton.setLayoutParams(buttonParams);
+                    // Center button vertically and stretch horizontally in container.
+                    FrameLayout.LayoutParams buttonParams = new FrameLayout.LayoutParams(
+                            FrameLayout.LayoutParams.MATCH_PARENT, dip32, Gravity.CENTER);
+                    speedButton.setLayoutParams(buttonParams);
 
-                // Add speed buttons view to buttons container layout.
-                buttonContainer.addView(speedButton);
+                    // Add speed buttons view to buttons container layout.
+                    buttonContainer.addView(speedButton);
 
-                // Add "Normal" label for 1.0x speed.
-                if (speed == 1.0f) {
-                    TextView normalLabel = new TextView(context);
-                    // Use same 'Normal' string as stock YouTube.
-                    normalLabel.setText(str("revanced_playback_speed_normal"));
-                    normalLabel.setTextColor(ThemeUtils.getAppForegroundColor());
-                    normalLabel.setTextSize(10);
-                    normalLabel.setGravity(Gravity.CENTER);
+                    // Add "Normal" label for 1.0x speed.
+                    if (speed == 1.0f) {
+                        TextView normalLabel = new TextView(context);
+                        // Use same 'Normal' string as stock YouTube.
+                        normalLabel.setText(str("revanced_playback_speed_normal"));
+                        normalLabel.setTextColor(ThemeUtils.getAppForegroundColor());
+                        normalLabel.setTextSize(10);
+                        normalLabel.setGravity(Gravity.CENTER);
+                        normalLabel.setSingleLine(true);
+                        normalLabel.setEllipsize(TextUtils.TruncateAt.END);
 
-                    FrameLayout.LayoutParams labelParams = new FrameLayout.LayoutParams(
-                            FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT,
-                            Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-                    labelParams.bottomMargin = 0; // Position label below button.
-                    normalLabel.setLayoutParams(labelParams);
+                        FrameLayout.LayoutParams labelParams = new FrameLayout.LayoutParams(
+                                FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT,
+                                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+                        labelParams.bottomMargin = 0; // Position label below button.
+                        normalLabel.setLayoutParams(labelParams);
 
-                    buttonContainer.addView(normalLabel);
+                        buttonContainer.addView(normalLabel);
+                    }
+
+                    speedButton.setOnClickListener(v -> userSelectedSpeed.apply(speed));
+
+                    gridLayout.addView(buttonContainer);
                 }
 
-                speedButton.setOnClickListener(v -> userSelectedSpeed.apply(speed));
-
-                gridLayout.addView(buttonContainer);
+                // Restore 2 digit minimum.
+                speedFormatter.setMinimumFractionDigits(2);
             }
-
-            // Restore 2 digit minimum.
-            speedFormatter.setMinimumFractionDigits(2);
 
             // Add in-rows speed buttons layout to main layout.
             mainLayout.addView(gridLayout);
 
-            ExtendedUtils.showBottomSheetDialog(context, mainLayout);
+            // ## Audio pitch UI: pitch controls and sync toggle, hidden entirely when disabled.
+            final Consumer<Float> onPitchChanged;
+            if (isPitchEnabled) {
+                Consumer<Float> userSelectedPitch = VideoInformation::setAudioPitch;
+
+                Drawable musicIcon = getDrawable("morphe_ic_music_note");
+                TextView currentPitchText = new TextView(context);
+                float currentPitch = VideoInformation.getPlaybackAudioPitch();
+                currentPitchText.setText(VideoInformation.formatAudioPitchStringX(currentPitch));
+
+                LinearLayout pitchHeader = createSectionHeader(
+                        context,
+                        musicIcon,
+                        getString("revanced_playback_audio_pitch_title"),
+                        currentPitchText,
+                        false
+                );
+                mainLayout.addView(pitchHeader);
+
+                LinearLayout pitchSliderLayout = new LinearLayout(context);
+                pitchSliderLayout.setOrientation(LinearLayout.HORIZONTAL);
+                pitchSliderLayout.setGravity(Gravity.CENTER_VERTICAL);
+
+                Button pitchMinusButton = createStyledButton(context, false, dip8, dip8);
+                Button pitchPlusButton = createStyledButton(context, true, dip8, dip8);
+
+                pitchMinusButton.setOnClickListener(v -> userSelectedPitch.accept(roundSpeedToNearestIncrement(
+                        VideoInformation.getPlaybackAudioPitch() - PITCH_ADJUSTMENT_CHANGE)));
+                pitchPlusButton.setOnClickListener(v -> userSelectedPitch.accept(roundSpeedToNearestIncrement(
+                        VideoInformation.getPlaybackAudioPitch() + PITCH_ADJUSTMENT_CHANGE)));
+
+                SeekBar pitchSlider = new SeekBar(context);
+                pitchSlider.setFocusable(true);
+                pitchSlider.setFocusableInTouchMode(true);
+                pitchSlider.setMax(pitchToProgressValue(CustomPlaybackAudioPitchPatch.PLAYBACK_AUDIO_PITCH_MAXIMUM));
+                pitchSlider.setProgress(pitchToProgressValue(currentPitch));
+                pitchSlider.getProgressDrawable().setColorFilter(
+                        ThemeUtils.getAppForegroundColor(), PorterDuff.Mode.SRC_IN);
+                pitchSlider.getThumb().setColorFilter(
+                        ThemeUtils.getAppForegroundColor(), PorterDuff.Mode.SRC_IN);
+                LinearLayout.LayoutParams pitchSliderParams = new LinearLayout.LayoutParams(
+                        0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+                pitchSlider.setLayoutParams(pitchSliderParams);
+
+                pitchSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                    @Override
+                    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                        if (fromUser) {
+                            userSelectedPitch.accept(roundSpeedToNearestIncrement(
+                                    CustomPlaybackAudioPitchPatch.PLAYBACK_AUDIO_PITCH_MINIMUM + (progress / PROGRESS_BAR_VALUE_SCALE)));
+                        }
+                    }
+
+                    @Override
+                    public void onStartTrackingTouch(SeekBar seekBar) {}
+
+                    @Override
+                    public void onStopTrackingTouch(SeekBar seekBar) {}
+                });
+
+                onPitchChanged = pitch -> {
+                    currentPitchText.setText(VideoInformation.formatAudioPitchStringX(pitch));
+                    pitchSlider.setProgress(pitchToProgressValue(pitch));
+                };
+                VideoInformation.addOnPlaybackAudioPitchChangeListener(onPitchChanged);
+
+                GridLayout pitchPresetGrid = new GridLayout(context);
+                pitchPresetGrid.setColumnCount(5);
+                pitchPresetGrid.setAlignmentMode(GridLayout.ALIGN_BOUNDS);
+                final float[] customPitchPresets = CustomPlaybackAudioPitchPatch.getPlaybackAudioPitches();
+                final String[] defaultPitchButtonLabels = {"/2", "−1st", "1x", "+1st", "×2"};
+                final boolean hasCustomPitchPresets = customPitchPresets.length > 0;
+                final int pitchPresetCount = hasCustomPitchPresets
+                        ? customPitchPresets.length
+                        : defaultPitchButtonLabels.length;
+                pitchPresetGrid.setRowCount((int) Math.ceil(pitchPresetCount / 5.0));
+                LinearLayout.LayoutParams pitchGridParams = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                pitchGridParams.setMargins(dip4, dip12, dip4, dip12);
+                pitchPresetGrid.setLayoutParams(pitchGridParams);
+
+                for (int i = 0; i < pitchPresetCount; i++) {
+                    final float customPitch = hasCustomPitchPresets ? customPitchPresets[i] : 0;
+                    final String pitchLabel = hasCustomPitchPresets
+                            ? formatSpeedStringX(customPitch, 2)
+                            : defaultPitchButtonLabels[i];
+                    FrameLayout pitchButtonContainer = new FrameLayout(context);
+                    GridLayout.LayoutParams pitchContainerParams = new GridLayout.LayoutParams();
+                    pitchContainerParams.width = 0;
+                    pitchContainerParams.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1, 1f);
+                    pitchContainerParams.setMargins(dip4, 0, dip4, 0);
+                    pitchContainerParams.height = dip60;
+                    pitchButtonContainer.setLayoutParams(pitchContainerParams);
+
+                    Button pitchPresetButton = new Button(context, null, 0);
+                    pitchPresetButton.setText(pitchLabel);
+                    pitchPresetButton.setTextColor(ThemeUtils.getAppForegroundColor());
+                    pitchPresetButton.setTextSize(12);
+                    pitchPresetButton.setAllCaps(false);
+                    pitchPresetButton.setGravity(Gravity.CENTER);
+
+                    ShapeDrawable pitchButtonBackground = new ShapeDrawable(new RoundRectShape(
+                            Utils.createCornerRadii(20), null, null));
+                    pitchButtonBackground.getPaint().setColor(getAdjustedBackgroundColor(false));
+                    pitchPresetButton.setBackground(pitchButtonBackground);
+                    pitchPresetButton.setPadding(dip4, dip4, dip4, dip4);
+
+                    FrameLayout.LayoutParams pitchButtonParams = new FrameLayout.LayoutParams(
+                            FrameLayout.LayoutParams.MATCH_PARENT, dip32, Gravity.CENTER);
+                    pitchPresetButton.setLayoutParams(pitchButtonParams);
+
+                    pitchPresetButton.setOnClickListener(v -> {
+                        if (hasCustomPitchPresets) {
+                            userSelectedPitch.accept(customPitch);
+                            return;
+                        }
+
+                        final float pitch = VideoInformation.getPlaybackAudioPitch();
+                        final float newValue = switch (pitchLabel) {
+                            case "/2" -> pitch * 0.5f;
+                            case "−1st" -> (float) (pitch / ONE_SEMITONE);
+                            case "1x" -> 1.0f;
+                            case "+1st" -> (float) (pitch * ONE_SEMITONE);
+                            case "×2" -> pitch * 2.0f;
+                            default -> pitch;
+                        };
+                        userSelectedPitch.accept(newValue);
+                    });
+                    pitchButtonContainer.addView(pitchPresetButton);
+                    pitchPresetGrid.addView(pitchButtonContainer);
+                }
+
+                // Sync button below pitch section
+                LinearLayout syncLayout = new LinearLayout(context);
+                syncLayout.setOrientation(LinearLayout.HORIZONTAL);
+                syncLayout.setGravity(Gravity.CENTER);
+                LinearLayout.LayoutParams syncLayoutParams = new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                syncLayoutParams.setMargins(dip8, dip4, dip8, dip8);
+                syncLayout.setLayoutParams(syncLayoutParams);
+
+                Button syncButton = new Button(context, null, 0);
+                boolean isTimeStretching = Settings.PLAYBACK_AUDIO_TIME_STRETCHING.get();
+                boolean isSynced = !isTimeStretching;
+
+                updateSyncButtonVisuals(syncButton, isSynced, dip6);
+
+                ShapeDrawable syncBackground = new ShapeDrawable(new RoundRectShape(
+                        Utils.createCornerRadii(20), null, null));
+                syncBackground.getPaint().setColor(getAdjustedBackgroundColor(false));
+                syncButton.setBackground(syncBackground);
+                syncButton.setPaddingRelative(dip10, dip4, dip16, dip4);
+
+                syncButton.setOnClickListener(v -> {
+                    boolean currentlyTimeStretching = Settings.PLAYBACK_AUDIO_TIME_STRETCHING.get();
+                    boolean newTimeStretching = !currentlyTimeStretching;
+                    Settings.PLAYBACK_AUDIO_TIME_STRETCHING.save(newTimeStretching);
+
+                    boolean nowSynced = !newTimeStretching;
+                    updateSyncButtonVisuals(syncButton, nowSynced, dip6);
+
+                    if (nowSynced) {
+                        VideoInformation.setAudioPitch(VideoInformation.getPlaybackSpeed());
+                    }
+                });
+
+                syncLayout.addView(syncButton);
+
+                pitchSliderLayout.addView(pitchMinusButton);
+                pitchSliderLayout.addView(pitchSlider);
+                pitchSliderLayout.addView(pitchPlusButton);
+
+                mainLayout.addView(pitchSliderLayout);
+                mainLayout.addView(pitchPresetGrid);
+                mainLayout.addView(syncLayout);
+            } else {
+                onPitchChanged = null;
+            }
+
+            ExtendedUtils.showBottomSheetDialog(context, mainLayout, null, d -> {
+                VideoInformation.removeOnPlaybackSpeedChangeListener(onSpeedChanged);
+                if (onPitchChanged != null) {
+                    VideoInformation.removeOnPlaybackAudioPitchChangeListener(onPitchChanged);
+                }
+            });
         } catch (Exception ex) {
             Logger.printException(() -> "showCustomModernPlaybackSpeedDialog failure", ex);
         }
@@ -1007,9 +1206,14 @@ public class VideoUtils extends IntentUtils {
             final int dip4 = dipToPixels(4);
             final int dip8 = dipToPixels(8);
             final int dip12 = dipToPixels(12);
+            final int dip16 = dipToPixels(16);
             final int dip20 = dipToPixels(20);
 
-            // Title: "Громкость перевода"
+            if (VoiceOverTranslationPatch.isTranslationRequestInProgress()) {
+                mainLayout.addView(createVotProgressStatus(context));
+            }
+
+            // Translation volume
             TextView titleText = new TextView(context);
             titleText.setText(str("revanced_vot_translation_volume_title"));
             titleText.setTextColor(ThemeUtils.getAppForegroundColor());
@@ -1018,17 +1222,29 @@ public class VideoUtils extends IntentUtils {
             titleText.setGravity(Gravity.CENTER);
             LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            titleParams.setMargins(0, dip20, 0, dip12);
+            titleParams.setMargins(0, dip20, 0, dip4);
             titleText.setLayoutParams(titleParams);
             mainLayout.addView(titleText);
+
+            TextView volumeValueText = new TextView(context);
+            volumeValueText.setText(str("revanced_vot_percent_value", Settings.VOT_TRANSLATION_VOLUME.get()));
+            volumeValueText.setTextColor(ThemeUtils.getAppForegroundColor());
+            volumeValueText.setTextSize(14);
+            volumeValueText.setIncludeFontPadding(false);
+            volumeValueText.setGravity(Gravity.CENTER);
+            LinearLayout.LayoutParams volumeValueParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            volumeValueParams.setMargins(0, 0, 0, 0);
+            volumeValueText.setLayoutParams(volumeValueParams);
+            mainLayout.addView(volumeValueText);
 
             // Slider row with -/+ buttons
             LinearLayout sliderLayout = new LinearLayout(context);
             sliderLayout.setOrientation(LinearLayout.HORIZONTAL);
             sliderLayout.setGravity(Gravity.CENTER_VERTICAL);
 
-            Button minusButton = createStyledButton(context, false, dip8, dip8);
-            Button plusButton = createStyledButton(context, true, dip8, dip8);
+            Button minusButton = createStyledButton(context, false, dip16, dip4);
+            Button plusButton = createStyledButton(context, true, dip4, dip16);
 
             SeekBar volumeSlider = new SeekBar(context);
             volumeSlider.setFocusable(true);
@@ -1043,16 +1259,9 @@ public class VideoUtils extends IntentUtils {
                     0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
             volumeSlider.setLayoutParams(sliderParams);
 
-            TextView volumeValueText = new TextView(context);
-            volumeValueText.setText(str("revanced_vot_percent_value", Settings.VOT_TRANSLATION_VOLUME.get()));
-            volumeValueText.setTextColor(ThemeUtils.getAppForegroundColor());
-            volumeValueText.setTextSize(14);
-            volumeValueText.setMinWidth(dipToPixels(40));
-
             sliderLayout.addView(minusButton);
             sliderLayout.addView(volumeSlider);
             sliderLayout.addView(plusButton);
-            sliderLayout.addView(volumeValueText);
 
             mainLayout.addView(sliderLayout);
 
@@ -1089,16 +1298,28 @@ public class VideoUtils extends IntentUtils {
             origTitleText.setGravity(Gravity.CENTER);
             LinearLayout.LayoutParams origTitleParams = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            origTitleParams.setMargins(0, dip20, 0, dip12);
+            origTitleParams.setMargins(0, dip20, 0, dip4);
             origTitleText.setLayoutParams(origTitleParams);
             mainLayout.addView(origTitleText);
+
+            TextView origVolumeValueText = new TextView(context);
+            origVolumeValueText.setText(str("revanced_vot_percent_value", Settings.VOT_ORIGINAL_AUDIO_VOLUME.get()));
+            origVolumeValueText.setTextColor(ThemeUtils.getAppForegroundColor());
+            origVolumeValueText.setTextSize(14);
+            origVolumeValueText.setIncludeFontPadding(false);
+            origVolumeValueText.setGravity(Gravity.CENTER);
+            LinearLayout.LayoutParams origVolumeValueParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            origVolumeValueParams.setMargins(0, 0, 0, 0);
+            origVolumeValueText.setLayoutParams(origVolumeValueParams);
+            mainLayout.addView(origVolumeValueText);
 
             LinearLayout origSliderLayout = new LinearLayout(context);
             origSliderLayout.setOrientation(LinearLayout.HORIZONTAL);
             origSliderLayout.setGravity(Gravity.CENTER_VERTICAL);
 
-            Button origMinusButton = createStyledButton(context, false, dip8, dip8);
-            Button origPlusButton = createStyledButton(context, true, dip8, dip8);
+            Button origMinusButton = createStyledButton(context, false, dip16, dip4);
+            Button origPlusButton = createStyledButton(context, true, dip4, dip16);
 
             SeekBar origVolumeSlider = new SeekBar(context);
             origVolumeSlider.setFocusable(true);
@@ -1113,16 +1334,9 @@ public class VideoUtils extends IntentUtils {
                     0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
             origVolumeSlider.setLayoutParams(origSliderParams);
 
-            TextView origVolumeValueText = new TextView(context);
-            origVolumeValueText.setText(str("revanced_vot_percent_value", Settings.VOT_ORIGINAL_AUDIO_VOLUME.get()));
-            origVolumeValueText.setTextColor(ThemeUtils.getAppForegroundColor());
-            origVolumeValueText.setTextSize(14);
-            origVolumeValueText.setMinWidth(dipToPixels(40));
-
             origSliderLayout.addView(origMinusButton);
             origSliderLayout.addView(origVolumeSlider);
             origSliderLayout.addView(origPlusButton);
-            origSliderLayout.addView(origVolumeValueText);
 
             mainLayout.addView(origSliderLayout);
 
@@ -1164,6 +1378,116 @@ public class VideoUtils extends IntentUtils {
             ExtendedUtils.showBottomSheetDialog(context, mainLayout);
         } catch (Exception ex) {
             Logger.printException(() -> "showVotBottomSheetDialog failure", ex);
+        }
+    }
+
+    private static LinearLayout createVotProgressStatus(Context context) {
+        final int dip8 = dipToPixels(8);
+        final int dip12 = dipToPixels(12);
+        final int dip16 = dipToPixels(16);
+        final int dip24 = dipToPixels(24);
+
+        LinearLayout container = new LinearLayout(context);
+        container.setOrientation(LinearLayout.HORIZONTAL);
+        container.setGravity(Gravity.CENTER);
+        container.setPadding(dip16, dip8, dip16, dip12);
+
+        VotCountdownProgressView progressView = new VotCountdownProgressView(context);
+        LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(dip24, dip24);
+        progressParams.setMargins(0, 0, dip12, 0);
+        container.addView(progressView, progressParams);
+
+        TextView progressText = new TextView(context);
+        progressText.setTextColor(ThemeUtils.getAppForegroundColor());
+        progressText.setTextSize(14);
+        progressText.setTypeface(Typeface.DEFAULT_BOLD);
+        progressText.setGravity(Gravity.CENTER);
+        container.addView(progressText, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        final Runnable[] updateProgress = new Runnable[1];
+        updateProgress[0] = () -> {
+            String status = VoiceOverTranslationPatch.getTranslationRequestStatusText();
+            boolean visible = !status.isEmpty();
+            container.setVisibility(visible ? View.VISIBLE : View.GONE);
+            progressView.setProgressFraction(
+                    VoiceOverTranslationPatch.getTranslationRequestProgressFraction());
+            progressText.setText(status);
+            if (visible && container.getWindowToken() != null) {
+                container.postDelayed(updateProgress[0], 250);
+            }
+        };
+
+        container.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override
+            public void onViewAttachedToWindow(@NonNull View v) {
+                updateProgress[0].run();
+            }
+
+            @Override
+            public void onViewDetachedFromWindow(@NonNull View v) {
+                container.removeCallbacks(updateProgress[0]);
+            }
+        });
+        updateProgress[0].run();
+        return container;
+    }
+
+    /**
+     * Draws the remaining server estimate as a shrinking circular arc. Once the estimate expires,
+     * a moving arc communicates that the translation is still processing without inventing a new
+     * countdown from a later poll response.
+     */
+    private static final class VotCountdownProgressView extends View {
+        private static final float INDETERMINATE_ARC_DEGREES = 100.0f;
+        private static final float PROGRESS_TRACK_ALPHA = 48.0f;
+
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final RectF bounds = new RectF();
+        private final float strokeWidth;
+        private float progress = -1.0f;
+
+        VotCountdownProgressView(Context context) {
+            super(context);
+            strokeWidth = Math.max(1.0f, dipToPixels(2));
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeCap(Paint.Cap.ROUND);
+        }
+
+        void setProgressFraction(float progress) {
+            this.progress = Float.isNaN(progress)
+                    ? -1.0f
+                    : Math.max(-1.0f, Math.min(1.0f, progress));
+            invalidate();
+        }
+
+        @Override
+        protected void onDraw(@NonNull Canvas canvas) {
+            super.onDraw(canvas);
+            float inset = strokeWidth / 2.0f;
+            bounds.set(inset, inset, getWidth() - inset, getHeight() - inset);
+            if (bounds.width() <= 0.0f || bounds.height() <= 0.0f) return;
+
+            int foregroundColor = ThemeUtils.getAppForegroundColor();
+            paint.setStrokeWidth(strokeWidth);
+            paint.setColor(withAlpha(foregroundColor, (int) PROGRESS_TRACK_ALPHA));
+            canvas.drawArc(bounds, -90.0f, 360.0f, false, paint);
+
+            paint.setColor(foregroundColor);
+            if (progress >= 0.0f) {
+                canvas.drawArc(bounds, -90.0f, 360.0f * progress, false, paint);
+            } else {
+                float start = (SystemClock.uptimeMillis() / 3.0f) % 360.0f - 90.0f;
+                canvas.drawArc(bounds, start, INDETERMINATE_ARC_DEGREES, false, paint);
+                if (getVisibility() == View.VISIBLE) {
+                    postInvalidateOnAnimation();
+                }
+            }
+        }
+
+        @SuppressWarnings("SameParameterValue")
+        private static int withAlpha(int color, int alpha) {
+            return (color & 0x00FFFFFF) | (Math.max(0, Math.min(255, alpha)) << 24);
         }
     }
 
@@ -1328,7 +1652,9 @@ public class VideoUtils extends IntentUtils {
      * @return A string representation of the speed with 'x' (e.g. "1.25x" or "1.00x").
      */
     private static String formatSpeedStringX(float speed) {
-        return speedFormatter.format(speed) + 'x';
+        synchronized (speedFormatter) {
+            return speedFormatter.format(speed) + 'x';
+        }
     }
 
     /**
@@ -1336,8 +1662,10 @@ public class VideoUtils extends IntentUtils {
      * @return A string representation of the speed with 'x' (e.g. "1.25x" or "1.00x").
      */
     public static String formatSpeedStringX(float speed, int minimumFractionDigits) {
-        speedFormatter.setMinimumFractionDigits(minimumFractionDigits);
-        return speedFormatter.format(speed) + 'x';
+        synchronized (speedFormatter) {
+            speedFormatter.setMinimumFractionDigits(minimumFractionDigits);
+            return speedFormatter.format(speed) + 'x';
+        }
     }
 
     /**
@@ -1364,6 +1692,84 @@ public class VideoUtils extends IntentUtils {
         final double roundedSpeed = Math.round(speed / SPEED_ADJUSTMENT_CHANGE) * SPEED_ADJUSTMENT_CHANGE;
         return Utils.clamp((float) roundedSpeed, (float) SPEED_ADJUSTMENT_CHANGE, PLAYBACK_SPEED_MAXIMUM);
     }
+
+    public static final float PITCH_ADJUSTMENT_CHANGE = 0.05f;
+    private static final double ONE_SEMITONE = Math.pow(2.0, 1.0 / 12.0);
+
+    private static int pitchToProgressValue(float pitch) {
+        return (int) ((pitch - CustomPlaybackAudioPitchPatch.PLAYBACK_AUDIO_PITCH_MINIMUM) * PROGRESS_BAR_VALUE_SCALE);
+    }
+
+    private static LinearLayout createSectionHeader(
+            Context context,
+            @Nullable Drawable iconDrawable,
+            String title,
+            @Nullable TextView valueTextView,
+            boolean isFirstHeader
+    ) {
+        final int dip8 = dipToPixels(8);
+        final int dip12 = dipToPixels(12);
+        final int dip16 = dipToPixels(16);
+        final int dip20 = dipToPixels(20);
+        final int dip22 = dipToPixels(22);
+
+        LinearLayout headerLayout = new LinearLayout(context);
+        headerLayout.setOrientation(LinearLayout.HORIZONTAL);
+        headerLayout.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams headerParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        headerParams.setMargins(dip8, isFirstHeader ? dip20 : dip16, dip8, dip12);
+        headerLayout.setLayoutParams(headerParams);
+
+        if (iconDrawable != null) {
+            Drawable icon = iconDrawable.mutate();
+            icon.setColorFilter(ThemeUtils.getAppForegroundColor(), PorterDuff.Mode.SRC_IN);
+            ImageView iconView = new ImageView(context);
+            iconView.setImageDrawable(icon);
+            LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(dip22, dip22);
+            iconParams.setMarginEnd(dip8);
+            iconView.setLayoutParams(iconParams);
+            headerLayout.addView(iconView);
+        }
+
+        TextView titleView = new TextView(context);
+        titleView.setText(title);
+        titleView.setTextColor(ThemeUtils.getAppForegroundColor());
+        titleView.setTextSize(16);
+        titleView.setTypeface(Typeface.DEFAULT_BOLD);
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
+                0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        titleView.setLayoutParams(titleParams);
+        headerLayout.addView(titleView);
+
+        if (valueTextView != null) {
+            valueTextView.setTextColor(ThemeUtils.getAppForegroundColor());
+            valueTextView.setTextSize(16);
+            valueTextView.setTypeface(Typeface.DEFAULT_BOLD);
+            valueTextView.setGravity(Gravity.END);
+            LinearLayout.LayoutParams valueParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            valueTextView.setLayoutParams(valueParams);
+            headerLayout.addView(valueTextView);
+        }
+
+        return headerLayout;
+    }
+
+    private static void updateSyncButtonVisuals(Button syncButton, boolean isSynced, int drawablePadding) {
+        Drawable syncIcon = getDrawable(isSynced ? "morphe_ic_sync" : "morphe_ic_sync_off");
+        if (syncIcon != null) {
+            syncIcon = syncIcon.mutate();
+            syncIcon.setColorFilter(ThemeUtils.getAppForegroundColor(), PorterDuff.Mode.SRC_IN);
+        }
+        syncButton.setCompoundDrawablesWithIntrinsicBounds(syncIcon, null, null, null);
+        syncButton.setCompoundDrawablePadding(drawablePadding);
+        syncButton.setText(getString("revanced_playback_audio_pitch_sync"));
+        syncButton.setTextColor(ThemeUtils.getAppForegroundColor());
+        syncButton.setTextSize(13);
+        syncButton.setAllCaps(false);
+        syncButton.setGravity(Gravity.CENTER);
+    }
 }
 
 /**
@@ -1375,7 +1781,7 @@ class OutlineSymbolDrawable extends Drawable {
 
     OutlineSymbolDrawable(boolean isPlus) {
         this.isPlus = isPlus;
-        paint = new Paint(Paint.ANTI_ALIAS_FLAG); // Enable anti-aliasing for smooth rendering.
+        paint = new Paint(Paint.ANTI_ALIAS_FLAG); // Enable antialiasing for smooth rendering.
         paint.setColor(ThemeUtils.getAppForegroundColor());
         paint.setStyle(Paint.Style.STROKE); // Use stroke style for outline.
         paint.setStrokeWidth(dipToPixels(1)); // 1dp stroke width.

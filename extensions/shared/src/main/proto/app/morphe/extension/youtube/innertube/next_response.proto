@@ -114,10 +114,41 @@ message YoutubeModel {
 
 message ViewModel {
     CompactifyVideoActionBarViewModel compactifyVideoActionBarViewModel = 2185;
+    QualitySheetHeaderViewModel qualitySheetHeaderViewModel = 449024803;
+    QuickQualitySheetContentViewModel quickQualitySheetContentViewModel = 449854123;
+    CaptionsSheetContentViewModel captionsSheetContentViewModel = 461956826;
 }
 
 message CompactifyVideoActionBarViewModel {
     repeated ActionButtons actionButtons = 1;
+}
+
+message QualitySheetHeaderViewModel {
+}
+
+message QuickQualitySheetContentViewModel {
+    QualityHeader qualityHeader = 1;
+    QualityFooter qualityFooter = 8;
+    bool enablePlayerAdapter = 9;
+}
+
+message QualityHeader {
+}
+
+message QualityFooter {
+    QualitySheetFooterViewModel qualitySheetFooterViewModel = 514785317;
+}
+
+message QualitySheetFooterViewModel {
+}
+
+message CaptionsSheetContentViewModel {
+    SettingsCtaText settingsCtaText = 6;
+    bool enablePlayerAdapter1 = 10;
+    bool enablePlayerAdapter2 = 11;
+}
+
+message SettingsCtaText {
 }
 
 message VideoActionBarModel {
@@ -134,13 +165,21 @@ message ActionButtons {
 
 message PrimaryButtonViewModel {
     oneof data {
+        AccountLinkButtonViewModel accountLinkButtonViewModel = 492031756;
         AddToPlaylistButtonViewModel addToPlaylistButtonViewModel = 484598023;
         SecondaryButtonViewModel secondaryButtonViewModel = 461054335;
         ClipButtonViewModel clipButtonViewModel = 490025863;
         CompactChannelBarViewModel compactChannelBarViewModel = 1107;
         DownloadButtonViewModel downloadButtonViewModel = 33561776;
+        LikeButtonViewModel likeButtonViewModel = 484585818;
+        DislikeButtonViewModel dislikeButtonViewModel = 484590786;
+        OverflowMenuButtonViewModel overflowMenuButtonViewModel = 37098;
         SegmentedLikeDislikeButtonViewModel segmentedLikeDislikeButtonViewModel = 484586709;
     }
+}
+
+message AccountLinkButtonViewModel {
+    string accountLinkStatusEntityKey = 2;
 }
 
 message AddToPlaylistButtonViewModel {
@@ -162,6 +201,18 @@ message CompactChannelBarViewModel {
 
 message DownloadButtonViewModel {
     string videoId = 1;
+}
+
+message LikeButtonViewModel {
+    string likeStatusEntityKey = 3;
+}
+
+message DislikeButtonViewModel {
+    string dislikeEntityKey = 2;
+}
+
+message OverflowMenuButtonViewModel {
+    bool forceEnablePushoverOverflowMenuItems = 4;
 }
 
 message SegmentedLikeDislikeButtonViewModel {

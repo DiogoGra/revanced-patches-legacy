@@ -9,7 +9,7 @@ import app.morphe.patches.shared.litho.addLithoFilter
 import app.morphe.patches.shared.litho.lithoFilterPatch
 import app.morphe.patches.shared.spans.addSpanFilter
 import app.morphe.patches.shared.spans.inclusiveSpanPatch
-import app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBLE_PACKAGE
+import app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBILITY_YOUTUBE
 import app.morphe.patches.youtube.utils.componentlist.hookElementList
 import app.morphe.patches.youtube.utils.componentlist.lazilyConvertedElementHookPatch
 import app.morphe.patches.youtube.utils.extension.Constants.COMPONENTS_PATH
@@ -18,15 +18,21 @@ import app.morphe.patches.youtube.utils.extension.Constants.SPANS_PATH
 import app.morphe.patches.youtube.utils.fix.litho.lithoLayoutPatch
 import app.morphe.patches.youtube.utils.patch.PatchList.HIDE_COMMENTS_COMPONENTS
 import app.morphe.patches.youtube.utils.playertype.playerTypeHookPatch
+import app.morphe.patches.youtube.utils.proto.elementProtoParserHookPatch
+import app.morphe.patches.youtube.utils.proto.hookElement
 import app.morphe.patches.youtube.utils.resourceid.sharedResourceIdPatch
 import app.morphe.patches.youtube.utils.settings.ResourceUtils.addPreference
 import app.morphe.patches.youtube.utils.settings.settingsPatch
 import app.morphe.util.fingerprint.methodOrThrow
+import app.morphe.util.getReference
 import app.morphe.util.getWalkerMethod
 import app.morphe.util.indexOfFirstInstructionOrThrow
+import app.morphe.util.indexOfFirstInstructionReversedOrThrow
 import app.morphe.util.indexOfFirstLiteralInstructionOrThrow
 import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 
 private const val COMMENTS_FILTER_CLASS_DESCRIPTOR =
     "$COMPONENTS_PATH/CommentsFilter;"
@@ -38,13 +44,14 @@ val commentsComponentPatch = bytecodePatch(
     HIDE_COMMENTS_COMPONENTS.title,
     HIDE_COMMENTS_COMPONENTS.summary,
 ) {
-    compatibleWith(COMPATIBLE_PACKAGE)
+    compatibleWith(COMPATIBILITY_YOUTUBE)
 
     dependsOn(
         settingsPatch,
         inclusiveSpanPatch,
         lithoFilterPatch,
         lithoLayoutPatch,
+        elementProtoParserHookPatch,
         lazilyConvertedElementHookPatch,
         playerTypeHookPatch,
         sharedResourceIdPatch,
@@ -89,8 +96,34 @@ val commentsComponentPatch = bytecodePatch(
 
         // endregion
 
+        // region hide category bar in comments
+
+        PanelSubheaderFingerprint.let {
+            it.method.apply {
+                val removeAllViewsIndex = indexOfFirstInstructionReversedOrThrow {
+                    opcode == Opcode.INVOKE_VIRTUAL &&
+                            getReference<MethodReference>()?.name == "removeAllViews"
+                }
+
+                val setVisibilityIndex = indexOfFirstInstructionOrThrow(removeAllViewsIndex) {
+                    opcode == Opcode.INVOKE_VIRTUAL &&
+                            getReference<MethodReference>()?.name == "setVisibility"
+                }
+
+                val subheaderRegister = getInstruction<FiveRegisterInstruction>(setVisibilityIndex).registerC
+
+                addInstruction(
+                    setVisibilityIndex + 1,
+                    "invoke-static { v$subheaderRegister }, $COMMENTS_FILTER_CLASS_DESCRIPTOR->hideInComments(Landroid/view/View;)V"
+                )
+            }
+        }
+
+        // endregion
+
         addSpanFilter(SEARCH_LINKS_FILTER_CLASS_DESCRIPTOR)
         addLithoFilter(COMMENTS_FILTER_CLASS_DESCRIPTOR)
+        hookElement("$COMMENTS_FILTER_CLASS_DESCRIPTOR->onCommentsLoaded([B)[B")
         hookElementList("$PLAYER_CLASS_DESCRIPTOR->sanitizeCommentsCategoryBar")
 
         // region add settings

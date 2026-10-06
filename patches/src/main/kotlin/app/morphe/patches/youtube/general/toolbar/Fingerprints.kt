@@ -1,14 +1,71 @@
+/*
+ * Copyright (C) 2024-2026 anddea
+ *
+ * This file is part of the revanced-patches project:
+ * https://github.com/anddea/revanced-patches
+ *
+ * Original author(s):
+ * - anddea (https://github.com/anddea)
+ * - inotia00 (https://github.com/inotia00)
+ *
+ * Licensed under the GNU General Public License v3.0.
+ *
+ * ------------------------------------------------------------------------
+ * GPLv3 Section 7 – Additional Terms & Attribution Requirements
+ * ------------------------------------------------------------------------
+ *
+ * This file contains substantial original work by the author(s) listed above.
+ *
+ * In accordance with Section 7 of the GNU General Public License v3.0,
+ * the following additional terms apply to this file:
+ *
+ * 1. Source Credit Preservation (Section 7(b)): This specific copyright notice
+ *    and the list of original authors above must be preserved in any copy
+ *    or derivative work. You may add your own copyright notice below it,
+ *    but you may not remove the original one.
+ *
+ * 2. Origin & Modification Marking (Section 7(c)): Modified versions must be
+ *    clearly marked as such (e.g., by adding a "Modified by" line or a new
+ *    copyright notice) and must not be misrepresented as the original work.
+ *
+ * 3. Version Control Attribution (Section 7(b)): Any ports or substantial
+ *    modifications must retain historical authorship credit in version control
+ *    systems (e.g., Git), listing original author(s) appropriately and
+ *    modifiers as committers or co-authors.
+ *
+ * 4. User Interface Attribution (Section 7(b)): Any works containing or
+ *    derived from this material must maintain a visible credit or
+ *    acknowledgment to the original author(s) within the application's
+ *    user interface (e.g., in an "About" or "Credits" section).
+ */
+
+/*
+ * Portions of this file are ported from Morphe:
+ * Copyright 2026 Morphe.
+ * https://github.com/MorpheApp/morphe-patches
+ *
+ * Original hard forked code:
+ * https://github.com/ReVanced/revanced-patches/commit/724e6d61b2ecd868c1a9a37d465a688e83a74799
+ *
+ * See the included NOTICE file for GPLv3 §7(b) and §7(c) terms that apply to Morphe contributions.
+ */
+
 package app.morphe.patches.youtube.general.toolbar
 
+import app.morphe.patcher.Fingerprint
+import app.morphe.patcher.InstructionLocation.MatchAfterWithin
+import app.morphe.patcher.fieldAccess
+import app.morphe.patcher.literal
+import app.morphe.patcher.methodCall
+import app.morphe.patches.shared.mapping.ResourceType
+import app.morphe.patches.shared.mapping.resourceLiteral
 import app.morphe.patches.youtube.utils.resourceid.actionBarRingo
 import app.morphe.patches.youtube.utils.resourceid.actionBarRingoBackground
 import app.morphe.patches.youtube.utils.resourceid.drawerContentView
-import app.morphe.patches.youtube.utils.resourceid.menuSearch
 import app.morphe.patches.youtube.utils.resourceid.p13nHeader
 import app.morphe.patches.youtube.utils.resourceid.seeMoreProceedingHeader
 import app.morphe.patches.youtube.utils.resourceid.voiceSearch
 import app.morphe.patches.youtube.utils.resourceid.youTubeLogo
-import app.morphe.patches.youtube.utils.resourceid.ytOutlineVideoCamera
 import app.morphe.util.fingerprint.legacyFingerprint
 import app.morphe.util.getReference
 import app.morphe.util.indexOfFirstInstruction
@@ -84,11 +141,6 @@ internal val attributeResolverFingerprint = legacyFingerprint(
     strings = listOf("Type of attribute is not a reference to a drawable (attr = %d, value = %s)")
 )
 
-internal val createButtonDrawableFingerprint = legacyFingerprint(
-    name = "createButtonDrawableFingerprint",
-    literals = listOf(ytOutlineVideoCamera),
-)
-
 /**
  * Matches using the class found in [searchSuggestionCollectionFingerprint].
  */
@@ -145,16 +197,6 @@ internal fun indexOfAddViewInstruction(method: Method) =
                 getReference<MethodReference>()?.name == "addView"
     }
 
-/**
- * This fingerprint is compatible with YouTube v19.07.40+
- */
-internal val imageSearchButtonConfigFingerprint = legacyFingerprint(
-    name = "imageSearchButtonConfigFingerprint",
-    returnType = "Z",
-    accessFlags = AccessFlags.PUBLIC or AccessFlags.FINAL,
-    literals = listOf(45617544L),
-)
-
 internal val searchSuggestionEndpointFingerprint = legacyFingerprint(
     name = "searchSuggestionEndpointFingerprint",
     returnType = "Z",
@@ -194,6 +236,49 @@ internal val searchSuggestionCollectionFingerprint = legacyFingerprint(
     literals = listOf(p13nHeader, seeMoreProceedingHeader)
 )
 
+internal object SearchBoxTypingStringFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = listOf("L"),
+    filters = listOf(
+        fieldAccess(opcode = Opcode.IGET_OBJECT, type = "Ljava/util/Collection;"),
+        methodCall(
+            smali = "Ljava/util/ArrayList;-><init>(Ljava/util/Collection;)V",
+            location = MatchAfterWithin(5),
+        ),
+        fieldAccess(opcode = Opcode.IGET_OBJECT, type = "Ljava/lang/String;"),
+        methodCall(
+            smali = "Ljava/lang/String;->isEmpty()Z",
+            location = MatchAfterWithin(5),
+        ),
+        resourceLiteral(ResourceType.DIMEN, "suggestion_category_divider_height"),
+    ),
+)
+
+private object SearchSuggestionEndpointConstructorFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.CONSTRUCTOR),
+    returnType = "V",
+    strings = listOf("\u2026 "),
+)
+
+internal object SearchSuggestionEndpoint2021Fingerprint : Fingerprint(
+    classFingerprint = SearchSuggestionEndpointConstructorFingerprint,
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "Z",
+    parameters = emptyList(),
+    filters = listOf(
+        fieldAccess(
+            opcode = Opcode.IGET_OBJECT,
+            definingClass = "this",
+            type = "Ljava/lang/String;",
+        ),
+        methodCall(
+            opcode = Opcode.INVOKE_STATIC,
+            smali = "Landroid/text/TextUtils;->isEmpty(Ljava/lang/CharSequence;)Z",
+        ),
+    ),
+)
+
 /**
  * YouTube 19.47 ~ 20.14.
  */
@@ -228,6 +313,47 @@ internal val searchBarParentFingerprint = legacyFingerprint(
     literals = listOf(voiceSearch),
 )
 
+internal object SearchBarBackButtonOnExitFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = emptyList(),
+    strings = listOf("voz-target-id", "search-lens-button")
+)
+
+internal object SearchBarBackButtonOnResumeFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = emptyList(),
+    custom = { method, _ ->
+        method.indexOfFirstInstruction {
+            opcode == Opcode.INVOKE_VIRTUAL &&
+                    getReference<MethodReference>()?.toString() ==
+                    "Landroid/widget/EditText;->setImeOptions(I)V"
+        } >= 0
+    }
+)
+
+internal object SearchResultsBackButtonOnResumeFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = emptyList(),
+    strings = listOf("suggest"),
+)
+
+internal object AppCompatToolbarNavigationIconSetterFingerprint : Fingerprint(
+    definingClass = "Landroid/support/v7/widget/Toolbar;",
+    accessFlags = listOf(AccessFlags.PUBLIC),
+    returnType = "V",
+    parameters = listOf("Landroid/graphics/drawable/Drawable;"),
+    custom = { method, _ ->
+        method.indexOfFirstInstruction {
+            opcode == Opcode.INVOKE_VIRTUAL &&
+                    getReference<MethodReference>()?.toString() ==
+                    "Landroid/widget/ImageButton;->setImageDrawable(Landroid/graphics/drawable/Drawable;)V"
+        } >= 0
+    }
+)
+
 internal val toolbarSearchButtonFingerprint = legacyFingerprint(
     name = "toolbarSearchButtonFingerprint",
     returnType = "V",
@@ -242,10 +368,34 @@ internal fun indexOfShowAsActionInstruction(method: Method) =
         getReference<MethodReference>()?.name == "setShowAsAction"
     }
 
-internal val toolbarSearchButtonLabelFingerprint = legacyFingerprint(
-    name = "toolbarSearchButtonLabelFingerprint",
-    returnType = "Ljava/lang/CharSequence;",
-    literals = listOf(menuSearch),
+private object SearchRequestLoaderParentFingerprint : Fingerprint(
+    name = "<init>",
+    strings = listOf("search_cache_key", "from_sound_search"),
+)
+
+internal object SearchRequestLoaderFingerprint : Fingerprint(
+    classFingerprint = SearchRequestLoaderParentFingerprint,
+    returnType = "V",
+    accessFlags = listOf(AccessFlags.PRIVATE, AccessFlags.FINAL),
+    custom = { method, _ ->
+        val parameterTypes = method.parameterTypes
+
+        parameterTypes.size in 3..4 &&
+                parameterTypes[0] == "Ljava/lang/String;" &&
+                parameterTypes[1] == "Z" &&
+                parameterTypes[2].startsWith("L") &&
+                (parameterTypes.size == 3 || parameterTypes[3].startsWith("L")) &&
+                method.indexOfFirstInstruction {
+                    opcode == Opcode.INVOKE_VIRTUAL &&
+                            getReference<MethodReference>()?.toString() ==
+                            "Lcom/google/android/libraries/youtube/rendering/ui/widget/loadingframe/LoadingFrameLayout;->c()V"
+                } >= 0 &&
+                method.indexOfFirstInstruction {
+                    opcode == Opcode.INVOKE_INTERFACE &&
+                            getReference<MethodReference>()?.toString() ==
+                            "Ljava/util/concurrent/Executor;->execute(Ljava/lang/Runnable;)V"
+                } >= 0
+    },
 )
 
 internal val voiceInputControllerParentFingerprint = legacyFingerprint(
@@ -309,4 +459,16 @@ internal val youActionBarFingerprint = legacyFingerprint(
         Opcode.MOVE_RESULT,
         Opcode.IF_EQZ,
     )
+)
+
+internal object TopBarRendererSecondaryFilterFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "V",
+    filters = listOf(
+        methodCall(
+            opcode = Opcode.INVOKE_INTERFACE,
+            smali = "Ljava/util/List;->iterator()Ljava/util/Iterator;",
+        ),
+        literal(120823052L),
+    ),
 )

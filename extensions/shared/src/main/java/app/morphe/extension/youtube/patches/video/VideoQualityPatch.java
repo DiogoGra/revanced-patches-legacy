@@ -29,14 +29,25 @@ import j$.util.Optional;
 public class VideoQualityPatch {
 
     /**
-     * Interface to use obfuscated methods.
+     * Interface implemented by YouTube's obfuscated video-quality model.
+     *
+     * The model class is renamed in YouTube 21.04, so extension methods must use this stable
+     * interface instead of the pre-21.04 concrete class descriptor.
      */
-    public interface VideoQualityMenuInterface {
-        void patch_setQuality(VideoQuality quality);
+    public interface VideoQualityInterface {
+        String patch_getQualityName();
+        int patch_getResolution();
     }
 
     /**
-     * Video resolution of the automatic quality option..
+     * Interface to use obfuscated methods.
+     */
+    public interface VideoQualityMenuInterface {
+        void patch_setQuality(VideoQualityInterface quality);
+    }
+
+    /**
+     * Video resolution of the automatic quality option.
      */
     public static final int AUTOMATIC_VIDEO_QUALITY_VALUE = -2;
 
@@ -45,6 +56,9 @@ public class VideoQualityPatch {
      * Since 'Hide video ads' can only be changed in the settings when the 'Hide ads' patch is included, the patch status is not checked.
      */
     private static final boolean HIDE_VIDEO_ADS = Settings.HIDE_VIDEO_ADS.get();
+
+    // Set the access modifier to final to override the flag only after the state snapshot is reloaded.
+    private static final boolean SETTINGS_INITIALIZED = Settings.SETTINGS_INITIALIZED.get();
 
     private static final IntegerSetting shortsQualityMobile = Settings.DEFAULT_VIDEO_QUALITY_MOBILE_SHORTS;
     private static final IntegerSetting shortsQualityWifi = Settings.DEFAULT_VIDEO_QUALITY_WIFI_SHORTS;
@@ -70,14 +84,14 @@ public class VideoQualityPatch {
      * The available qualities of the current video.
      */
     @Nullable
-    private static VideoQuality[] currentQualities;
+    private static VideoQualityInterface[] currentQualities;
 
     /**
      * The current quality of the video playing.
      * This is always the actual quality even if Automatic quality is active.
      */
     @Nullable
-    private static VideoQuality currentQuality;
+    private static VideoQualityInterface currentQuality;
 
     /**
      * The current VideoQualityMenuInterface, set during setVideoQuality.
@@ -86,12 +100,12 @@ public class VideoQualityPatch {
     private static VideoQualityMenuInterface currentMenuInterface;
 
     @Nullable
-    public static VideoQuality[] getCurrentQualities() {
+    public static VideoQualityInterface[] getCurrentQualities() {
         return currentQualities;
     }
 
     @Nullable
-    public static VideoQuality getCurrentQuality() {
+    public static VideoQualityInterface getCurrentQuality() {
         return currentQuality;
     }
 
@@ -100,7 +114,7 @@ public class VideoQualityPatch {
         return currentMenuInterface;
     }
 
-    public static void setCurrentQuality(VideoQuality updatedCurrentQuality) {
+    public static void setCurrentQuality(VideoQualityInterface updatedCurrentQuality) {
         try {
             if (updatedCurrentQuality.patch_getResolution() != AUTOMATIC_VIDEO_QUALITY_VALUE
                     && (currentQuality == null || currentQuality != updatedCurrentQuality)) {
@@ -177,7 +191,7 @@ public class VideoQualityPatch {
      * Overrides the initial video quality to not follow the 'Video quality preferences' in YouTube settings.
      * (e.g. 'Auto (recommended)' - 360p/480p, 'Higher picture quality' - 720p/1080p...)
      * If the maximum video quality available is 1080p and the default video quality is 2160p,
-     * 1080p is used as a initial video quality.
+     * 1080p is used as an initial video quality.
      * <p>
      * Called before {@link #newVideoStarted()}.
      */
@@ -237,7 +251,7 @@ public class VideoQualityPatch {
      * Overrides the initial video quality to not follow the 'Video quality preferences' in YouTube settings.
      * (e.g. 'Auto (recommended)' - 360p/480p, 'Higher picture quality' - 720p/1080p...)
      * Called after {@link #setVideoFormat(List)}.
-     * Called before {@link #setVideoQuality(VideoQuality[], VideoQualityMenuInterface, int)}.
+     * Called before {@link #setVideoQuality(VideoQualityInterface[], VideoQualityMenuInterface, int)}.
      */
     public static FormatStreamModel getVideoFormat(FormatStreamModel format) {
         if (PatchStatus.VideoPlayback() && format != null && !userChangedQuality && preferredFormat != null) {
@@ -262,12 +276,27 @@ public class VideoQualityPatch {
     }
 
     /**
+     * Compatibility bridge for the legacy YouTube quality model.
+     *
+     * The 20.51 callback passes a {@code VideoQuality[]} array. Arrays are invariant, so the
+     * legacy bytecode must not invoke the interface-array overload directly. The legacy model is
+     * made to implement {@link VideoQualityInterface} by the patcher before this bridge runs.
+     */
+    public static int setVideoQuality(VideoQuality[] qualities, VideoQualityMenuInterface menu, int originalQualityIndex) {
+        VideoQualityInterface[] interfaceQualities = new VideoQualityInterface[qualities.length];
+        for (int i = 0; i < qualities.length; i++) {
+            interfaceQualities[i] = (VideoQualityInterface) qualities[i];
+        }
+        return setVideoQuality(interfaceQualities, menu, originalQualityIndex);
+    }
+
+    /**
      * Injection point.
      *
      * @param qualities            Video qualities available, ordered from largest to smallest, with index 0 being the 'automatic' value of -2
      * @param originalQualityIndex quality index to use, as chosen by YouTube
      */
-    public static int setVideoQuality(VideoQuality[] qualities, VideoQualityMenuInterface menu, int originalQualityIndex) {
+    public static int setVideoQuality(VideoQualityInterface[] qualities, VideoQualityMenuInterface menu, int originalQualityIndex) {
         try {
             Utils.verifyOnMainThread();
             currentMenuInterface = menu;
@@ -284,7 +313,7 @@ public class VideoQualityPatch {
             // java.lang.ArrayIndexOutOfBoundsException: length=8; index=-1
             originalQualityIndex = Math.max(originalQualityIndex, 0);
 
-            VideoQuality updatedCurrentQuality = qualities[originalQualityIndex];
+            VideoQualityInterface updatedCurrentQuality = qualities[originalQualityIndex];
             setCurrentQuality(updatedCurrentQuality);
 
             final int preferredQuality = getDefaultQualityResolution();
@@ -301,7 +330,7 @@ public class VideoQualityPatch {
 
             // Find the highest quality that is equal to or less than the preferred.
             int i = 0;
-            for (VideoQuality quality : qualities) {
+            for (VideoQualityInterface quality : qualities) {
                 final int qualityResolution = quality.patch_getResolution();
                 if ((qualityResolution != AUTOMATIC_VIDEO_QUALITY_VALUE && qualityResolution <= preferredQuality)
                         // Use the lowest video quality if the default is lower than all available.
@@ -312,14 +341,11 @@ public class VideoQualityPatch {
                             : "Video is already the preferred quality: " + quality
                     );
 
-                    // On first load of a new regular video, if the video is already the
-                    // desired quality then the quality flyout will show 'Auto' (ie: Auto (720p)).
-                    //
-                    // To prevent user confusion, set the video index even if the
-                    // quality is already correct so the UI picker will not display "Auto".
-                    if (qualityNeedsChange || !isShortsActive()) {
+                    if (qualityNeedsChange) {
                         updateQualityString(quality.patch_getQualityName());
-                        menu.patch_setQuality(qualities[i]);
+                        if (menu != null) {
+                            menu.patch_setQuality(qualities[i]);
+                        }
 
                         return i;
                     }
@@ -328,7 +354,7 @@ public class VideoQualityPatch {
                 }
                 i++;
             }
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             Logger.printException(() -> "setVideoQuality failure", ex);
         }
         return originalQualityIndex;
@@ -348,7 +374,7 @@ public class VideoQualityPatch {
                     Logger.printDebug(() -> "Cannot save default quality, qualities is null");
                     return;
                 }
-                VideoQuality quality = currentQualities[userSelectedQualityIndex];
+                VideoQualityInterface quality = currentQualities[userSelectedQualityIndex];
                 saveDefaultQuality(quality.patch_getResolution());
             } catch (Exception ex) {
                 Logger.printException(() -> "userChangedQualityInOldFlyout failure", ex);

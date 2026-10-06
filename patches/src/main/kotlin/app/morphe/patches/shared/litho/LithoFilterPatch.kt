@@ -1,3 +1,40 @@
+/*
+ * Copyright (C) 2026 anddea
+ *
+ * This file is part of the revanced-patches project:
+ * https://github.com/anddea/revanced-patches
+ *
+ * Licensed under the GNU General Public License v3.0.
+ *
+ * ------------------------------------------------------------------------
+ * GPLv3 Section 7 – Additional Terms & Attribution Requirements
+ * ------------------------------------------------------------------------
+ *
+ * This file contains substantial original work by the author(s) listed above.
+ *
+ * In accordance with Section 7 of the GNU General Public License v3.0,
+ * the following additional terms apply to this file:
+ *
+ * 1. Source Credit Preservation (Section 7(b)): This specific copyright notice
+ *    and the list of original authors above must be preserved in any copy
+ *    or derivative work. You may add your own copyright notice below it,
+ *    but you may not remove the original one.
+ *
+ * 2. Origin & Modification Marking (Section 7(c)): Modified versions must be
+ *    clearly marked as such (e.g., by adding a "Modified by" line or a new
+ *    copyright notice) and must not be misrepresented as the original work.
+ *
+ * 3. Version Control Attribution (Section 7(b)): Any ports or substantial
+ *    modifications must retain historical authorship credit in version control
+ *    systems (e.g., Git), listing original author(s) appropriately and
+ *    modifiers as committers or co-authors.
+ *
+ * 4. User Interface Attribution (Section 7(b)): Any works containing or
+ *    derived from this material must maintain a visible credit or
+ *    acknowledgment to the original author(s) within the application's
+ *    user interface (e.g., in an "About" or "Credits" section).
+ */
+
 package app.morphe.patches.shared.litho
 
 import app.morphe.patcher.Fingerprint
@@ -12,12 +49,26 @@ import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod.Companion.toMuta
 import app.morphe.patches.shared.conversionContextFingerprintToString2
 import app.morphe.patches.shared.extension.Constants.COMPONENTS_PATH
 import app.morphe.patches.youtube.utils.extension.sharedExtensionPatch
-import app.morphe.patches.youtube.utils.playservice.*
-import app.morphe.util.*
+import app.morphe.patches.youtube.utils.playservice.is_19_25_or_greater
+import app.morphe.patches.youtube.utils.playservice.is_20_05_or_greater
+import app.morphe.patches.youtube.utils.playservice.is_20_21_or_greater
+import app.morphe.patches.youtube.utils.playservice.is_20_22_or_greater
+import app.morphe.patches.youtube.utils.playservice.versionCheckPatch
+import app.morphe.util.addInstructionsAtControlFlowLabel
+import app.morphe.util.findFieldFromToString
+import app.morphe.util.findFreeRegister
+import app.morphe.util.findMethodsOrThrow
 import app.morphe.util.fingerprint.injectLiteralInstructionBooleanCall
 import app.morphe.util.fingerprint.matchOrThrow
 import app.morphe.util.fingerprint.methodOrThrow
 import app.morphe.util.fingerprint.mutableClassOrThrow
+import app.morphe.util.getFreeRegisterProvider
+import app.morphe.util.getReference
+import app.morphe.util.indexOfFirstInstructionOrThrow
+import app.morphe.util.indexOfFirstInstructionReversedOrThrow
+import app.morphe.util.insertLiteralOverride
+import app.morphe.util.or
+import app.morphe.util.returnLate
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
@@ -44,7 +95,12 @@ private const val REGISTER_FILTER_ARRAY = 2
 
 private lateinit var helperMethod: MutableMethod
 
-// For now, we'll use hybrid implementation, LithoFilter for YouTube based on ReVanced, for YTM based on RVX
+private data class FlatBufferElementReferences(
+    val elementClass: String,
+    val elementField: FieldReference,
+    val byteBufferField: FieldReference,
+)
+
 val lithoFilterPatch = bytecodePatch(
     description = "Hooks the method which parses the bytes into a ComponentContext to filter components.",
 ) {
@@ -54,16 +110,18 @@ val lithoFilterPatch = bytecodePatch(
     )
 
     var filterCount = 0
-    var isYouTube = false
+    var isNewLitho = false
     var filterArrayMethod: MutableMethod? = null
+    val filterClassDescriptors = mutableSetOf<String>()
 
     execute {
-        // `componentContextSubParserFingerprint` is specific to the YouTube app.
-        isYouTube = ConversionContextFingerprintToString.originalClassDefOrNull != null && is_20_22_or_greater
-        // print("isYouTube: $isYouTube\n")
+        val isYouTubeMusic = false
+        val useModernFilterDataInLegacyBridge = !isYouTubeMusic &&
+                is_20_21_or_greater && !is_20_22_or_greater
+        isNewLitho = is_20_22_or_greater
 
-        if (isYouTube) {
-            // Remove dummy filter from extenion static field
+        if (isNewLitho) {
+            // Remove dummy filter from extension static field
             // and add the filters included during patching.
             LithoFilterFingerprint.match(classDefBy(EXTENSION_LITHO_FILTER_CLASS_DESCRIPTOR)).let {
                 it.method.apply {
@@ -83,15 +141,17 @@ val lithoFilterPatch = bytecodePatch(
                         MutableMethodImplementation(3),
                     ).toMutable().apply {
                         addLithoFilter = { classDescriptor ->
-                            addInstructions(
-                                0,
+                            if (filterClassDescriptors.add(classDescriptor)) {
+                                addInstructions(
+                                    0,
+                                    """
+                                    new-instance v$REGISTER_FILTER_CLASS, $classDescriptor
+                                    invoke-direct { v$REGISTER_FILTER_CLASS }, $classDescriptor-><init>()V
+                                    const/16 v$REGISTER_FILTER_COUNT, ${filterCount++}
+                                    aput-object v$REGISTER_FILTER_CLASS, v$REGISTER_FILTER_ARRAY, v$REGISTER_FILTER_COUNT
                                 """
-                                new-instance v$REGISTER_FILTER_CLASS, $classDescriptor
-                                invoke-direct { v$REGISTER_FILTER_CLASS }, $classDescriptor-><init>()V
-                                const/16 v$REGISTER_FILTER_COUNT, ${filterCount++}
-                                aput-object v$REGISTER_FILTER_CLASS, v$REGISTER_FILTER_ARRAY, v$REGISTER_FILTER_COUNT
-                            """
-                            )
+                                )
+                            }
                         }
                     }
                     it.classDef.methods.add(helperMethod)
@@ -109,7 +169,7 @@ val lithoFilterPatch = bytecodePatch(
                 }
             }
 
-            // region Pass the buffer into extension.
+            // region Pass the buffer into extension
 
             if (is_20_22_or_greater) {
                 // Hook method that bridges between UPB buffer native code and FB Litho.
@@ -123,24 +183,76 @@ val lithoFilterPatch = bytecodePatch(
                 }
             }
 
-            // Legacy Non native buffer.
-            ProtobufBufferReferenceLegacyFingerprint.method.addInstruction(
-                0,
-                "invoke-static { p2 }, $EXTENSION_LITHO_FILTER_CLASS_DESCRIPTOR->setProtoBuffer(Ljava/nio/ByteBuffer;)V",
-            )
+            if (!isYouTubeMusic) {
+                // Legacy non-native buffer. Supported YT Music versions use the native Upb encode
+                // path exposed at component creation, so the old ByteBuffer hook is only needed
+                // for YouTube's hybrid runtime.
+                ProtobufBufferReferenceLegacyFingerprint.method.addInstruction(
+                    0,
+                    "invoke-static { p2 }, $EXTENSION_LITHO_FILTER_CLASS_DESCRIPTOR->setProtoBuffer(Ljava/nio/ByteBuffer;)V",
+                )
+            }
+
+            val protoBufferEncodeMethod = ProtobufBufferEncodeFingerprint.method
+
+            val flatBufferElementReferences = if (isYouTubeMusic) {
+                val elementInterface = ComponentCreateFingerprint.method.parameterTypes[2].toString()
+                val flatBufferBaseClass = ProtobufBufferReferenceLegacyFingerprint.classDef
+                val byteBufferField = flatBufferBaseClass.fields.single {
+                    it.type == "Ljava/nio/ByteBuffer;"
+                }
+
+                fun inheritsFrom(type: String, expectedSuperclass: String): Boolean {
+                    var current: String? = type
+                    while (current != null && current != "Ljava/lang/Object;") {
+                        if (current == expectedSuperclass) return true
+                        current = try {
+                            classDefBy(current).superclass
+                        } catch (_: Exception) {
+                            null
+                        }
+                    }
+                    return false
+                }
+
+                var references: FlatBufferElementReferences? = null
+                classDefForEach { classDef ->
+                    if (!classDef.interfaces.contains(elementInterface)) return@classDefForEach
+
+                    val elementFields = classDef.fields.filter {
+                        inheritsFrom(it.type, flatBufferBaseClass.type)
+                    }
+                    if (elementFields.size == 1) {
+                        check(references == null) {
+                            "Found multiple FlatBuffer implementations of $elementInterface"
+                        }
+                        references = FlatBufferElementReferences(
+                            classDef.type,
+                            elementFields.single(),
+                            byteBufferField,
+                        )
+                    }
+                }
+                checkNotNull(references) {
+                    "Could not find the FlatBuffer implementation of $elementInterface"
+                }
+            } else {
+                null
+            }
 
             // endregion
-
 
             // region Modify the create component method and
             // if the component is filtered then return an empty component.
 
             // Find the identifier/path fields of the conversion context.
 
-            val conversionContextIdentifierField = ConversionContextFingerprintToString.method
+            val conversionContextMatch = conversionContextFingerprintToString2.matchOrThrow()
+            val conversionContextClass = conversionContextMatch.originalClassDef
+            val conversionContextIdentifierField = conversionContextMatch.method
                 .findFieldFromToString("identifierProperty=")
 
-            val conversionContextPathBuilderField = ConversionContextFingerprintToString.originalClassDef
+            val conversionContextPathBuilderField = conversionContextClass
                 .fields.single { field -> field.type == "Ljava/lang/StringBuilder;" }
 
             // Find class and methods to create an empty component.
@@ -187,7 +299,6 @@ val lithoFilterPatch = bytecodePatch(
             ComponentCreateFingerprint.method.apply {
                 val insertIndex = indexOfFirstInstructionOrThrow(Opcode.RETURN_OBJECT)
 
-
                 // We can directly access the class related with the buttonViewModel from this method.
                 // This is within 10 lines of insertIndex.
                 val buttonViewModelIndex = indexOfFirstInstructionReversedOrThrow(insertIndex) {
@@ -205,11 +316,12 @@ val lithoFilterPatch = bytecodePatch(
                 )
 
                 val registerProvider = getFreeRegisterProvider(
-                    insertIndex, 3, buttonViewModelRegister
+                    insertIndex, 4, buttonViewModelRegister
                 )
                 val freeRegister = registerProvider.getFreeRegister()
                 val identifierRegister = registerProvider.getFreeRegister()
                 val pathRegister = registerProvider.getFreeRegister()
+                val bufferRegister = registerProvider.getFreeRegister()
 
                 // We need to find a free register to store the accessibilityId and accessibilityText.
                 // This is before the insertion index.
@@ -221,19 +333,64 @@ val lithoFilterPatch = bytecodePatch(
                 val accessibilityIdRegister = accessibilityRegisterProvider.getFreeRegister()
                 val accessibilityTextRegister = accessibilityRegisterProvider.getFreeRegister()
 
+                // YouTube Music 9.15 can pass either an UPB or FlatBuffer-backed element. Read the
+                // current FlatBuffer directly because the generic parser hook can run on another
+                // thread and direct ByteBuffers do not expose their backing bytes.
+                val unsupportedDirectBufferInstructions = if (flatBufferElementReferences != null) {
+                    with(flatBufferElementReferences) {
+                        """
+                        instance-of v$freeRegister, v$bufferRegister, $elementClass
+                        if-eqz v$freeRegister, :missing_buffer
+                        check-cast v$bufferRegister, $elementClass
+                        iget-object v$bufferRegister, v$bufferRegister, $elementField
+                        iget-object v$bufferRegister, v$bufferRegister, $byteBufferField
+                        invoke-static { v$bufferRegister }, $EXTENSION_LITHO_FILTER_CLASS_DESCRIPTOR->setDirectProtoBuffer(Ljava/nio/ByteBuffer;)V
+                        goto :filter
+
+                        :missing_buffer
+                        const/4 v$freeRegister, 0x0
+                        new-array v$bufferRegister, v$freeRegister, [B
+                        """.trimIndent()
+                    }
+                } else {
+                    """
+                    const/4 v$freeRegister, 0x0
+                    new-array v$bufferRegister, v$freeRegister, [B
+                    """.trimIndent()
+                }
+
                 addInstructionsAtControlFlowLabel(
                     insertIndex,
                     """
+                    move-object/from16 v$bufferRegister, p3
+
+                    # Use the current component buffer directly. Reusing buffers by identifier can
+                    # collide for repeated components such as fullscreen quick action buttons.
+                    instance-of v$freeRegister, v$bufferRegister, ${protoBufferEncodeMethod.definingClass}
+                    if-eqz v$freeRegister, :empty_buffer
+
+                    check-cast v$bufferRegister, ${protoBufferEncodeMethod.definingClass}
+                    invoke-virtual { v$bufferRegister }, $protoBufferEncodeMethod
+                    move-result-object v$bufferRegister
+                    goto :set_direct_buffer
+
+                    :empty_buffer
+                    $unsupportedDirectBufferInstructions
+
+                    :set_direct_buffer
+                    invoke-static { v$bufferRegister }, $EXTENSION_LITHO_FILTER_CLASS_DESCRIPTOR->setDirectProtoBuffer([B)V
+
+                    :filter
                     move-object/from16 v$freeRegister, p2
                     
                     # 20.41 field is the abstract superclass.
                     # Verify it's the expected subclass just in case. 
-                    instance-of v$identifierRegister, v$freeRegister, ${ConversionContextFingerprintToString.classDef.type}
+                    instance-of v$identifierRegister, v$freeRegister, ${conversionContextClass.type}
                     if-eqz v$identifierRegister, :unfiltered
                     
                     iget-object v$identifierRegister, v$freeRegister, $conversionContextIdentifierField
                     iget-object v$pathRegister, v$freeRegister, $conversionContextPathBuilderField
-                    invoke-static { v$identifierRegister, v$accessibilityIdRegister, v$accessibilityTextRegister, v$pathRegister }, $EXTENSION_LITHO_FILTER_CLASS_DESCRIPTOR->isFiltered(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/StringBuilder;)Z
+                    invoke-static { v$identifierRegister, v$accessibilityIdRegister, v$accessibilityTextRegister, v$pathRegister, v$freeRegister }, $EXTENSION_LITHO_FILTER_CLASS_DESCRIPTOR->isFiltered(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/StringBuilder;Ljava/lang/Object;)Z
                     move-result v$freeRegister
                     if-eqz v$freeRegister, :unfiltered
                     
@@ -276,8 +433,7 @@ val lithoFilterPatch = bytecodePatch(
 
             // endregion
 
-
-            // region Change Litho thread executor to 1 thread to fix layout issue in unpatched YouTube.
+            // region Change Litho thread executor to 1 thread to fix layout issue in unpatched YouTube
 
             LithoThreadExecutorFingerprint.method.addInstructions(
                 0,
@@ -291,8 +447,7 @@ val lithoFilterPatch = bytecodePatch(
 
             // endregion
 
-
-            // region A/B test of new Litho native code.
+            // region A/B test of new Litho native code
 
             // Turn off native code that handles litho component names.  If this feature is on then nearly
             // all litho components have a null name and identifier/path filtering is completely broken.
@@ -304,18 +459,23 @@ val lithoFilterPatch = bytecodePatch(
             }
 
             // Turn off a feature flag that enables native code of protobuf parsing (Upb protobuf).
-            LithoConverterBufferUpbFeatureFlagFingerprint.let {
-                // 20.22 the flag is still enabled in one location, but what it does is not known.
-                // Disable it anyway.
-                it.method.insertLiteralOverride(
-                    it.instructionMatches.first().index,
-                    false
-                )
+            // This override is specific to YouTube. YouTube Music 9.15 switches between UPB and
+            // FlatBuffer-backed elements at runtime, and forcing the FlatBuffer converter can
+            // recreate stateful components such as the timed lyrics background during updates.
+            if (!isYouTubeMusic) {
+                LithoConverterBufferUpbFeatureFlagFingerprint.let {
+                    // 20.22 the flag is still enabled in one location, but what it does is not known.
+                    // Disable it anyway.
+                    it.method.insertLiteralOverride(
+                        it.instructionMatches.first().index,
+                        false
+                    )
+                }
             }
 
             // endregion
         } else {
-            // region Pass the buffer into extension.
+            // region Pass the buffer into extension
 
             byteBufferFingerprint.methodOrThrow().addInstruction(
                 0,
@@ -324,7 +484,7 @@ val lithoFilterPatch = bytecodePatch(
 
             // endregion
 
-            // region Hook the method that parses bytes into a ComponentContext.
+            // region Hook the method that parses bytes into a ComponentContext
 
             // Allow the method to run to completion, and override the
             // return value with an empty component if it should be filtered.
@@ -374,51 +534,169 @@ val lithoFilterPatch = bytecodePatch(
             return-object v0
             """
 
-            var isLegacyMethod = false
-
-            try {
-                isLegacyMethod = MethodUtil.methodSignaturesMatch(
-                    componentContextParserLegacyFingerprint.methodOrThrow(),
-                    componentContextSubParserFingerprint2.methodOrThrow()
-                )
-            } catch (_: Exception) {
-            }
-
             componentCreateFingerprint.methodOrThrow().apply {
-                val insertIndex = if (isLegacyMethod) {
-                    // YT 19.16 and YTM 6.51 clobbers p2 so must check at start of the method and not at the return index.
-                    0
+                if (useModernFilterDataInLegacyBridge) {
+                    // v20.21 still needs the legacy filter engine, but new button filters require
+                    // accessibility and the direct buffer available at this component-create hook.
+                    val accessibilityIdMethod = with(AccessibilityIdFingerprint) {
+                        val index = instructionMatches.first().index
+                        method.getInstruction<ReferenceInstruction>(index).reference as MethodReference
+                    }
+                    val accessibilityTextFingerprint = Fingerprint(
+                        returnType = "V",
+                        filters = listOf(
+                            methodCall(
+                                opcode = Opcode.INVOKE_INTERFACE,
+                                parameters = listOf(),
+                                returnType = "Ljava/lang/String;"
+                            ),
+                            methodCall(
+                                reference = accessibilityIdMethod,
+                                location = MatchAfterWithin(5)
+                            )
+                        ),
+                        custom = { method, _ ->
+                            AccessFlags.SYNTHETIC.isSet(method.accessFlags)
+                        }
+                    )
+                    val accessibilityTextMethod = with(accessibilityTextFingerprint) {
+                        val index = instructionMatches.first().index
+                        method.getInstruction<ReferenceInstruction>(index).reference as MethodReference
+                    }
+                    val protoBufferEncodeMethod = ProtobufBufferEncodeFingerprint.method
+                    val insertIndex = indexOfFirstInstructionOrThrow(Opcode.RETURN_OBJECT)
+                    val buttonViewModelIndex = indexOfFirstInstructionReversedOrThrow(insertIndex) {
+                        opcode == Opcode.CHECK_CAST &&
+                                getReference<TypeReference>()?.type == accessibilityIdMethod.definingClass
+                    }
+                    val buttonViewModelRegister =
+                        getInstruction<OneRegisterInstruction>(buttonViewModelIndex).registerA
+                    val accessibilityIdIndex = buttonViewModelIndex + 2
+                    val nullCheckIndex = indexOfFirstInstructionReversedOrThrow(
+                        buttonViewModelIndex,
+                        Opcode.IF_EQZ
+                    )
+
+                    val registerProvider = getFreeRegisterProvider(
+                        insertIndex,
+                        4,
+                        buttonViewModelRegister
+                    )
+                    val freeRegister = registerProvider.getFreeRegister()
+                    val identifierRegister = registerProvider.getFreeRegister()
+                    val pathRegister = registerProvider.getFreeRegister()
+                    val bufferRegister = registerProvider.getFreeRegister()
+                    val accessibilityRegisterProvider = getFreeRegisterProvider(
+                        nullCheckIndex,
+                        2,
+                        registerProvider.getUsedAndUnAvailableRegisters()
+                    )
+                    val accessibilityIdRegister = accessibilityRegisterProvider.getFreeRegister()
+                    val accessibilityTextRegister = accessibilityRegisterProvider.getFreeRegister()
+
+                    addInstructionsAtControlFlowLabel(
+                        insertIndex,
+                        """
+                        move-object/from16 v$bufferRegister, p3
+                        instance-of v$freeRegister, v$bufferRegister, ${protoBufferEncodeMethod.definingClass}
+                        if-eqz v$freeRegister, :empty_buffer
+
+                        check-cast v$bufferRegister, ${protoBufferEncodeMethod.definingClass}
+                        invoke-virtual { v$bufferRegister }, $protoBufferEncodeMethod
+                        move-result-object v$bufferRegister
+                        goto :set_buffer
+
+                        :empty_buffer
+                        const/4 v$freeRegister, 0x0
+                        new-array v$bufferRegister, v$freeRegister, [B
+
+                        :set_buffer
+                        invoke-static { v$bufferRegister }, $EXTENSION_LEGACY_LITHO_FILTER_CLASS_DESCRIPTOR->setDirectProtoBuffer([B)V
+
+                        move-object/from16 v$freeRegister, p2
+                        instance-of v$identifierRegister, v$freeRegister, ${conversionContextClass.type}
+                        if-eqz v$identifierRegister, :unfiltered
+
+                        iget-object v$identifierRegister, v$freeRegister, $conversionContextIdentifierField
+                        iget-object v$pathRegister, v$freeRegister, $conversionContextPathBuilderField
+                        invoke-static { v$identifierRegister, v$accessibilityIdRegister, v$accessibilityTextRegister, v$pathRegister, v$freeRegister }, $EXTENSION_LEGACY_LITHO_FILTER_CLASS_DESCRIPTOR->isFiltered(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/StringBuilder;Ljava/lang/Object;)Z
+                        move-result v$freeRegister
+                        if-eqz v$freeRegister, :unfiltered
+
+                        move-object/from16 v$freeRegister, p1
+                        invoke-static { v$freeRegister }, $builderMethodDescriptor
+                        move-result-object v$freeRegister
+                        iget-object v$freeRegister, v$freeRegister, $emptyComponentField
+                        return-object v$freeRegister
+
+                        :unfiltered
+                        nop
+                        """
+                    )
+
+                    addInstructions(
+                        accessibilityIdIndex,
+                        """
+                        invoke-interface { v$buttonViewModelRegister }, $accessibilityIdMethod
+                        move-result-object v$accessibilityIdRegister
+                        invoke-interface { v$buttonViewModelRegister }, $accessibilityTextMethod
+                        move-result-object v$accessibilityTextRegister
+                        """
+                    )
+
+                    addInstructions(
+                        nullCheckIndex,
+                        """
+                        const-string v$accessibilityIdRegister, ""
+                        const-string v$accessibilityTextRegister, ""
+                        """
+                    )
                 } else {
-                    indexOfFirstInstructionOrThrow(Opcode.RETURN_OBJECT)
+                    var isLegacyMethod = false
+
+                    try {
+                        isLegacyMethod = MethodUtil.methodSignaturesMatch(
+                            componentContextParserLegacyFingerprint.methodOrThrow(),
+                            componentContextSubParserFingerprint2.methodOrThrow()
+                        )
+                    } catch (_: Exception) {
+                    }
+
+                    val insertIndex = if (isLegacyMethod) {
+                        // YT 19.16 and YTM 6.51 clobbers p2 so must check at start of the method and not at the return index.
+                        0
+                    } else {
+                        indexOfFirstInstructionOrThrow(Opcode.RETURN_OBJECT)
+                    }
+
+                    val freeRegister = findFreeRegister(insertIndex)
+                    val identifierRegister = findFreeRegister(insertIndex, freeRegister)
+                    val pathRegister = findFreeRegister(insertIndex, freeRegister, identifierRegister)
+
+                    addInstructionsAtControlFlowLabel(
+                        insertIndex,
+                        """
+                        move-object/from16 v$freeRegister, p2
+
+                        # Required for YouTube Music.
+                        check-cast v$freeRegister, ${conversionContextIdentifierField.definingClass}
+
+                        iget-object v$identifierRegister, v$freeRegister, $conversionContextIdentifierField
+                        iget-object v$pathRegister, v$freeRegister, $conversionContextPathBuilderField
+                        invoke-static {v$pathRegister, v$identifierRegister, v$freeRegister}, $EXTENSION_LEGACY_LITHO_FILTER_CLASS_DESCRIPTOR->isFiltered(Ljava/lang/StringBuilder;Ljava/lang/String;Ljava/lang/Object;)Z
+                        move-result v$freeRegister
+                        if-eqz v$freeRegister, :unfiltered
+                        """ + emptyComponentLabel + """
+                        :unfiltered
+                        nop
+                        """
+                    )
                 }
-
-                val freeRegister = findFreeRegister(insertIndex)
-                val identifierRegister = findFreeRegister(insertIndex, freeRegister)
-                val pathRegister = findFreeRegister(insertIndex, freeRegister, identifierRegister)
-
-                addInstructionsAtControlFlowLabel(
-                    insertIndex,
-                    """
-                    move-object/from16 v$freeRegister, p2
-
-                    # Required for YouTube Music.
-                    check-cast v$freeRegister, ${conversionContextIdentifierField.definingClass}
-
-                    iget-object v$identifierRegister, v$freeRegister, $conversionContextIdentifierField
-                    iget-object v$pathRegister, v$freeRegister, $conversionContextPathBuilderField
-                    invoke-static {v$pathRegister, v$identifierRegister, v$freeRegister}, $EXTENSION_LEGACY_LITHO_FILTER_CLASS_DESCRIPTOR->isFiltered(Ljava/lang/StringBuilder;Ljava/lang/String;Ljava/lang/Object;)Z
-                    move-result v$freeRegister
-                    if-eqz v$freeRegister, :unfiltered
-                    """ + emptyComponentLabel + """
-                    :unfiltered
-                    nop
-                    """
-                )
             }
 
             // endregion
 
-            // region Change Litho thread executor to 1 thread to fix layout issue in unpatched YouTube.
+            // region Change Litho thread executor to 1 thread to fix layout issue in unpatched YouTube
 
             lithoThreadExecutorFingerprint.methodOrThrow().addInstructions(
                 0, """
@@ -431,7 +709,7 @@ val lithoFilterPatch = bytecodePatch(
 
             // endregion
 
-            // region A/B test of new Litho native code.
+            // region A/B test of new Litho native code
 
             // Turn off native code that handles litho component names.  If this feature is on then nearly
             // all litho components have a null name and identifier/path filtering is completely broken.
@@ -493,21 +771,23 @@ val lithoFilterPatch = bytecodePatch(
                 }
 
             addLithoFilter = { classDescriptor ->
-                filterArrayMethod!!.addInstructions(
-                    0,
-                    """
-                    new-instance v0, $classDescriptor
-                    invoke-direct {v0}, $classDescriptor-><init>()V
-                    const/16 v1, ${filterCount++}
-                    aput-object v0, v2, v1
-                    """
-                )
+                if (filterClassDescriptors.add(classDescriptor)) {
+                    filterArrayMethod!!.addInstructions(
+                        0,
+                        """
+                        new-instance v0, $classDescriptor
+                        invoke-direct {v0}, $classDescriptor-><init>()V
+                        const/16 v1, ${filterCount++}
+                        aput-object v0, v2, v1
+                        """
+                    )
+                }
             }
         }
     }
 
     finalize {
-        if (isYouTube) {
+        if (isNewLitho) {
             helperMethod.apply {
                 addInstruction(
                     implementation!!.instructions.size,

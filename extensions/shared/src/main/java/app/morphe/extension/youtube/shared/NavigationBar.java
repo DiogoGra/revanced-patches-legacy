@@ -1,6 +1,22 @@
+/*
+ * Copyright 2026 Morphe.
+ * https://github.com/MorpheApp/morphe-patches
+ *
+ * Portions of this file are modified by anddea:
+ * Copyright (C) 2026 anddea
+ * https://github.com/anddea/revanced-patches
+ *
+ * Original hard forked code:
+ * https://github.com/ReVanced/revanced-patches/commit/724e6d61b2ecd868c1a9a37d465a688e83a74799
+ *
+ * See the included NOTICE file for GPLv3 §7(b) and §7(c) terms that apply to Morphe contributions.
+ */
+
 package app.morphe.extension.youtube.shared;
 
 import static app.morphe.extension.youtube.shared.NavigationBar.NavigationButton.CREATE;
+import static app.morphe.extension.youtube.utils.ExtendedUtils.IS_20_31_OR_GREATER;
+import static app.morphe.extension.youtube.utils.ExtendedUtils.isSpoofingToLessThan;
 
 import android.app.Activity;
 import android.content.res.Configuration;
@@ -16,11 +32,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import android.widget.FrameLayout;
+import java.lang.ref.WeakReference;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,13 +46,24 @@ import java.util.WeakHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import app.morphe.extension.shared.settings.BaseSettings;
 import app.morphe.extension.shared.utils.Logger;
+import app.morphe.extension.shared.utils.ResourceType;
+import app.morphe.extension.shared.utils.ResourceUtils;
 import app.morphe.extension.shared.utils.Utils;
 import app.morphe.extension.youtube.settings.Settings;
 
 @SuppressWarnings("unused")
 public final class NavigationBar {
     private static final String NAVIGATION_ICON_DIAGNOSTIC_PREFIX = "RVX_NAV_DIAG";
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static void setCairoNotificationFilledIcon(EnumMap enumMap, Enum tabActivityCairo) {
+        int iconId = ResourceUtils.getIdentifier("yt_fill_bell_black_24", ResourceType.DRAWABLE);
+        if (iconId != 0) {
+            enumMap.putIfAbsent(tabActivityCairo, iconId);
+        }
+    }
     private static final long[] LEGACY_NAVIGATION_ICON_RESTORE_DELAYS_MS = {
             250,
             1000,
@@ -100,6 +129,98 @@ public final class NavigationBar {
 
 
     /**
+     * Interface to call obfuscated methods in AppCompat Toolbar class.
+     */
+    public interface AppCompatToolbarPatchInterface {
+        Drawable patch_getNavigationIcon();
+    }
+
+    /**
+     * Interface to be notified when the navigation button changes.
+     */
+    public interface OnNavigationButtonChangedListener {
+        /**
+         * @param activeButton Currently selected button. Is null only if the navigation button
+         *                     is a new and unidentified type.
+         */
+        void onNavigationButtonChanged(@Nullable NavigationButton activeButton);
+    }
+
+    private static final List<OnNavigationButtonChangedListener> onNavigationButtonChangedListeners
+            = Collections.synchronizedList(new ArrayList<>());
+
+    /**
+     * Registers a listener to be notified when the navigation button changes.
+     */
+    public static void addOnNavigationButtonChangedListener(OnNavigationButtonChangedListener listener) {
+        onNavigationButtonChangedListeners.add(listener);
+    }
+
+    /**
+     * Unregisters a listener from being notified when the navigation button changes.
+     */
+    public static void removeOnNavigationButtonChangedListener(OnNavigationButtonChangedListener listener) {
+        onNavigationButtonChangedListeners.remove(listener);
+    }
+
+    private static void notifyNavigationButtonChangedListeners(@Nullable NavigationButton button) {
+        for (OnNavigationButtonChangedListener listener : onNavigationButtonChangedListeners) {
+            listener.onNavigationButtonChanged(button);
+        }
+    }
+
+    //
+    // Search and toolbar.
+    //
+
+    private static volatile WeakReference<View> searchBarResultsRef = new WeakReference<>(null);
+
+    private static volatile WeakReference<AppCompatToolbarPatchInterface> toolbarResultsRef
+            = new WeakReference<>(null);
+
+    /**
+     * Injection point.
+     */
+    public static void searchBarResultsViewLoaded(View searchbarResults) {
+        searchBarResultsRef = new WeakReference<>(searchbarResults);
+    }
+
+    /**
+     * Injection point.
+     */
+    public static void setToolbar(FrameLayout layout) {
+        AppCompatToolbarPatchInterface toolbar = Utils.getChildView(layout, false, (view) ->
+                view instanceof AppCompatToolbarPatchInterface
+        );
+
+        if (toolbar == null) {
+            Logger.printException(() -> "Could not find navigation toolbar");
+            return;
+        }
+
+        toolbarResultsRef = new WeakReference<>(toolbar);
+    }
+
+    /**
+     * @return If the search bar is on screen.  This includes if the player
+     *         is on screen and the search results are behind the player (and not visible).
+     *         Detecting the search is covered by the player can be done by checking {@link PlayerType#isMaximizedOrFullscreen()}.
+     */
+    public static boolean isSearchBarActive() {
+        View searchbarResults = searchBarResultsRef.get();
+        return searchbarResults != null && searchbarResults.isShown();
+    }
+
+    public static boolean isBackButtonVisible() {
+        AppCompatToolbarPatchInterface toolbar = toolbarResultsRef.get();
+        return toolbar != null && toolbar.patch_getNavigationIcon() != null;
+    }
+
+    //
+    // Navigation bar buttons.
+    //
+
+    /**
      * How long to wait for the set nav button latch to be released.  Maximum wait time must
      * be as small as possible while still allowing enough time for the nav bar to update.
      * <p>
@@ -160,7 +281,7 @@ public final class NavigationBar {
         }
 
         if (Utils.isCurrentlyOnMainThread()) {
-            // The latch is released from the main thread, and waiting from the main thread will always timeout.
+            // The latch is released from the main thread, and waiting from the main thread will always time out.
             // This situation has only been observed when navigating out of a submenu and not changing tabs.
             // and for that use case the nav bar does not change so it's safe to return here.
             Logger.printDebug(() -> "Cannot block main thread waiting for nav button. " +
@@ -263,14 +384,19 @@ public final class NavigationBar {
             }
 
             NavigationButton button = viewToButtonMap.get(navButtonImageView);
+            NavigationButton oldButton = NavigationButton.selectedNavigationButton;
 
             if (button == null) { // An unknown tab was selected.
                 // Show a toast only if debug mode is enabled.
-                if (Settings.DEBUG.get()) {
+                if (BaseSettings.DEBUG.get()) {
                     Logger.printException(() -> "Unknown navigation view selected: " + navButtonImageView);
                 }
 
                 NavigationButton.selectedNavigationButton = null;
+
+                if (oldButton != null) {
+                    notifyNavigationButtonChangedListeners(null);
+                }
                 return;
             }
 
@@ -281,6 +407,11 @@ public final class NavigationBar {
 
             // Release any threads waiting for the selected nav button.
             releaseNavButtonLatch();
+
+            if (button != oldButton) {
+                Logger.printDebug(() -> "Changed to navigation button: " + button);
+                notifyNavigationButtonChangedListeners(button);
+            }
         } catch (Exception ex) {
             Logger.printException(() -> "navigationTabSelected failure", ex);
         }
@@ -294,9 +425,7 @@ public final class NavigationBar {
         createNavButtonLatch();
     }
 
-    /**
-     * @noinspection EmptyMethod
-     */
+    /** @noinspection EmptyMethod*/
     private static void navigationTabCreatedCallback(NavigationButton button, View tabView) {
         // Code is added during patching.
     }
@@ -838,13 +967,21 @@ public final class NavigationBar {
         SHORTS("TAB_SHORTS", "TAB_SHORTS_CAIRO"),
         /**
          * Create new video tab.
-         * This tab will never be in a selected state, even if the create video UI is on screen.
+         * This tab will never be in a selected state, even if the Create video UI is on screen.
          */
         CREATE("CREATION_TAB_LARGE", "CREATION_TAB_LARGE_CAIRO"),
         /**
          * Only shown to automotive layout.
          */
         EXPLORE("TAB_EXPLORE"),
+        /**
+         * Only shown when 'Show Search' is turned on.
+         */
+        SEARCH("SEARCH", "SEARCH_BOLD", "SEARCH_CAIRO"),
+        /**
+         * Only shown when 'Show Settings' is turned on.
+         */
+        SETTINGS("SETTINGS", "SETTINGS_CAIRO"),
         SUBSCRIPTIONS("PIVOT_SUBSCRIPTIONS", "TAB_SUBSCRIPTIONS_CAIRO"),
         /**
          * Notifications tab.  Only present when
@@ -904,5 +1041,26 @@ public final class NavigationBar {
         NavigationButton(String... ytEnumNames) {
             this.ytEnumNames = Arrays.asList(ytEnumNames);
         }
+    }
+
+    /**
+     * Returns the navigation items shown by the order editor.
+     *
+     * <p>Some of these items are optional in YouTube (for example, Explore and Search), but
+     * keeping them in the saved order lets the same preference work across layouts and accounts.
+     * Items that are not present in a particular guide response are ignored by the patch.</p>
+     */
+    public static List<NavigationButton> getDefaultNavigationButtonOrder() {
+        return Arrays.asList(
+                NavigationButton.HOME,
+                NavigationButton.SHORTS,
+                NavigationButton.CREATE,
+                NavigationButton.SUBSCRIPTIONS,
+                NavigationButton.NOTIFICATIONS,
+                NavigationButton.LIBRARY,
+                NavigationButton.EXPLORE,
+                NavigationButton.SEARCH,
+                NavigationButton.SETTINGS
+        );
     }
 }

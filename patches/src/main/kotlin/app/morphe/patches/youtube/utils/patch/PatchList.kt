@@ -5,6 +5,10 @@ internal enum class PatchList(
     val summary: String,
     var included: Boolean? = false
 ) {
+    APP_REFRESH_RATE(
+        "App refresh rate",
+        "Adds an option to change the app refresh rate."
+    ),
     ALTERNATIVE_THUMBNAILS(
         "Alternative thumbnails",
         "Adds options to replace video thumbnails using the DeArrow API or image captures from the video."
@@ -41,13 +45,9 @@ internal enum class PatchList(
         "Custom Shorts action buttons",
         "Changes, at compile time, the icon of the action buttons of the Shorts player."
     ),
-    CUSTOM_BRANDING_ICON_FOR_YOUTUBE(
-        "Custom branding icon for YouTube",
-        "Changes the YouTube app icon to the icon specified in patch options."
-    ),
-    CUSTOM_BRANDING_NAME_FOR_YOUTUBE(
-        "Custom branding name for YouTube",
-        "Changes the YouTube app name to the name specified in patch options."
+    CUSTOM_BRANDING_FOR_YOUTUBE(
+        "Custom branding for YouTube",
+        "Adds in-app app-name, launcher-icon, header, splash, and settings-icon selection."
     ),
     CUSTOM_DOUBLE_TAP_LENGTH(
         "Custom double tap length",
@@ -89,6 +89,10 @@ internal enum class PatchList(
         "Freeze layout updates",
         "Adds an option to freeze YouTube layout update configuration."
     ),
+    DISABLE_PLAYLIST_AUTOPLAY(
+        "Disable playlist autoplay",
+        "Adds an option to stop a playlist from automatically advancing to the next video."
+    ),
     DISABLE_RESUMING_MINIPLAYER_ON_STARTUP(
         "Disable resuming Miniplayer on startup",
         "Adds an option to disable the Miniplayer 'Continue watching' from resuming on app startup."
@@ -97,13 +101,13 @@ internal enum class PatchList(
         "Disable resuming Shorts on startup",
         "Adds an option to disable the Shorts player from resuming on app startup when Shorts were last being watched."
     ),
+    DISABLE_SCROLLING_SPEED_LIMIT(
+        "Disable scrolling speed limit",
+        "Adds an option to remove limits of how fast the home and subscription feed can be scrolled."
+    ),
     DISABLE_SIGN_IN_TO_TV_POPUP(
         "Disable sign in to TV popup",
         "Adds an option to disable the popup asking to sign into a TV on the same local network."
-    ),
-    DISABLE_SPLASH_ANIMATION(
-        "Disable splash animation",
-        "Adds an option to disable the splash animation on app startup."
     ),
     ENABLE_DEBUG_LOGGING(
         "Enable debug logging",
@@ -124,6 +128,14 @@ internal enum class PatchList(
     FULLSCREEN_COMPONENTS(
         "Fullscreen components",
         "Adds options to hide or change components related to fullscreen."
+    ),
+    FULLSCREEN_VIDEO_SCALE(
+        "Fullscreen video scale",
+        "Adds options to stretch or zoom videos to fill the screen in fullscreen mode."
+    ),
+    GEMINI(
+        "Gemini",
+        "Adds options to use Gemini for video summaries, transcription, and settings search."
     ),
     GMSCORE_SUPPORT(
         "GmsCore support",
@@ -163,7 +175,7 @@ internal enum class PatchList(
     ),
     HIDE_PLAYER_BUTTONS(
         "Hide player buttons",
-        "Adds options to hide buttons in the video player."
+        "Adds options to hide buttons in the video player, and to hide or change the opacity of the player control buttons background."
     ),
     HIDE_PLAYER_FLYOUT_MENU(
         "Hide player flyout menu",
@@ -173,17 +185,13 @@ internal enum class PatchList(
         "Hide shortcuts",
         "Remove, at compile time, the app shortcuts that appears when the app icon is long pressed."
     ),
-    HOOK_YOUTUBE_MUSIC_ACTIONS(
-        "Hook YouTube Music actions",
-        "Adds support for opening music in RVX Music using the in-app YouTube Music button."
+    OVERRIDE_YOUTUBE_MUSIC_BUTTONS(
+        "Override YouTube Music buttons",
+        "Overrides YouTube Music buttons to open RVX Music or any compatible third-party client."
     ),
     HOOK_DOWNLOAD_ACTIONS(
         "Hook download actions",
         "Adds support to download videos with an external downloader app using the in-app download button."
-    ),
-    MATERIALYOU(
-        "MaterialYou",
-        "Applies the MaterialYou theme for Android 12+ devices."
     ),
     MINIPLAYER(
         "Miniplayer",
@@ -193,6 +201,10 @@ internal enum class PatchList(
         "Navigation bar components",
         "Adds options to hide or change components related to the navigation bar."
     ),
+    OPEN_CHANNEL_OF_LIVE_AVATAR(
+        "Open channel of live avatar",
+        "Adds an option to prevent a channel's current live video from opening when tapping its avatar."
+    ),
     OPEN_LINKS_EXTERNALLY(
         "Open links externally",
         "Adds an option to always open links in your browser instead of the in-app browser."
@@ -201,13 +213,33 @@ internal enum class PatchList(
         "Overlay buttons",
         "Adds options to display useful overlay buttons in the video player."
     ),
+    PLAYBACK_IN_FEEDS(
+        "Playback in feeds",
+        "Adds the 'Playback in feeds' setting of YouTube to the RVX settings, where it is always available even if YouTube hides it."
+    ),
     PLAYER_COMPONENTS(
         "Player components",
         "Adds options to hide or change components related to the video player."
     ),
+    POTOKEN_PROVIDER(
+        "PoToken provider",
+        "Adds option to get PoToken using the built-in PoToken provider."
+    ),
+    RELOAD_VIDEO(
+        "Reload video",
+        "Adds an option to display a button in the video player to reload the current video."
+    ),
+    SAVE_TO_WATCH_LATER(
+        "Save to Watch later",
+        "Adds options to save videos to Watch later from the video player or feed flyout menu."
+    ),
     REMOVE_BACKGROUND_PLAYBACK_RESTRICTIONS(
         "Remove background playback restrictions",
         "Removes restrictions on background playback, including for music and kids videos."
+    ),
+    REMEMBER_LIVESTREAM_POSITION(
+        "Remember livestream playback position",
+        "Adds an option to remember the playback position of ongoing livestreams and resume from there when reopening a livestream."
     ),
     REMOVE_VIEWER_DISCRETION_DIALOG(
         "Remove viewer discretion dialog",
@@ -237,6 +269,10 @@ internal enum class PatchList(
         "Settings for YouTube",
         "Applies mandatory patches to implement ReVanced Extended settings into the application."
     ),
+    SETTINGS_MENU_FILTER(
+        "Settings menu filter",
+        "Adds an option to hide items on the standard YouTube settings screen by their visible name."
+    ),
     SHORTS_COMPONENTS(
         "Shorts components",
         "Adds options to hide or change components related to YouTube Shorts."
@@ -253,13 +289,17 @@ internal enum class PatchList(
         "Spoof app version",
         "Adds options to spoof the YouTube client version. This can be used to restore old UI elements and features."
     ),
+    SPOOF_VIDEO_STREAMS(
+        "Spoof video streams",
+        "Adds options to spoof the client video streams to fix playback."
+    ),
     SWIPE_CONTROLS(
         "Swipe controls",
         "Adds options for controlling volume and brightness with swiping, and whether to enter fullscreen when swiping down below the player."
     ),
     THEME(
         "Theme",
-        "Changes the app's themes to the values specified in patch options."
+        "Adds options to change the app's themes and splash screen style."
     ),
     TOOLBAR_COMPONENTS(
         "Toolbar components",
@@ -284,5 +324,9 @@ internal enum class PatchList(
     WATCH_HISTORY(
         "Spoof watch history",
         "Adds an option to change the domain of the watch history or check its status."
+    ),
+    WIDE_SEARCH_BAR(
+        "Wide search bar",
+        "Adds a wide search bar to the top of the home and subscription feed."
     )
 }

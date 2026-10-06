@@ -158,8 +158,6 @@ var offlineNoContentBodyTextNotOfflineEligible = -1L
     private set
 var p13nHeader = -1L
     private set
-var pairWithTVKey = -1L
-    private set
 var playerCollapseButton = -1L
     private set
 var playerControlPreviousButtonTouchArea = -1L
@@ -266,6 +264,8 @@ var ytOutlinePictureInPictureWhite = -1L
     private set
 var ytOutlineVideoCamera = -1L
     private set
+var ytOutlineExperimentalVideoCamera = -1L
+    private set
 var ytOutlineXWhite = -1L
     private set
 var ytPremiumWordMarkHeader = -1L
@@ -364,7 +364,6 @@ internal val sharedResourceIdPatch = resourcePatch(
         offlineNoContentBodyTextNotOfflineEligible =
             getResourceId(STRING, "offline_no_content_body_text_not_offline_eligible")
         p13nHeader = getResourceId(STRING, "p13n_header")
-        pairWithTVKey = getResourceId(STRING, "pair_with_tv_key")
         playerCollapseButton = getResourceId(ID, "player_collapse_button")
         playerControlPreviousButtonTouchArea =
             getResourceId(ID, "player_control_previous_button_touch_area")
@@ -427,6 +426,7 @@ internal val sharedResourceIdPatch = resourcePatch(
         ytOutlinePictureInPictureWhite =
             getResourceId(DRAWABLE, "yt_outline_picture_in_picture_white_24")
         ytOutlineVideoCamera = getResourceId(DRAWABLE, "yt_outline_video_camera_black_24")
+        ytOutlineExperimentalVideoCamera = getResourceId(DRAWABLE, "yt_outline_experimental_video_camera_black_24")
         ytOutlineXWhite = getResourceId(DRAWABLE, "yt_outline_x_white_24")
         ytPremiumWordMarkHeader = getResourceId(ATTR, "ytPremiumWordmarkHeader")
         ytTextSecondary = getResourceId(ATTR, "ytTextSecondary")

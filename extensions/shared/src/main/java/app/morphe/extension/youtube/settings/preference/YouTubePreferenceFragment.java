@@ -1,3 +1,9 @@
+/*
+ * Original author(s):
+ * - anddea (https://github.com/anddea)
+ * - COOLak (https://github.com/COOLak)
+ */
+
 package app.morphe.extension.youtube.settings.preference;
 
 import static app.morphe.extension.shared.patches.PatchStatus.PatchVersion;
@@ -14,6 +20,8 @@ import android.preference.PreferenceScreen;
 import android.preference.SwitchPreference;
 import android.widget.Toolbar;
 
+import androidx.annotation.NonNull;
+
 import java.util.Date;
 
 import app.morphe.extension.shared.settings.Setting;
@@ -24,6 +32,8 @@ import app.morphe.extension.shared.utils.Utils;
 import app.morphe.extension.youtube.patches.general.ChangeFormFactorPatch;
 import app.morphe.extension.youtube.patches.utils.PatchStatus;
 import app.morphe.extension.youtube.patches.utils.ReturnYouTubeDislikePatch;
+import app.morphe.extension.youtube.patches.voiceovertranslation.VotApiClient;
+import app.morphe.extension.youtube.patches.voiceovertranslation.TranslationPlaybackController;
 import app.morphe.extension.youtube.returnyoutubedislike.ReturnYouTubeDislike;
 import app.morphe.extension.youtube.settings.Settings;
 import app.morphe.extension.youtube.settings.YouTubeActivityHook;
@@ -88,10 +98,40 @@ public class YouTubePreferenceFragment extends ToolbarPreferenceFragment {
             // Debug log
             setDebugLogPreference();
 
+            // Voice Over Translation proxy host fetch
+            setVotProxyPreference();
+
             setPreferenceAvailability();
         } catch (Exception ex) {
             Logger.printException(() -> "initialize failure", ex);
         }
+    }
+
+    @Override
+    protected void syncSettingWithPreference(@NonNull Preference pref,
+                                             @NonNull Setting<?> setting,
+                                             boolean applySettingToPreference) {
+        if (pref instanceof VotOAuthPreference votOAuthPreference && setting == Settings.VOT_OAUTH_TOKEN) {
+            if (applySettingToPreference) {
+                votOAuthPreference.updateUI();
+            }
+            return;
+        }
+
+        if (pref instanceof NavigationBarOrderPreference navigationBarOrderPreference
+                && setting == Settings.NAVIGATION_BAR_ORDER) {
+            if (applySettingToPreference) {
+                navigationBarOrderPreference.updateSummary();
+            }
+            return;
+        }
+
+        super.syncSettingWithPreference(pref, setting, applySettingToPreference);
+    }
+
+    @Override
+    protected void onSettingChanged(Setting<?> setting) {
+        TranslationPlaybackController.onSettingChanged(setting.key);
     }
 
     /**
@@ -110,6 +150,13 @@ public class YouTubePreferenceFragment extends ToolbarPreferenceFragment {
         } catch (Exception ex) {
             Logger.printException(() -> "onStart failure", ex);
         }
+    }
+
+    /** Refreshes the main settings Activity after YouTube's stock appearance changes. */
+    @Override
+    public void onResume() {
+        super.onResume();
+        YouTubeActivityHook.refreshTheme(getActivity());
     }
 
     @Override
@@ -199,6 +246,33 @@ public class YouTubePreferenceFragment extends ToolbarPreferenceFragment {
         });
     }
 
+    /**
+     * Adds the explicit VOT proxy host refresh action. The host is never fetched or changed while
+     * processing a translation request.
+     */
+    private void setVotProxyPreference() {
+        Preference fetchPreference = findPreference("vot_proxy_url_fetch");
+        if (fetchPreference == null) {
+            return;
+        }
+        fetchPreference.setOnPreferenceClickListener(pref -> {
+            pref.setEnabled(false);
+            Utils.runOnBackgroundThread(() -> {
+                String workerHost = VotApiClient.fetchLatestProxyWorkerHost();
+                Utils.runOnMainThread(() -> {
+                    pref.setEnabled(true);
+                    if (workerHost == null) {
+                        Utils.showToastLong(str("revanced_vot_proxy_url_fetch_failed"));
+                        return;
+                    }
+                    VotApiClient.saveProxyWorkerHost(workerHost);
+                    Utils.showToastShort(str("revanced_vot_proxy_url_fetch_success", workerHost));
+                });
+            });
+            return true;
+        });
+    }
+
     private void setPreferenceAvailability() {
         setTabletLayoutPreference();
         setPatchInformationPreference();
@@ -267,9 +341,6 @@ public class YouTubePreferenceFragment extends ToolbarPreferenceFragment {
         if (!(findPreference(Settings.RYD_ENABLED.key) instanceof SwitchPreference enabledPreference)) {
             return;
         }
-        if (!(findPreference(Settings.RYD_SHORTS.key) instanceof SwitchPreference shortsPreference)) {
-            return;
-        }
         if (!(findPreference(Settings.RYD_DISLIKE_PERCENTAGE.key) instanceof SwitchPreference percentagePreference)) {
             return;
         }
@@ -286,10 +357,6 @@ public class YouTubePreferenceFragment extends ToolbarPreferenceFragment {
 
             return true;
         });
-        String shortsSummary = ReturnYouTubeDislikePatch.IS_SPOOFING_TO_NON_LITHO_SHORTS_PLAYER
-                ? str("revanced_ryd_shorts_summary_on")
-                : str("revanced_ryd_shorts_summary_on_disclaimer");
-        shortsPreference.setSummaryOn(shortsSummary);
         percentagePreference.setOnPreferenceChangeListener(clearAllUICaches);
         compactLayoutPreference.setOnPreferenceChangeListener(clearAllUICaches);
     }
@@ -313,7 +380,9 @@ public class YouTubePreferenceFragment extends ToolbarPreferenceFragment {
     }
 
     private void setWhitelistPreference() {
-        final boolean enabled = PatchStatus.VideoPlayback() || PatchStatus.SponsorBlock();
+        final boolean enabled = PatchStatus.HideAds()
+                || PatchStatus.VideoPlayback()
+                || PatchStatus.SponsorBlock();
         final String[] whitelistKey = {Settings.OVERLAY_BUTTON_WHITELIST.key, "revanced_whitelist_settings"};
 
         for (String key : whitelistKey) {

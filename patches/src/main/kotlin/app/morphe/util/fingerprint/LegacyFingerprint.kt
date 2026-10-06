@@ -1,5 +1,3 @@
-@file:Suppress("CONTEXT_RECEIVERS_DEPRECATED")
-
 package app.morphe.util.fingerprint
 
 import app.morphe.patcher.Fingerprint
@@ -24,19 +22,30 @@ import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 private val String.exception
     get() = PatchException("Failed to resolve $this")
 
-context(BytecodePatchContext)
+context(_: BytecodePatchContext)
 internal fun Pair<String, Fingerprint>.resolvable(): Boolean =
     second.methodOrNull != null
 
-context(BytecodePatchContext)
+context(_: BytecodePatchContext)
 internal fun Pair<String, Fingerprint>.definingClassOrThrow(): String =
     second.classDefOrNull?.type ?: throw first.exception
 
-context(BytecodePatchContext)
+context(_: BytecodePatchContext)
 internal fun Pair<String, Fingerprint>.matchOrThrow(): Match =
     second.match(mutableClassOrThrow())
 
-context(BytecodePatchContext)
+/**
+ * Resolves a fingerprint only when it matches exactly one method.
+ *
+ * The regular [Fingerprint.method] accessor selects the first match. Requiring a single match
+ * prevents a patch from silently modifying the wrong method when obfuscated targets contain
+ * multiple candidates.
+ */
+context(_: BytecodePatchContext)
+internal fun Fingerprint.matchSingle(): Match =
+    matchAll(1..1).first()
+
+context(_: BytecodePatchContext)
 internal fun Pair<String, Fingerprint>.matchOrThrow(parentFingerprint: Pair<String, Fingerprint>): Match {
     val parentClassDef = parentFingerprint.second.classDefOrNull
         ?: throw parentFingerprint.first.exception
@@ -44,47 +53,47 @@ internal fun Pair<String, Fingerprint>.matchOrThrow(parentFingerprint: Pair<Stri
         ?: throw first.exception
 }
 
-context(BytecodePatchContext)
+context(_: BytecodePatchContext)
 internal fun Pair<String, Fingerprint>.matchOrNull(): Match? =
     second.classDefOrNull?.let {
         second.matchOrNull(it)
     }
 
-context(BytecodePatchContext)
+context(_: BytecodePatchContext)
 internal fun Pair<String, Fingerprint>.matchOrNull(parentFingerprint: Pair<String, Fingerprint>): Match? =
     parentFingerprint.second.classDefOrNull?.let { parentClassDef ->
         second.matchOrNull(parentClassDef)
     }
 
-context(BytecodePatchContext)
+context(_: BytecodePatchContext)
 internal fun Pair<String, Fingerprint>.methodOrNull(): MutableMethod? =
     matchOrNull()?.method
 
-context(BytecodePatchContext)
+context(_: BytecodePatchContext)
 internal fun Pair<String, Fingerprint>.methodOrThrow(): MutableMethod =
     second.methodOrNull ?: throw first.exception
 
-context(BytecodePatchContext)
+context(_: BytecodePatchContext)
 internal fun Pair<String, Fingerprint>.methodOrThrow(parentFingerprint: Pair<String, Fingerprint>): MutableMethod =
     matchOrThrow(parentFingerprint).method
 
-context(BytecodePatchContext)
+context(_: BytecodePatchContext)
 internal fun Pair<String, Fingerprint>.originalMethodOrThrow(): Method =
     second.originalMethodOrNull ?: throw first.exception
 
-context(BytecodePatchContext)
+context(_: BytecodePatchContext)
 internal fun Pair<String, Fingerprint>.originalMethodOrThrow(parentFingerprint: Pair<String, Fingerprint>): Method =
     matchOrThrow(parentFingerprint).originalMethod
 
-context(BytecodePatchContext)
+context(_: BytecodePatchContext)
 internal fun Pair<String, Fingerprint>.mutableClassOrThrow(): MutableClass =
     second.classDefOrNull ?: throw first.exception
 
-context(BytecodePatchContext)
+context(_: BytecodePatchContext)
 internal fun Pair<String, Fingerprint>.methodCall() =
     methodOrThrow().methodCall()
 
-context(BytecodePatchContext)
+context(_: BytecodePatchContext)
 internal fun MutableMethod.methodCall(): String {
     var methodCall = "$definingClass->$name("
     for (i in 0 until parameters.size) {
@@ -94,7 +103,7 @@ internal fun MutableMethod.methodCall(): String {
     return methodCall
 }
 
-context(BytecodePatchContext)
+context(_: BytecodePatchContext)
 fun Pair<String, Fingerprint>.injectLiteralInstructionBooleanCall(
     literal: Long,
     descriptor: String
@@ -124,7 +133,7 @@ fun Pair<String, Fingerprint>.injectLiteralInstructionBooleanCall(
     }
 }
 
-context(BytecodePatchContext)
+context(_: BytecodePatchContext)
 fun Pair<String, Fingerprint>.injectLiteralInstructionViewCall(
     literal: Long,
     smaliInstruction: String
@@ -133,7 +142,7 @@ fun Pair<String, Fingerprint>.injectLiteralInstructionViewCall(
     method.injectLiteralInstructionViewCall(literal, smaliInstruction)
 }
 
-@Deprecated("Migrate away from fingerprint DSL")
+// @Deprecated("Migrate away from fingerprint DSL")
 internal fun legacyFingerprint(
     name: String,
     accessFlags: Int? = null,

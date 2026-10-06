@@ -7,7 +7,6 @@
 
 package app.morphe.extension.shared.spoof;
 
-import static app.morphe.extension.shared.patches.AppCheckPatch.IS_YOUTUBE;
 import static app.morphe.extension.shared.patches.AppCheckPatch.IS_YOUTUBE_MUSIC;
 
 import android.os.Build;
@@ -16,85 +15,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.Locale;
-import java.util.Objects;
 
-@SuppressWarnings({"ConstantLocale", "deprecation"})
+@SuppressWarnings({"ConstantLocale"})
 public enum ClientType {
-    /**
-     * Video not playable: None.
-     * AV1 codec available.
-     */
-    ANDROID_REEL_AUTH(
-            3,
-            "ANDROID",
-            "com.google.android.youtube",
-            Build.MANUFACTURER,
-            Build.MODEL,
-            "Android",
-            Build.VERSION.RELEASE,
-            String.valueOf(Build.VERSION.SDK_INT),
-            Build.ID,
-            // A hardcoded client version is used for YouTube Music.
-            "20.47.62",
-            null,
-            IS_YOUTUBE,
-            IS_YOUTUBE,
-            true,
-            false,
-            true,
-            true,
-            false,
-            "Android Reel auth"
-    ),
-    /**
-     * Video not playable: Paid, Movie, Private, Age-restricted.
-     * AV1 codec available.
-     */
-    ANDROID_REEL_NO_AUTH(
-            ANDROID_REEL_AUTH.id,
-            ANDROID_REEL_AUTH.clientName,
-            Objects.requireNonNull(ANDROID_REEL_AUTH.packageName),
-            ANDROID_REEL_AUTH.deviceMake,
-            ANDROID_REEL_AUTH.deviceModel,
-            ANDROID_REEL_AUTH.osName,
-            ANDROID_REEL_AUTH.osVersion,
-            Objects.requireNonNull(ANDROID_REEL_AUTH.androidSdkVersion),
-            ANDROID_REEL_AUTH.buildID,
-            ANDROID_REEL_AUTH.clientVersion,
-            ANDROID_REEL_AUTH.clientPlatform,
-            false,
-            false,
-            ANDROID_REEL_AUTH.supportsMultiAudioTracks,
-            ANDROID_REEL_AUTH.supportsOAuth2,
-            ANDROID_REEL_AUTH.supportsVRImmersiveMode,
-            ANDROID_REEL_AUTH.requireSABR,
-            ANDROID_REEL_AUTH.usePlayerEndpoint,
-            "Android Reel no auth"
-    ),
-    /**
-     * Legacy alias retained for older YouTube and YouTube Music integrations.
-     */
-    ANDROID_REEL(
-            ANDROID_REEL_NO_AUTH.id,
-            ANDROID_REEL_NO_AUTH.clientName,
-            Objects.requireNonNull(ANDROID_REEL_NO_AUTH.packageName),
-            ANDROID_REEL_NO_AUTH.deviceMake,
-            ANDROID_REEL_NO_AUTH.deviceModel,
-            ANDROID_REEL_NO_AUTH.osName,
-            ANDROID_REEL_NO_AUTH.osVersion,
-            Objects.requireNonNull(ANDROID_REEL_NO_AUTH.androidSdkVersion),
-            ANDROID_REEL_NO_AUTH.buildID,
-            ANDROID_REEL_NO_AUTH.clientVersion,
-            ANDROID_REEL_NO_AUTH.clientPlatform,
-            ANDROID_REEL_NO_AUTH.canLogin,
-            ANDROID_REEL_NO_AUTH.requireLogin,
-            ANDROID_REEL_NO_AUTH.supportsMultiAudioTracks,
-            ANDROID_REEL_NO_AUTH.supportsOAuth2,
-            ANDROID_REEL_NO_AUTH.supportsVRImmersiveMode,
-            ANDROID_REEL_NO_AUTH.requireSABR,
-            ANDROID_REEL_NO_AUTH.usePlayerEndpoint,
-            "Android Reel"
-    ),
     /**
      * Video not playable in YouTube: All videos (This client requires login, but cannot log in with YouTube's access token).
      * Video not playable in YouTube Music: None.
@@ -112,6 +35,8 @@ public enum ClientType {
             "com.google.android.apps.youtube.music/7.12.52 (Linux; U; Android " + Build.VERSION.RELEASE + ") gzip",
             IS_YOUTUBE_MUSIC,
             true,
+            false,
+            false,
             false,
             false,
             false,
@@ -144,100 +69,100 @@ public enum ClientType {
     ),
     /**
      * Video not playable: Kids.
-     * AV1 codec available.
-     */
-    // https://dumps.tadiphone.dev/dumps/oculus/eureka
-    ANDROID_VR_1_74(
-            28,
-            "ANDROID_VR",
-            "com.google.android.apps.youtube.vr.oculus",
-            "Oculus",
-            "Quest 3",
-            "Android",
-            "14",
-            "34",
-            "UP1A.231005.007.A1",
-            "1.74.19",
-            null,
-            false,
-            false,
-            true,
-            true,
-            true,
-            true,
-            true,
-            "Android VR 1.74"
-    ),
-    /**
-     * Video not playable: Kids.
      * AV1 codec not available.
      */
-    // https://dumps.tadiphone.dev/dumps/oculus/monterey
-    ANDROID_VR_1_73(
-            ANDROID_VR_1_74.id,
-            ANDROID_VR_1_74.clientName,
-            Objects.requireNonNull(ANDROID_VR_1_74.packageName),
-            ANDROID_VR_1_74.deviceMake,
-            "Quest",
-            ANDROID_VR_1_74.osName,
-            "10",
-            "29",
-            "QQ3A.200805.001",
-            "1.73.24",
-            ANDROID_VR_1_74.clientPlatform,
-            ANDROID_VR_1_74.canLogin,
-            ANDROID_VR_1_74.requireLogin,
-            ANDROID_VR_1_74.supportsMultiAudioTracks,
-            ANDROID_VR_1_74.supportsOAuth2,
-            ANDROID_VR_1_74.supportsVRImmersiveMode,
-            ANDROID_VR_1_74.requireSABR,
-            ANDROID_VR_1_74.usePlayerEndpoint,
-            "Android VR 1.73"
-    ),
-    /**
-     * Legacy VR clients retained for existing saved settings and integrations.
-     */
-    ANDROID_VR_1_65(
+    ANDROID_VR_SABR(
             28,
             "ANDROID_VR",
-            "com.google.android.apps.youtube.vr.oculus",
-            "Oculus",
-            "Quest 3",
+            "com.google.android.apps.youtube.vr.pico",
+            "Pico",
+            "A8110", // PICO 4.
             "Android",
-            "14",
-            "34",
-            "UP1A.231005.007.A1",
-            "1.65.10",
-            null,
-            false,
-            false,
-            false,
-            true,
-            true,
-            false,
-            true,
-            "Android VR 1.65"
-    ),
-    ANDROID_VR_1_64(
-            ANDROID_VR_1_65.id,
-            ANDROID_VR_1_65.clientName,
-            Objects.requireNonNull(ANDROID_VR_1_65.packageName),
-            ANDROID_VR_1_65.deviceMake,
-            "Quest",
-            ANDROID_VR_1_65.osName,
             "10",
             "29",
-            "QQ3A.200805.001",
+            "5.13.7",
+            "1.73.21",
+            null,
+            false,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            "Android VR"
+    ),
+    /**
+     * Same as {@code ANDROID_VR_SABR} but supports dash streams.
+     */
+    ANDROID_VR_DASH(
+            ANDROID_VR_SABR.id,
+            ANDROID_VR_SABR.clientName,
+            ANDROID_VR_SABR.packageName,
+            ANDROID_VR_SABR.deviceMake,
+            ANDROID_VR_SABR.deviceModel,
+            ANDROID_VR_SABR.osName,
+            ANDROID_VR_SABR.osVersion,
+            ANDROID_VR_SABR.androidSdkVersion,
+            ANDROID_VR_SABR.buildID,
             "1.64.34",
-            ANDROID_VR_1_65.clientPlatform,
-            ANDROID_VR_1_65.canLogin,
-            ANDROID_VR_1_65.requireLogin,
-            ANDROID_VR_1_65.supportsMultiAudioTracks,
-            ANDROID_VR_1_65.supportsOAuth2,
-            ANDROID_VR_1_65.supportsVRImmersiveMode,
-            ANDROID_VR_1_65.requireSABR,
-            ANDROID_VR_1_65.usePlayerEndpoint,
-            "Android VR 1.64"
+            ANDROID_VR_SABR.clientPlatform,
+            ANDROID_VR_SABR.canLogin,
+            ANDROID_VR_SABR.requireLogin,
+            false,
+            ANDROID_VR_SABR.supportsOAuth2,
+            ANDROID_VR_SABR.supportsVRImmersiveMode,
+            false,
+            ANDROID_VR_SABR.usePlayerEndpoint,
+            "Android VR Downgraded"
+    ),
+    /**
+     * Same as {@code ANDROID_VR_SABR} but supports AV1 codec.
+     */
+    ANDROID_XR_SABR(
+            ANDROID_VR_SABR.id,
+            ANDROID_VR_SABR.clientName,
+            "com.google.android.apps.youtube.xr",
+            "Samsung",
+            "SM-I610", // Galaxy XR.
+            ANDROID_VR_SABR.osName,
+            "14",
+            "34",
+            "UML1.250710.002.A1",
+            "1.73.21",
+            ANDROID_VR_SABR.clientPlatform,
+            ANDROID_VR_SABR.canLogin,
+            ANDROID_VR_SABR.requireLogin,
+            ANDROID_VR_SABR.supportsMultiAudioTracks,
+            ANDROID_VR_SABR.supportsOAuth2,
+            ANDROID_VR_SABR.supportsVRImmersiveMode,
+            ANDROID_VR_SABR.requireSABR,
+            ANDROID_VR_SABR.usePlayerEndpoint,
+            "Android XR"
+    ),
+    /**
+     * Same as {@code ANDROID_XR_SABR} but supports dash streams.
+     */
+    ANDROID_XR_DASH(
+            ANDROID_XR_SABR.id,
+            ANDROID_XR_SABR.clientName,
+            ANDROID_XR_SABR.packageName,
+            ANDROID_XR_SABR.deviceMake,
+            ANDROID_XR_SABR.deviceModel,
+            ANDROID_XR_SABR.osName,
+            ANDROID_XR_SABR.osVersion,
+            ANDROID_XR_SABR.androidSdkVersion,
+            ANDROID_XR_SABR.buildID,
+            "1.69.27",
+            ANDROID_XR_SABR.clientPlatform,
+            ANDROID_XR_SABR.canLogin,
+            ANDROID_XR_SABR.requireLogin,
+            false,
+            ANDROID_XR_SABR.supportsOAuth2,
+            ANDROID_XR_SABR.supportsVRImmersiveMode,
+            false,
+            ANDROID_XR_SABR.usePlayerEndpoint,
+            "Android XR Downgraded"
     ),
     /**
      * Video not playable: Livestream.
@@ -266,19 +191,21 @@ public enum ClientType {
             "Android Studio"
     ),
     /**
-     * Video not playable: None.
+     * Video not playable: Livestream.
      * AV1 codec available.
      */
-    TV(7,
+    TV_SABR(
+            7,
             "TVHTML5",
-            "Samsung",
-            "SmartTV",
-            "Tizen",
-            "2.4.0",
-            "5.20150304",
-            "TV",
-            // Currently, it is the only User-Agent available for signed out among TV clients, but sign in is still required for certain IP bands or countries.
-            "Mozilla/5.0 (SMART-TV; Linux; Tizen 2.4.0) AppleWebKit/538.1 (KHTML, like Gecko) Version/2.4.0 TV Safari/538.1",
+            "Sony",
+            "PS4",
+            "PlayStation 4",
+            "",
+            "7.20260707.07.00",
+            "GAME_CONSOLE",
+            "Mozilla/5.0 (PS4; Leanback Shell) Gecko/20100101 Firefox/65.0 LeanbackShell/01.00.01.75 Sony PS4/ (PS4, , no, CH)",
+            true,
+            false,
             true,
             false,
             true,
@@ -287,94 +214,178 @@ public enum ClientType {
             "TV"
     ),
     /**
+     * Same as {@code TV_SABR} but supports dash streams.
+     * This client cannot be selected in the settings and is used only for livestreams.
+     */
+    TV_DASH(
+            TV_SABR.id,
+            TV_SABR.clientName,
+            "Samsung",
+            "SmartTV",
+            "Tizen",
+            "2.4.0",
+            "5.20150304",
+            "TV",
+            "Mozilla/5.0 (SMART-TV; Linux; Tizen 2.4.0) AppleWebKit/538.1 (KHTML, like Gecko) Version/2.4.0 TV Safari/538.1",
+            TV_SABR.canLogin,
+            TV_SABR.requireLogin,
+            TV_SABR.supportsMultiAudioTracks,
+            TV_SABR.supportsVRImmersiveMode,
+            TV_SABR.requireJS,
+            TV_SABR.requirePoToken,
+            false,
+            "TV Downgraded"
+    ),
+    /**
+     * Video not playable: None.
+     * AV1 codec available.
+     */
+    TV_SIMPLY(
+            75,
+            "TVHTML5_SIMPLY",
+            TV_SABR.deviceMake,
+            TV_SABR.deviceModel,
+            TV_SABR.osName,
+            TV_SABR.osVersion,
+            "1.1",
+            TV_SABR.clientPlatform,
+            TV_SABR.userAgent,
+            true,
+            // This client requires a PoToken for logout.
+            false,
+            TV_SABR.supportsMultiAudioTracks,
+            TV_SABR.supportsVRImmersiveMode,
+            TV_SABR.requireJS,
+            true,
+            false,
+            "TV Simply"
+    ),
+    /**
      * Video not playable: Kids, Paid, Movie, Private, Age-restricted.
      * AV1 codec available.
      * May stop working at any time.
      */
-    VISIONOS(101,
+    VISIONOS_1_03(
+            101,
             "VISIONOS",
             "Apple",
             "RealityDevice17,1",
             "visionOS",
-            "26.5.23O471",
+            "26.6.1",
             "1.03",
             null,
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 15_7_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15",
+            "com.google.visionosyoutube/1.03 (RealityDevice17,1; U; CPU visionOS 26_6_1 like Mac OS X; en_US) gzip",
             false,
             false,
             true,
             true,
             false,
-            "visionOS"
+            false,
+            false,
+            "visionOS 1.03"
     ),
-    TV_SIMPLY(75,
-            "TVHTML5_SIMPLY",
-            "Microsoft",
-            "Xbox 360",
-            "Xbox",
-            "6.1",
-            "1.0",
-            "GAME_CONSOLE",
-            "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0; Xbox)",
-            true,
+    /**
+     * Video not playable: Kids, Paid, Movie, Private, Age-restricted.
+     * AV1 codec not available.
+     * May stop working at any time.
+     */
+    VISIONOS_1_02(
+            VISIONOS_1_03.id,
+            VISIONOS_1_03.clientName,
+            VISIONOS_1_03.deviceMake,
+            "RealityDevice14,1",
+            VISIONOS_1_03.osName,
+            VISIONOS_1_03.osVersion,
+            "1.02",
+            VISIONOS_1_03.clientPlatform,
+            "com.google.visionosyoutube/1.02 (RealityDevice14,1; U; CPU visionOS 26_6_1 like Mac OS X; en_US) gzip",
+            VISIONOS_1_03.canLogin,
+            VISIONOS_1_03.requireLogin,
+            VISIONOS_1_03.supportsMultiAudioTracks,
+            VISIONOS_1_03.supportsVRImmersiveMode,
+            VISIONOS_1_03.requireJS,
+            VISIONOS_1_03.requirePoToken,
+            VISIONOS_1_03.requireSABR,
+            "visionOS 1.02"
+    ),
+    /**
+     * Plain ANDROID client used for caption / transcript fetching.
+     */
+    ANDROID(
+            3,
+            "ANDROID",
+            "com.google.android.youtube",
+            Build.MANUFACTURER,
+            Build.MODEL,
+            "Android",
+            Build.VERSION.RELEASE,
+            String.valueOf(Build.VERSION.SDK_INT),
+            Build.ID,
+            "20.10.38",
+            null,
             true,
             true,
             false,
+            false,
+            false,
+            false,
             true,
-            "TV Simply"
+            "Android"
     ),
     GET_CHANNEL_FROM_ID(
-            ANDROID_REEL_AUTH.id,
-            ANDROID_REEL_AUTH.clientName,
-            Objects.requireNonNull(ANDROID_REEL_AUTH.packageName),
-            ANDROID_REEL_AUTH.deviceMake,
-            ANDROID_REEL_AUTH.deviceModel,
-            ANDROID_REEL_AUTH.osName,
-            ANDROID_REEL_AUTH.osVersion,
-            Objects.requireNonNull(ANDROID_REEL_AUTH.androidSdkVersion),
-            ANDROID_REEL_AUTH.buildID,
-            ANDROID_REEL_AUTH.clientVersion,
-            ANDROID_REEL_AUTH.clientPlatform,
+            3,
+            "ANDROID",
+            "com.google.android.youtube",
+            Build.MANUFACTURER,
+            Build.MODEL,
+            "Android",
+            Build.VERSION.RELEASE,
+            String.valueOf(Build.VERSION.SDK_INT),
+            Build.ID,
+            "20.47.62",
+            null,
             false,
             false,
             false,
-            ANDROID_REEL_AUTH.supportsOAuth2,
-            ANDROID_REEL_AUTH.supportsVRImmersiveMode,
-            ANDROID_REEL_AUTH.requireSABR,
-            ANDROID_REEL_AUTH.usePlayerEndpoint,
+            false,
+            true,
+            true,
+            false,
             "Get Channel From ID"
     ),
     SAVE_TO_WATCH_LATER(
-            ANDROID_REEL_AUTH.id,
-            ANDROID_REEL_AUTH.clientName,
-            Objects.requireNonNull(ANDROID_REEL_AUTH.packageName),
-            ANDROID_REEL_AUTH.deviceMake,
-            ANDROID_REEL_AUTH.deviceModel,
-            ANDROID_REEL_AUTH.osName,
-            ANDROID_REEL_AUTH.osVersion,
-            Objects.requireNonNull(ANDROID_REEL_AUTH.androidSdkVersion),
-            ANDROID_REEL_AUTH.buildID,
-            ANDROID_REEL_AUTH.clientVersion,
-            ANDROID_REEL_AUTH.clientPlatform,
+            3,
+            "ANDROID",
+            "com.google.android.youtube",
+            Build.MANUFACTURER,
+            Build.MODEL,
+            "Android",
+            Build.VERSION.RELEASE,
+            String.valueOf(Build.VERSION.SDK_INT),
+            Build.ID,
+            "20.47.62",
+            null,
             true,
             true,
             false,
-            ANDROID_REEL_AUTH.supportsOAuth2,
-            ANDROID_REEL_AUTH.supportsVRImmersiveMode,
-            ANDROID_REEL_AUTH.requireSABR,
-            ANDROID_REEL_AUTH.usePlayerEndpoint,
+            false,
+            true,
+            true,
+            false,
             "Save To Watch Later"
     );
 
     public final int id;
     public final String clientName;
-    @Nullable public final String packageName;
+    @NonNull
+    public final String packageName;
     public final String userAgent;
     public final String deviceMake;
     public final String deviceModel;
     public final String osName;
     public final String osVersion;
-    @Nullable public final String androidSdkVersion;
+    @NonNull
+    public final String androidSdkVersion;
     public final String buildID;
     public final String clientVersion;
     public final String clientPlatform;
@@ -384,6 +395,7 @@ public enum ClientType {
     public final boolean supportsMultiAudioTracks;
     public final boolean supportsVRImmersiveMode;
     public final boolean requireJS;
+    public final boolean requirePoToken;
     public final boolean requireSABR;
     public final boolean usePlayerEndpoint;
     public final String friendlyName;
@@ -429,7 +441,7 @@ public enum ClientType {
 
         Locale defaultLocale = Locale.getDefault();
         this.userAgent = String.format(Locale.ENGLISH,
-                "%s/%s (Linux; U; Android %s; %s; %s; Build/%s)",
+                "%s/%s (Linux; U; Android %s; %s; %s Build/%s)",
                 packageName,
                 clientVersion,
                 osVersion,
@@ -439,6 +451,7 @@ public enum ClientType {
         );
 
         requireJS = false;
+        requirePoToken = false;
     }
 
     ClientType(int id,
@@ -455,6 +468,8 @@ public enum ClientType {
                boolean supportsMultiAudioTracks,
                boolean supportsVRImmersiveMode,
                boolean requireJS,
+               boolean requirePoToken,
+               boolean requireSABR,
                String friendlyName) {
         this.id = id;
         this.clientName = clientName;
@@ -470,12 +485,13 @@ public enum ClientType {
         this.supportsMultiAudioTracks = supportsMultiAudioTracks;
         this.supportsVRImmersiveMode = supportsVRImmersiveMode;
         this.requireJS = requireJS;
+        this.requirePoToken = requirePoToken;
+        this.requireSABR = requireSABR;
         this.friendlyName = friendlyName;
 
-        androidSdkVersion = null;
+        androidSdkVersion = "";
         buildID = null;
-        packageName = null;
-        requireSABR = false;
+        packageName = "";
         supportsOAuth2 = false;
         usePlayerEndpoint = true;
     }

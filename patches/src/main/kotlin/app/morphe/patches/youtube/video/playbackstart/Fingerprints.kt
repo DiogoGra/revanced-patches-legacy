@@ -1,5 +1,9 @@
 package app.morphe.patches.youtube.video.playbackstart
 
+import app.morphe.patcher.Fingerprint
+import app.morphe.patcher.StringComparisonType
+import app.morphe.patcher.methodCall
+import app.morphe.patcher.string
 import app.morphe.util.fingerprint.legacyFingerprint
 import app.morphe.util.or
 import com.android.tools.smali.dexlib2.AccessFlags
@@ -56,4 +60,24 @@ internal val shortsPlaybackStartIntentLegacyFingerprint = legacyFingerprint(
     )
 )
 
+internal object PlaybackStartDescriptorToStringFingerprint : Fingerprint(
+    name = "toString",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
+    returnType = "Ljava/lang/String;",
+    filters = listOf(
+        methodCall(smali = "Ljava/util/Locale;->getDefault()Ljava/util/Locale;"),
+        methodCall(returnType = "Ljava/lang/String;", parameters = listOf()),
+        string("PlaybackStartDescriptor:", comparison = StringComparisonType.STARTS_WITH)
+    )
+)
 
+internal object ModernShortsPlaybackStartIntentFingerprint : Fingerprint(
+    accessFlags = listOf(AccessFlags.PROTECTED, AccessFlags.FINAL),
+    returnType = "V",
+    parameters = listOf("L", "Ljava/util/Map;", "J", "Ljava/lang/String;"),
+    filters = listOf(
+        string("com.google.android.apps.youtube.app.endpoint.flags"),
+        string("ReelWatchFragmentArgs"),
+        string("reels_fragment_descriptor"),
+    ),
+)

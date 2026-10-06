@@ -5,12 +5,13 @@
  * https://github.com/anddea/revanced-patches
  *
  * Original author(s):
+ * - anddea (https://github.com/anddea)
  * - Jav1x (https://github.com/Jav1x)
  *
  * Licensed under the GNU General Public License v3.0.
  *
  * ------------------------------------------------------------------------
- * GPLv3 Section 7 – Attribution Notice
+ * GPLv3 Section 7 – Additional Terms & Attribution Requirements
  * ------------------------------------------------------------------------
  *
  * This file contains substantial original work by the author(s) listed above.
@@ -18,24 +19,24 @@
  * In accordance with Section 7 of the GNU General Public License v3.0,
  * the following additional terms apply to this file:
  *
- * 1. Attribution (Section 7(b)): This specific copyright notice and the
- *    list of original authors above must be preserved in any copy or
- *    derivative work. You may add your own copyright notice below it,
+ * 1. Source Credit Preservation (Section 7(b)): This specific copyright notice
+ *    and the list of original authors above must be preserved in any copy
+ *    or derivative work. You may add your own copyright notice below it,
  *    but you may not remove the original one.
  *
- * 2. Origin (Section 7(c)): Modified versions must be clearly marked as
- *    such (e.g., by adding a "Modified by" line or a new copyright notice).
- *    They must not be misrepresented as the original work.
+ * 2. Origin & Modification Marking (Section 7(c)): Modified versions must be
+ *    clearly marked as such (e.g., by adding a "Modified by" line or a new
+ *    copyright notice) and must not be misrepresented as the original work.
  *
- * ------------------------------------------------------------------------
- * Version Control Acknowledgement (Non-binding Request)
- * ------------------------------------------------------------------------
+ * 3. Version Control Attribution (Section 7(b)): Any ports or substantial
+ *    modifications must retain historical authorship credit in version control
+ *    systems (e.g., Git), listing original author(s) appropriately and
+ *    modifiers as committers or co-authors.
  *
- * While not a legal requirement of the GPLv3, the original author(s)
- * respectfully request that ports or substantial modifications retain
- * historical authorship credit in version control systems (e.g., Git),
- * listing original author(s) appropriately and modifiers as committers
- * or co-authors.
+ * 4. User Interface Attribution (Section 7(b)): Any works containing or
+ *    derived from this material must maintain a visible credit or
+ *    acknowledgment to the original author(s) within the application's
+ *    user interface (e.g., in an "About" or "Credits" section).
  */
 
 package app.morphe.extension.youtube.patches.voiceovertranslation;
@@ -45,6 +46,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Manual protobuf encoder/decoder that avoids conflicts with YouTube's bundled protobuf version.
@@ -117,28 +121,74 @@ public class VotProtobuf {
     }
 
     /**
-     * Encode a VideoTranslationAudioRequest with empty audio.
-     *   translationId = 1 (string)
-     *   url = 2 (string)
-     *   audioInfo = 6 (message): { fileId = 1 (string), audioFile = 2 (bytes) }
+     * Encode upstream SubtitlesRequest: url = 1, language = 2 (both strings).
+     * Translation uses different field numbers, but shares these wire-format helpers.
      */
-    public static byte[] encodeEmptyAudioRequest(String translationId, String url) {
+    public static byte[] encodeSubtitlesRequest(String url, String language) {
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            if (url != null && !url.isEmpty()) writeString(out, 1, url);
+            if (language != null && !language.isEmpty()) writeString(out, 2, language);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to encode subtitles request", e);
+        }
+    }
+
+    public static byte[] encodeAudioRequest(String translationId, String url, String fileId, byte[] audioData) {
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             writeString(out, 1, translationId);
             writeString(out, 2, url);
 
-            // audioInfo (field 6) is a nested message: AudioBufferObject { fileId=1, audioFile=2 }
             ByteArrayOutputStream audioInfoOut = new ByteArrayOutputStream();
-            writeString(audioInfoOut, 1, "web_api_get_all_generating_urls_data_from_iframe");
-            // audioFile (field 2) is empty bytes - we skip it
+            writeString(audioInfoOut, 1, fileId);
+            if (audioData != null && audioData.length > 0) {
+                writeBytes(audioInfoOut, audioData);
+            }
 
             byte[] audioInfoBytes = audioInfoOut.toByteArray();
-            writeBytes(out, audioInfoBytes);
+            writeMessage(out, 6, audioInfoBytes);
 
             return out.toByteArray();
         } catch (IOException e) {
             throw new RuntimeException("Failed to encode audio request", e);
+        }
+    }
+
+    public static byte[] encodeEmptyAudioRequest(String translationId, String url) {
+        return encodeAudioRequest(
+                translationId,
+                url,
+                "web_api_get_all_generating_urls_data_from_iframe",
+                new byte[0]
+        );
+    }
+
+    public static byte[] encodePartialAudioRequest(
+            String translationId, String url, String fileId,
+            int audioPartsLength, int version, int chunkId, byte[] audioData
+    ) {
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            writeString(out, 1, translationId);
+            writeString(out, 2, url);
+
+            ByteArrayOutputStream partialAudioBufferOut = new ByteArrayOutputStream();
+            writeInt32(partialAudioBufferOut, 1, chunkId);
+            writeBytes(partialAudioBufferOut, audioData);
+
+            ByteArrayOutputStream partialAudioInfoOut = new ByteArrayOutputStream();
+            writeMessage(partialAudioInfoOut, 1, partialAudioBufferOut.toByteArray());
+            writeInt32(partialAudioInfoOut, 2, audioPartsLength);
+            writeString(partialAudioInfoOut, 3, fileId);
+            writeInt32(partialAudioInfoOut, 4, version);
+
+            writeMessage(out, 4, partialAudioInfoOut.toByteArray());
+
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to encode partial audio request", e);
         }
     }
 
@@ -290,6 +340,86 @@ public class VotProtobuf {
         return response;
     }
 
+    /** Upstream SubtitlesObject fields consumed by subtitle selection; other fields are skipped. */
+    public static class SubtitleTrack {
+        public String language = "";
+        public String url = "";
+        public String translatedLanguage = "";
+        public String translatedUrl = "";
+    }
+
+    /** Upstream SubtitlesResponse: waiting = 1, repeated SubtitlesObject subtitles = 2. */
+    public static class SubtitlesResponse {
+        public boolean waiting;
+        public final List<SubtitleTrack> subtitles = new ArrayList<>();
+    }
+
+    /** Decodes tracks with the same binary helpers as translation, checking nested message bounds. */
+    public static SubtitlesResponse decodeSubtitlesResponse(byte[] data) {
+        SubtitlesResponse response = new SubtitlesResponse();
+        int pos = 0;
+        while (pos < data.length) {
+            int[] tag = readVarint(data, pos);
+            pos = tag[1];
+            if (tag[0] == 8) {
+                int[] value = readVarint(data, pos);
+                response.waiting = value[0] != 0;
+                pos = value[1];
+            } else if (tag[0] == 18) {
+                int[] length = readVarint(data, pos);
+                pos = length[1];
+                int end = subtitleFieldEnd(data, pos, length[0]);
+                response.subtitles.add(decodeSubtitleTrack(Arrays.copyOfRange(data, pos, end)));
+                pos = end;
+            } else {
+                pos = skipSubtitleField(data, pos, tag[0]);
+            }
+        }
+        return response;
+    }
+
+    private static SubtitleTrack decodeSubtitleTrack(byte[] data) {
+        SubtitleTrack track = new SubtitleTrack();
+        int pos = 0;
+        while (pos < data.length) {
+            int[] tag = readVarint(data, pos);
+            pos = tag[1];
+            if (tag[0] == 10 || tag[0] == 18 || tag[0] == 34 || tag[0] == 42) {
+                int[] length = readVarint(data, pos);
+                pos = length[1];
+                int end = subtitleFieldEnd(data, pos, length[0]);
+                String value = new String(data, pos, length[0], StandardCharsets.UTF_8);
+                switch (tag[0]) {
+                    case 10 -> track.language = value;
+                    case 18 -> track.url = value;
+                    case 34 -> track.translatedLanguage = value;
+                    case 42 -> track.translatedUrl = value;
+                }
+                pos = end;
+            } else {
+                pos = skipSubtitleField(data, pos, tag[0]);
+            }
+        }
+        return track;
+    }
+
+    private static int subtitleFieldEnd(byte[] data, int pos, int length) {
+        if (length < 0 || length > data.length - pos) {
+            throw new IllegalArgumentException("Truncated subtitle protobuf field");
+        }
+        return pos + length;
+    }
+
+    private static int skipSubtitleField(byte[] data, int pos, int tag) {
+        int wireType = tag & 7;
+        if (tag >>> 3 == 0 || (wireType != 0 && wireType != 1 && wireType != 2 && wireType != 5)) {
+            throw new IllegalArgumentException("Invalid subtitle protobuf tag: " + tag);
+        }
+        int end = skipField(data, pos, wireType);
+        subtitleFieldEnd(data, pos, end - pos);
+        return end;
+    }
+
     // ==================== LOW-LEVEL ENCODING ====================
 
     private static void writeTag(ByteArrayOutputStream out, int fieldNumber, int wireType) {
@@ -303,10 +433,14 @@ public class VotProtobuf {
         out.write(bytes);
     }
 
-    private static void writeBytes(ByteArrayOutputStream out, byte[] value) throws IOException {
-        writeTag(out, 6, WIRETYPE_LENGTH_DELIMITED);
+    private static void writeMessage(ByteArrayOutputStream out, int fieldNumber, byte[] value) throws IOException {
+        writeTag(out, fieldNumber, WIRETYPE_LENGTH_DELIMITED);
         writeRawVarint(out, value.length);
         out.write(value);
+    }
+
+    private static void writeBytes(ByteArrayOutputStream out, byte[] value) throws IOException {
+        writeMessage(out, 2, value);
     }
 
     private static void writeInt32(ByteArrayOutputStream out, int fieldNumber, int value) throws IOException {
@@ -345,16 +479,14 @@ public class VotProtobuf {
     private static int[] readVarint(byte[] data, int pos) {
         int result = 0;
         int shift = 0;
-        while (pos < data.length) {
-            int b = data[pos] & 0xFF;
-            pos++;
-            result |= (b & 0x7F) << shift;
-            if ((b & 0x80) == 0) {
-                break;
-            }
+        while (pos < data.length && shift < 64) {
+            int b = data[pos++] & 0xFF;
+            // Only the low 32 bits are needed by the API's int32/uint32 fields.
+            if (shift < 32) result |= (b & 0x7F) << shift;
+            if ((b & 0x80) == 0) return new int[]{result, pos};
             shift += 7;
         }
-        return new int[]{result, pos};
+        throw new IllegalArgumentException("Truncated or oversized protobuf varint");
     }
 
     /**

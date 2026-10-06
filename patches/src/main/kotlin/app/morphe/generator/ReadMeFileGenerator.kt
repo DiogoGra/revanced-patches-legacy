@@ -38,7 +38,8 @@ internal class ReadMeFileGenerator : PatchesFileGenerator {
         mapOf(
             app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBLE_PACKAGE to "\"COMPATIBLE_PACKAGE_YOUTUBE\""
         ).forEach { (compatiblePackage, replaceString) ->
-            compatiblePackage.let { (packageName, versions) ->
+            compatiblePackage.let { compatibility ->
+                val versions = compatibility.targets.mapNotNull { it.version }
                 val supportedVersion =
                     versions
                         ?.toString()

@@ -24,8 +24,8 @@ import app.morphe.patches.youtube.utils.patch.PatchList.SPOOF_APP_VERSION
 import app.morphe.patches.youtube.utils.playservice.is_19_26_or_greater
 import app.morphe.patches.youtube.utils.playservice.is_19_34_or_greater
 import app.morphe.patches.youtube.utils.playservice.versionCheckPatch
-import app.morphe.patches.youtube.utils.request.buildRequestPatch
-import app.morphe.patches.youtube.utils.request.hookBuildRequest
+import app.morphe.patches.shared.misc.request.buildRequestPatch
+import app.morphe.patches.shared.misc.request.hookBuildRequest
 import app.morphe.patches.youtube.utils.resourceid.settingsFragment
 import app.morphe.patches.youtube.utils.resourceid.settingsFragmentCairo
 import app.morphe.patches.youtube.utils.settings.ResourceUtils.addPreference
@@ -55,7 +55,7 @@ import com.android.tools.smali.dexlib2.iface.reference.TypeReference
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethodParameter
 
-context(BytecodePatchContext)
+context(_: BytecodePatchContext)
 private fun settingsLayoutUpdatesHook() {
     try {
         if (!is_19_34_or_greater) {
@@ -69,7 +69,7 @@ private fun settingsLayoutUpdatesHook() {
             }
         }
 
-        settingsFragmentSyntheticFingerprint.methodOrThrow().apply {
+        settingsFragmentSyntheticFingerprint.method.apply {
             listOf(settingsFragment, settingsFragmentCairo)
                 .filter { it > 0 }
                 .forEach { literal ->
@@ -92,7 +92,7 @@ private fun settingsLayoutUpdatesHook() {
     }
 }
 
-context(BytecodePatchContext)
+context(_: BytecodePatchContext)
 private fun restorePlayerAppVersionHook() {
     try {
         fun app.morphe.patcher.util.proxy.mutableTypes.MutableMethod.getReference(index: Int) =

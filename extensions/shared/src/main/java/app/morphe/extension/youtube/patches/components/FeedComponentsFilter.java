@@ -1,4 +1,17 @@
+/*
+ * Portions of this file are ported from Morphe:
+ * Copyright 2026 Morphe.
+ * https://github.com/MorpheApp/morphe-patches
+ *
+ * Original hard forked code:
+ * https://github.com/ReVanced/revanced-patches/commit/724e6d61b2ecd868c1a9a37d465a688e83a74799
+ *
+ * See the included NOTICE file for GPLv3 Section 7 terms that apply to Morphe contributions.
+ */
+
 package app.morphe.extension.youtube.patches.components;
+
+import static app.morphe.extension.youtube.utils.ExtendedUtils.IS_20_22_OR_GREATER;
 
 import androidx.annotation.Nullable;
 
@@ -16,6 +29,7 @@ import app.morphe.extension.shared.utils.Logger;
 import app.morphe.extension.shared.utils.StringTrieSearch;
 import app.morphe.extension.youtube.settings.Settings;
 import app.morphe.extension.youtube.shared.EngagementPanel;
+import app.morphe.extension.youtube.shared.NavigationBar;
 import app.morphe.extension.youtube.shared.NavigationBar.NavigationButton;
 import app.morphe.extension.youtube.shared.RootView;
 
@@ -44,10 +58,21 @@ public final class FeedComponentsFilter extends Filter {
     private final StringFilterGroupList channelProfileStringFilterGroup = new StringFilterGroupList();
     private final StringFilterGroup carouselShelves;
     private final StringFilterGroup chipBar;
+    private final StringFilterGroup chipsShelf;
     private final StringFilterGroup communityPosts;
     private final StringFilterGroup expandableCard;
+    private final StringFilterGroup getPremiumButton;
+    private final ByteArrayFilterGroup getPremiumButtonBuffer;
+    private final ByteArrayFilterGroup productCardBuffer;
+    private final ByteArrayFilterGroup summaryCardBuffer;
     private final ByteArrayFilterGroup playablesBuffer;
     private final ByteArrayFilterGroup ticketShelfBuffer;
+    private final ByteArrayFilterGroup movieShelfBuffer;
+    private final StringFilterGroup inviteToMessageCard;
+    private final ByteArrayFilterGroup inviteToMessageCardBuffer;
+    private final StringFilterGroup videoLabels;
+    private final ByteArrayFilterGroupList videoLabelsGroupList = new ByteArrayFilterGroupList();
+    private final StringFilterGroup videoRecommendationLabels;
 
     private final Supplier<Stream<String>> knownBrowseId = () -> Stream.of(
             BROWSE_ID_HOME,
@@ -69,40 +94,52 @@ public final class FeedComponentsFilter extends Filter {
 
     private final StringTrieSearch carouselShelfExceptions = new StringTrieSearch();
 
-    private static final ByteArrayFilterGroup mixPlaylists = new ByteArrayFilterGroup(null, "&list=");
     private static final ByteArrayFilterGroup mixPlaylistsBufferExceptions = new ByteArrayFilterGroup(
             null,
             "cell_description_body",
             "channel_profile"
     );
-    private static final StringTrieSearch mixPlaylistsContextExceptions = new StringTrieSearch();
+    private static final ByteArrayFilterGroup mixPlaylistUrlBuffer = new ByteArrayFilterGroup(
+            null,
+            "?list=RD",
+            "&list=RD"
+    );
+
+    public enum ExpandableCardStyle {
+        SHOW_ALL,
+        HIDE_PRODUCT_ONLY,
+        HIDE_SUMMARY_ONLY,
+        HIDE_PRODUCT_AND_SUMMARY,
+        HIDE_ALL
+    }
 
     public FeedComponentsFilter() {
         carouselShelfExceptions.addPattern("library_recent_shelf.");
 
-        mixPlaylistsContextExceptions.addPatterns(
-                "V.ED", // playlist browse id
-                "java.lang.ref.WeakReference"
-        );
-
         // Identifiers.
 
-        final StringFilterGroup chipsShelf = new StringFilterGroup(
+        chipsShelf = new StringFilterGroup(
                 Settings.HIDE_CHIPS_SHELF,
                 "chips_shelf"
         );
 
         communityPosts = new StringFilterGroup(
                 null,
-                "post_base_wrapper",
                 "images_post_responsive",
                 "images_post_root",
                 "images_post_slim",
+                "options_post_responsive_root",
+                "options_post_root",
+                "poll_post_responsive_root",
                 "poll_post_root",
+                "post_base_wrapper",
                 "post_responsive_root",
                 "post_shelf_slim",
+                "shared_post_responsive_root",
                 "shared_post_root",
+                "text_post_responsive_root",
                 "text_post_root",
+                "videos_post_responsive_root",
                 "videos_post_root"
         );
 
@@ -121,15 +158,28 @@ public final class FeedComponentsFilter extends Filter {
                 "tvfilm_attachment"
         );
 
-        final StringFilterGroup tasteBuilder = new StringFilterGroup(
-                Settings.HIDE_SURVEYS,
-                "selectable_item.",
-                "cell_button."
-        );
-
         final StringFilterGroup ticketShelfIdentifier = new StringFilterGroup(
                 Settings.HIDE_TICKET_SHELF,
                 "ticket_"
+        );
+
+        // The 'Invite others to message' card of the Messages section shown at the top of
+        // the Notifications tab, wrapped in a linear layout and identified by a unique,
+        // language independent buffer string.
+        //
+        // The 'Messages' shelf header above the card is deliberately not hidden: every
+        // section header of the Notifications tab ('Messages', 'Notifications', 'Today',
+        // 'This week', 'Older') uses the exact same identifier and an otherwise byte
+        // identical buffer, and the title is localized by the server without an app string
+        // resource, so there is no language independent way to match it.
+        inviteToMessageCard = new StringFilterGroup(
+                Settings.HIDE_INVITE_TO_MESSAGE_CARD,
+                "linear_layout.e"
+        );
+
+        inviteToMessageCardBuffer = new ByteArrayFilterGroup(
+                null,
+                "connections_inbox_zero_state"
         );
 
         addIdentifierCallbacks(
@@ -138,8 +188,8 @@ public final class FeedComponentsFilter extends Filter {
                 expandableShelf,
                 feedSearchBar,
                 movieShelfIdentifier,
-                tasteBuilder,
-                ticketShelfIdentifier
+                ticketShelfIdentifier,
+                inviteToMessageCard
         );
 
         // Paths.
@@ -152,10 +202,28 @@ public final class FeedComponentsFilter extends Filter {
 
         channelProfile = new StringFilterGroup(
                 null,
-                "channel_profile.",
-                "page_header." // new layout
+                "channel_profile.e",
+                "page_header.e" // new layout
         );
 
+        channelProfileStringFilterGroup.addAll(
+                new StringFilterGroup(
+                        Settings.HIDE_COMMUNITY_BUTTON,
+                        "community_button"
+                ),
+                new StringFilterGroup(
+                        Settings.HIDE_STORE_BUTTON,
+                        "header_store_button"
+                ),
+                new StringFilterGroup(
+                        Settings.HIDE_JOIN_BUTTON_IN_CHANNEL_PAGE,
+                        "sponsor_button"
+                ),
+                new StringFilterGroup(
+                        Settings.HIDE_SUBSCRIBE_BUTTON_IN_CHANNEL_PAGE,
+                        "subscribe_button"
+                )
+        );
         channelProfileBufferFilterGroup.addAll(
                 new ByteArrayFilterGroup(
                         Settings.HIDE_COMMUNITY_BUTTON,
@@ -171,11 +239,9 @@ public final class FeedComponentsFilter extends Filter {
                 )
         );
 
-        channelProfileStringFilterGroup.addAll(
-                new StringFilterGroup(
-                        Settings.HIDE_SUBSCRIBE_BUTTON_IN_CHANNEL_PAGE,
-                        "subscribe_button"
-                )
+        final StringFilterGroup compactChannelCommunityButton = new StringFilterGroup(
+                Settings.HIDE_COMMUNITY_BUTTON,
+                "compact_channel$FEcommunity"
         );
 
         final StringFilterGroup membersShelf = new StringFilterGroup(
@@ -186,20 +252,42 @@ public final class FeedComponentsFilter extends Filter {
         final StringFilterGroup linksPreview = new StringFilterGroup(
                 Settings.HIDE_LINKS_PREVIEW,
                 "channel_header_links",
-                "attribution." // new layout
+                "attribution.e" // new layout
         );
 
         expandableCard = new StringFilterGroup(
-                Settings.HIDE_EXPANDABLE_CARD,
+                null,
                 INLINE_EXPANSION_PATH,
                 "inline_expander",
                 "expandable_metadata."
         );
 
+        getPremiumButton = new StringFilterGroup(
+                Settings.HIDE_GET_PREMIUM_BUTTON,
+                "|button.e"
+        );
+
+        getPremiumButtonBuffer = new ByteArrayFilterGroup(
+                null,
+                "SPunlimited"
+        );
+
+        productCardBuffer = new ByteArrayFilterGroup(
+                null,
+                "gstatic.com/shopping"
+        );
+
+        summaryCardBuffer = new ByteArrayFilterGroup(
+                null,
+                "PAfeedback_genai"
+        );
+
         final StringFilterGroup surveys = new StringFilterGroup(
                 Settings.HIDE_SURVEYS,
+                "in_feed_survey",
+                "slimline_survey",
                 "feed_nudge",
-                "_survey"
+                "in_short_survey"
         );
 
         // It appears YouTube no longer uses this keyword.
@@ -254,9 +342,26 @@ public final class FeedComponentsFilter extends Filter {
                 "subscriptions_section_header"
         );
 
-        final var videoRecommendationLabels = new StringFilterGroup(
+        videoRecommendationLabels = new StringFilterGroup(
                 Settings.HIDE_VIDEO_RECOMMENDATION_LABELS,
                 "endorsement_header_footer."
+        );
+
+        videoLabels = new StringFilterGroup(
+                null,
+                "|badge.e"
+        );
+        videoLabelsGroupList.addAll(
+                new ByteArrayFilterGroup(
+                        Settings.HIDE_AUTO_DUBBED_LABEL,
+                        "yt_outline_person_radar",
+                        "yt_outline_experimental_person_waves"
+                ),
+                new ByteArrayFilterGroup(
+                        Settings.HIDE_HYPED_LABEL,
+                        "yt_fill_star_shooting",
+                        "yt_fill_experimental_hype"
+                )
         );
 
         carouselShelves = new StringFilterGroup(
@@ -288,13 +393,20 @@ public final class FeedComponentsFilter extends Filter {
                 "ticket_item"
         );
 
+        movieShelfBuffer = new ByteArrayFilterGroup(
+                Settings.HIDE_MOVIE_SHELF,
+                "movie_card.e"
+        );
+
         addPathCallbacks(
                 albumCard,
                 carouselShelves,
                 channelProfile,
                 chipBar,
+                compactChannelCommunityButton,
                 expandableCard,
                 forYouShelf,
+                getPremiumButton,
                 imageShelf,
                 latestPosts,
                 linksPreview,
@@ -307,6 +419,7 @@ public final class FeedComponentsFilter extends Filter {
                 subscriptionsSectionHeader,
                 surveys,
                 ticketShelfPath,
+                videoLabels,
                 videoRecommendationLabels
         );
     }
@@ -316,15 +429,22 @@ public final class FeedComponentsFilter extends Filter {
      * <p>
      * Called from a different place then the other filters.
      */
-    public static boolean filterMixPlaylists(final Object conversionContext, @Nullable final byte[] bytes) {
+    public static boolean filterMixPlaylists(@Nullable final byte[] bytes) {
         try {
             if (!Settings.HIDE_MIX_PLAYLISTS.get()) {
                 return false;
             }
-            return bytes != null
-                    && mixPlaylists.check(bytes).isFiltered()
-                    && !mixPlaylistsBufferExceptions.check(bytes).isFiltered()
-                    && !mixPlaylistsContextExceptions.matches(conversionContext.toString());
+
+            if (bytes == null) {
+                Logger.printDebug(() -> "buffer is null");
+                return false;
+            }
+
+            if (!mixPlaylistsBufferExceptions.check(bytes).isFiltered()
+                    && mixPlaylistUrlBuffer.check(bytes).isFiltered()) {
+                Logger.printDebug(() -> "Filtered mix playlist");
+                return true;
+            }
         } catch (Exception ex) {
             Logger.printException(() -> "filterMixPlaylists failure", ex);
         }
@@ -408,19 +528,30 @@ public final class FeedComponentsFilter extends Filter {
     }
 
     @Override
-    public boolean isFiltered(String path, String identifier, String allValue, byte[] buffer,
+    public boolean isFiltered(String path, String accessibility, String allValue, byte[] buffer,
                               StringFilterGroup matchedGroup, FilterContentType contentType, int contentIndex) {
         if (matchedGroup == channelProfile) {
             if (contentIndex != 0) {
                 return false;
             }
-            return channelProfileBufferFilterGroup.check(buffer).isFiltered()
-                    || channelProfileStringFilterGroup.check(path).isFiltered();
+            if (IS_20_22_OR_GREATER) {
+                return channelProfileStringFilterGroup.check(accessibility).isFiltered();
+            } else {
+                return channelProfileBufferFilterGroup.check(buffer).isFiltered()
+                        || channelProfileStringFilterGroup.check(accessibility).isFiltered()
+                        || channelProfileStringFilterGroup.check(path).isFiltered();
+            }
+        }
 
-        } else if (matchedGroup == chipBar) {
+        if (matchedGroup == chipBar) {
             return hideCategoryBar(contentIndex);
+        }
 
-        } else if (matchedGroup == communityPosts) {
+        if (matchedGroup == chipsShelf) {
+            return NavigationButton.getSelectedNavigationButton() != NavigationButton.LIBRARY;
+        }
+
+        if (matchedGroup == communityPosts) {
             // Channel Pages (Deep navigation logic)
             // When back button is visible, we are likely on a channel page.
             // Exclude Player and Search to ensure we don't accidentally hide Related/Search items with this setting.
@@ -443,17 +574,58 @@ public final class FeedComponentsFilter extends Filter {
 
             // If we are not in Channel or Subscriptions, we assume Home or Related Videos.
             return Settings.HIDE_COMMUNITY_POSTS_HOME_RELATED_VIDEOS.get();
+        }
 
-        } else if (matchedGroup == expandableCard) {
-            return path.startsWith(FEED_VIDEO_PATH);
+        if (matchedGroup == expandableCard) {
+            if (!path.startsWith(FEED_VIDEO_PATH)) {
+                return false;
+            }
 
-        } else if (matchedGroup == carouselShelves) {
+            ExpandableCardStyle style = Settings.HIDE_EXPANDABLE_CARD.get();
+            return switch (style) {
+                case HIDE_ALL -> true;
+                case HIDE_PRODUCT_ONLY -> productCardBuffer.check(buffer).isFiltered();
+                case HIDE_SUMMARY_ONLY -> summaryCardBuffer.check(buffer).isFiltered();
+                case HIDE_PRODUCT_AND_SUMMARY ->
+                        productCardBuffer.check(buffer).isFiltered() || summaryCardBuffer.check(buffer).isFiltered();
+                default -> false;
+            };
+        }
+
+        if (matchedGroup == getPremiumButton) {
+            return path.startsWith("page_header.e") && getPremiumButtonBuffer.check(buffer).isFiltered();
+        }
+
+        if (matchedGroup == carouselShelves) {
             if (contentIndex == 0) {
                 return playablesBuffer.check(buffer).isFiltered()
                         || ticketShelfBuffer.check(buffer).isFiltered()
+                        || movieShelfBuffer.check(buffer).isFiltered()
                         || (!carouselShelfExceptions.matches(path) && hideShelves());
             }
             return false;
+        }
+
+        if (matchedGroup == inviteToMessageCard) {
+            // The identifier is generic and used all over the app.
+            if (contentIndex != 0) {
+                return false;
+            }
+
+            if (!inviteToMessageCardBuffer.check(buffer).isFiltered()) {
+                return false;
+            }
+
+            // Check the navigation button last and only after all buffer checks pass.
+            return NavigationButton.getSelectedNavigationButton() == NavigationButton.NOTIFICATIONS;
+        }
+
+        if (matchedGroup == videoLabels) {
+            return videoLabelsGroupList.check(buffer).isFiltered();
+        }
+
+        if (matchedGroup == videoRecommendationLabels) {
+            return NavigationBar.isSearchBarActive();
         }
 
         return true;

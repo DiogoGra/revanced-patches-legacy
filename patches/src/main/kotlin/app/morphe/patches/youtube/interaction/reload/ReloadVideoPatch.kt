@@ -9,15 +9,16 @@ package app.morphe.patches.youtube.interaction.reload
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
-import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.patch.resourcePatch
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod.Companion.toMutable
-import app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBLE_PACKAGE
+import app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBILITY_YOUTUBE_RELOAD_VIDEO
 import app.morphe.patches.youtube.utils.mainactivity.mainActivityFingerprint
+import app.morphe.patches.youtube.utils.patch.PatchList.RELOAD_VIDEO
 import app.morphe.patches.youtube.utils.playercontrols.addTopControl
 import app.morphe.patches.youtube.utils.playercontrols.injectControl
 import app.morphe.patches.youtube.utils.playercontrols.playerControlsPatch
+import app.morphe.patches.youtube.utils.playservice.is_20_00_or_greater
 import app.morphe.patches.youtube.utils.settings.ResourceUtils.addPreference
 import app.morphe.patches.youtube.utils.settings.settingsPatch
 import app.morphe.patches.youtube.video.information.videoInformationPatch
@@ -41,21 +42,25 @@ private val reloadVideoResourcePatch = resourcePatch {
     )
 
     execute {
-        addPreference(
-            arrayOf(
-                "PREFERENCE_SCREEN: PLAYER",
-                "PREFERENCE_SCREENS: PLAYER_BUTTONS",
-                "SETTINGS: RELOAD_VIDEO",
+        run {
+            addPreference(
+                arrayOf(
+                    "PREFERENCE_SCREEN: PLAYER",
+                    "PREFERENCE_SCREENS: PLAYER_BUTTONS",
+                    "SETTINGS: RELOAD_VIDEO",
+                ),
+                RELOAD_VIDEO
             )
-        )
 
-        copyResources(
-            "youtube/reloadbutton/default",
-            ResourceGroup(
-                resourceDirectoryName = "drawable",
-                "morphe_reload_video.xml",
-            ),
-        )
+            copyResources(
+                "youtube/reloadbutton/default",
+                ResourceGroup(
+                    resourceDirectoryName = "drawable",
+                    "morphe_reload_video.xml",
+                    "morphe_reload_video_bold.xml",
+                ),
+            )
+        }
     }
 }
 
@@ -66,12 +71,12 @@ private const val EXTENSION_CLASS_DESCRIPTOR =
     "Lapp/morphe/extension/youtube/patches/ReloadVideoPatch;"
 
 private const val EXTENSION_PLAYER_INTERFACE =
-    "Lapp/morphe/extension/youtube/patches/ReloadVideoPatch\$PlayerInterface;"
+    $$"Lapp/morphe/extension/youtube/patches/ReloadVideoPatch$PlayerInterface;"
 
 @Suppress("unused")
 val reloadVideoPatch = bytecodePatch(
-    name = "Reload video",
-    description = "Adds an option to display a button in the video player to reload the current video.",
+    name = RELOAD_VIDEO.title,
+    description = RELOAD_VIDEO.summary,
 ) {
     dependsOn(
         reloadVideoResourcePatch,
@@ -79,19 +84,29 @@ val reloadVideoPatch = bytecodePatch(
         videoInformationPatch,
     )
 
-    compatibleWith(COMPATIBLE_PACKAGE)
+    compatibleWith(COMPATIBILITY_YOUTUBE_RELOAD_VIDEO)
 
     execute {
-        injectControl(EXTENSION_BUTTON_DESCRIPTOR)
+        if (!is_20_00_or_greater) {
+            // Legacy clients reload through the intent fallback without the modern dismiss-player hook.
+            injectControl(EXTENSION_BUTTON_DESCRIPTOR)
+            mainActivityFingerprint.methodOrThrow().addInstruction(
+                0,
+                "invoke-static/range { p0 .. p0 }, $EXTENSION_CLASS_DESCRIPTOR->setMainActivity(Landroid/app/Activity;)V"
+            )
+            return@execute
+        }
+        if (is_20_00_or_greater) {
+            injectControl(EXTENSION_BUTTON_DESCRIPTOR)
 
-        // Main activity is used to launch downloader intent.
-        mainActivityFingerprint.methodOrThrow().addInstruction(
-            0,
-            "invoke-static/range { p0 .. p0 }, $EXTENSION_CLASS_DESCRIPTOR->setMainActivity(Landroid/app/Activity;)V"
-        )
+            // Main activity is used to launch downloader intent.
+            mainActivityFingerprint.methodOrThrow().addInstruction(
+                0,
+                "invoke-static/range { p0 .. p0 }, $EXTENSION_CLASS_DESCRIPTOR->setMainActivity(Landroid/app/Activity;)V"
+            )
 
-        MiniAppOpenYtContentCommandEndpointFingerprint.instructionMatchesOrNull?.let { instructionMatches ->
-            val dismissPlayerInnerMethod = instructionMatches[2]
+            val dismissPlayerInnerMethod = MiniAppOpenYtContentCommandEndpointFingerprint
+                .instructionMatches[2]
                 .getInstruction<ReferenceInstruction>()
                 .getReference<MethodReference>()!!
 
@@ -113,9 +128,9 @@ val reloadVideoPatch = bytecodePatch(
                         addInstructions(
                             0,
                             """
-                                invoke-virtual { p0 }, $dismissPlayerInnerMethod
-                                return-void
-                            """
+                            invoke-virtual { p0 }, $dismissPlayerInnerMethod
+                            return-void
+                        """
                         )
                     }
                 )
@@ -131,14 +146,21 @@ val reloadVideoPatch = bytecodePatch(
                     )
                 }
             }
+
+            BackButtonFinishActivityOnNewVideoIntentFingerprint.method.addInstruction(
+                0,
+                "return-void"
+            )
         }
     }
 
     finalize {
-        addTopControl(
-            "youtube/reloadbutton/shared",
-            "@+id/morphe_reload_video_button",
-            "@+id/morphe_reload_video_button"
-        )
+        run {
+            addTopControl(
+                "youtube/reloadbutton/shared",
+                "@+id/morphe_reload_video_button",
+                "@+id/morphe_reload_video_button"
+            )
+        }
     }
 }

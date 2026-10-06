@@ -3,6 +3,8 @@ package app.morphe.extension.music.settings.preference;
 import static app.morphe.extension.music.settings.Settings.APP_INFO;
 import static app.morphe.extension.music.settings.Settings.BYPASS_IMAGE_REGION_RESTRICTIONS_DOMAIN;
 import static app.morphe.extension.music.settings.Settings.CHANGE_START_PAGE;
+import static app.morphe.extension.music.settings.Settings.CROSSFADE_CURVE;
+import static app.morphe.extension.music.settings.Settings.CROSSFADE_DURATION;
 import static app.morphe.extension.music.settings.Settings.CUSTOM_FILTER_STRINGS;
 import static app.morphe.extension.music.settings.Settings.CUSTOM_PLAYBACK_SPEEDS;
 import static app.morphe.extension.music.settings.Settings.CUSTOM_PLAYER_BACKGROUND_COLOR_PRIMARY;
@@ -12,13 +14,12 @@ import static app.morphe.extension.music.settings.Settings.ENABLE_CUSTOM_NAVIGAT
 import static app.morphe.extension.music.settings.Settings.EXTERNAL_DOWNLOADER_PACKAGE_NAME;
 import static app.morphe.extension.music.settings.Settings.HIDE_ACCOUNT_MENU_FILTER_STRINGS;
 import static app.morphe.extension.music.settings.Settings.OPEN_DEFAULT_APP_SETTINGS;
-import static app.morphe.extension.music.settings.Settings.OPTIONAL_SPONSOR_BLOCK_SETTINGS_PREFIX;
 import static app.morphe.extension.music.settings.Settings.REPLACE_NAVIGATION_BUTTON_ABOUT;
 import static app.morphe.extension.music.settings.Settings.RETURN_YOUTUBE_USERNAME_ABOUT;
 import static app.morphe.extension.music.settings.Settings.SB_API_URL;
 import static app.morphe.extension.music.settings.Settings.SETTINGS_IMPORT_EXPORT;
-import static app.morphe.extension.music.settings.Settings.SPOOF_APP_VERSION_TARGET;
 import static app.morphe.extension.music.settings.Settings.SPOOF_APP_VERSION_FOR_LYRICS_TARGET;
+import static app.morphe.extension.music.settings.Settings.SPOOF_APP_VERSION_TARGET;
 import static app.morphe.extension.music.settings.Settings.SPOOF_VIDEO_STREAMS_CLIENT_TYPE;
 import static app.morphe.extension.music.settings.Settings.SPOOF_VIDEO_STREAMS_SIGN_IN_ANDROID_VR_ABOUT;
 import static app.morphe.extension.music.settings.Settings.WATCH_HISTORY_TYPE;
@@ -82,7 +83,6 @@ public class ReVancedPreferenceFragment extends PreferenceFragment {
 
     private static String existingSettings;
 
-
     public ReVancedPreferenceFragment() {
     }
 
@@ -134,12 +134,23 @@ public class ReVancedPreferenceFragment extends PreferenceFragment {
             if (dataString == null || dataString.isEmpty())
                 return;
 
-            if (dataString.startsWith(OPTIONAL_SPONSOR_BLOCK_SETTINGS_PREFIX)) {
-                SponsorBlockCategoryPreference.showDialog(baseActivity, dataString.replaceAll(OPTIONAL_SPONSOR_BLOCK_SETTINGS_PREFIX, ""));
-                return;
-            } else if (dataString.equals(OPEN_DEFAULT_APP_SETTINGS)) {
-                openDefaultAppSetting();
-                return;
+            handlePreferenceIntent(baseActivity, mActivity, dataString, this);
+        } catch (Exception ex) {
+            Logger.printException(() -> "onCreate failure", ex);
+        }
+    }
+
+    public static boolean handlePreferenceIntent(@Nullable Activity baseActivity,
+                                                 @Nullable Activity mActivity,
+                                                 @Nullable String dataString,
+                                                 @Nullable ReVancedPreferenceFragment fragment) {
+        try {
+            if (baseActivity == null || mActivity == null || dataString == null || dataString.isEmpty())
+                return false;
+
+            if (dataString.equals(OPEN_DEFAULT_APP_SETTINGS)) {
+                openDefaultAppSetting(baseActivity);
+                return true;
             }
 
             final Setting<?> settings = getSettingFromPath(dataString);
@@ -154,43 +165,58 @@ public class ReVancedPreferenceFragment extends PreferenceFragment {
                         || settings.equals(RETURN_YOUTUBE_USERNAME_YOUTUBE_DATA_API_V3_DEVELOPER_KEY)
                         || settings.equals(SPOOF_VIDEO_STREAMS_PLAYER_JS_HASH_VALUE)) {
                     ResettableEditTextPreference.showDialog(mActivity, stringSetting);
+                    return true;
                 } else if (settings.equals(EXTERNAL_DOWNLOADER_PACKAGE_NAME)) {
                     ExternalDownloaderPreference.showDialog(mActivity);
+                    return true;
                 } else if (settings.equals(SB_API_URL)) {
                     SponsorBlockApiUrlPreference.showDialog(mActivity);
+                    return true;
                 } else if (settings.equals(SPOOF_APP_VERSION_TARGET)
                         || settings.equals(SPOOF_APP_VERSION_FOR_LYRICS_TARGET)) {
                     ResettableListPreference.showDialog(mActivity, stringSetting, 0);
+                    return true;
                 } else {
                     Logger.printDebug(() -> "Failed to find the right value: " + dataString);
                 }
             } else if (settings instanceof BooleanSetting) {
                 if (settings.equals(APP_INFO)) {
                     AppInfoDialogBuilder.showDialog(mActivity);
+                    return true;
                 } else if (settings.equals(SETTINGS_IMPORT_EXPORT)) {
-                    importExportListDialogBuilder();
+                    if (fragment != null) {
+                        fragment.importExportListDialogBuilder();
+                        return true;
+                    }
                 } else if (settings.equals(RETURN_YOUTUBE_USERNAME_ABOUT)) {
                     YouTubeDataAPIDialogBuilder.showDialog(mActivity);
+                    return true;
                 } else if (settings.equals(REPLACE_NAVIGATION_BUTTON_ABOUT)) {
                     ResettableListPreference.showDialog(mActivity, CHANGE_START_PAGE, 0);
+                    return true;
                 } else if (settings.equals(SPOOF_VIDEO_STREAMS_SIGN_IN_ANDROID_VR_ABOUT)) {
                     SpoofStreamingDataSignInDialogBuilder.showVRDialog(mActivity);
+                    return true;
                 } else {
                     Logger.printDebug(() -> "Failed to find the right value: " + dataString);
                 }
             } else if (settings instanceof EnumSetting<?> enumSetting) {
                 if (settings.equals(CHANGE_START_PAGE)
+                        || settings.equals(CROSSFADE_CURVE)
+                        || settings.equals(CROSSFADE_DURATION)
                         || settings.equals(DISABLE_MUSIC_VIDEO_IN_ALBUM_REDIRECT_TYPE)
                         || settings.equals(RETURN_YOUTUBE_USERNAME_DISPLAY_FORMAT)
                         || settings.equals(SPOOF_VIDEO_STREAMS_CLIENT_TYPE)
                         || settings.equals(WATCH_HISTORY_TYPE)
                 ) {
                     ResettableListPreference.showDialog(mActivity, enumSetting, 0);
+                    return true;
                 }
             }
         } catch (Exception ex) {
-            Logger.printException(() -> "onCreate failure", ex);
+            Logger.printException(() -> "handlePreferenceIntent failure", ex);
         }
+        return false;
     }
 
     @Override
@@ -198,9 +224,8 @@ public class ReVancedPreferenceFragment extends PreferenceFragment {
         super.onDestroy();
     }
 
-    private void openDefaultAppSetting() {
+    private static void openDefaultAppSetting(Context context) {
         try {
-            Context context = getActivity();
             final Uri uri = Uri.parse("package:" + context.getPackageName());
             final Intent intent = isSDKAbove(31)
                     ? new Intent(android.provider.Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS, uri)

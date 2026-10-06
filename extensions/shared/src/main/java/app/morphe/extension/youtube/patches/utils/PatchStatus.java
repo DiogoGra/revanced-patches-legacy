@@ -1,29 +1,13 @@
 package app.morphe.extension.youtube.patches.utils;
 
-import app.morphe.extension.shared.utils.Utils;
-
 public class PatchStatus {
-    public static final String SPOOF_APP_VERSION_TARGET_DEFAULT_VALUE = "19.01.34";
+    public static final String SPOOF_APP_VERSION_TARGET_DEFAULT_VALUE = "20.05.46";
 
     public static boolean ImageSearchButton() {
         // Replace this with true if the 'Hide image search buttons' patch succeeds
         return false;
     }
 
-    public static boolean AddMissingResources() {
-        // Replace this with true if the 'Add missing resources' patch succeeds
-        return false;
-    }
-
-    // Modified by a patch. Do not touch.
-    public static boolean OldSeekbarThumbnailsDefaultBoolean() {
-        return false;
-    }
-
-    public static boolean OldSplashAnimation() {
-        // Replace this with true if the 'Restore old splash animation (Custom branding icon)' succeeds
-        return false;
-    }
 
     public static boolean PlayerButtons() {
         // Replace this with true if the 'Hide player buttons' patch succeeds
@@ -35,14 +19,13 @@ public class PatchStatus {
         return false;
     }
 
-    public static boolean SplashAnimation() {
-        // If 'Restore old splash animation' is included and device is running Android 12+,
-        // YouTube TV splash animations will be disabled by default.
-        return OldSplashAnimation() && Utils.isSDKAbove(31);
-    }
-
     public static boolean SponsorBlock() {
         // Replace this with true if the 'SponsorBlock' patch succeeds
+        return false;
+    }
+
+    public static boolean HideAds() {
+        // Replace this with true if the 'Hide ads' patch succeeds
         return false;
     }
 
@@ -56,8 +39,18 @@ public class PatchStatus {
         return false;
     }
 
+    public static boolean Gemini() {
+        // Replace this with true if the 'Gemini' patch succeeds
+        return false;
+    }
+
     public static boolean VoiceOverTranslation() {
         // Replace this with true if the 'Voice Over Translation' patch succeeds
+        return false;
+    }
+
+    public static boolean GoogleVoiceOverTranslation() {
+        // Replace this with true if the 'Google Voice Over Translation' patch succeeds
         return false;
     }
 
@@ -66,11 +59,21 @@ public class PatchStatus {
         return false;
     }
 
+    public static boolean AddMissingResources() {
+        return false;
+    }
+
+    // Modified by a patch. Do not touch.
+    public static boolean SpoofAppVersionDefaultBoolean() {
+        return false;
+    }
+
     public static String SpoofAppVersionDefaultString() {
         return SPOOF_APP_VERSION_TARGET_DEFAULT_VALUE;
     }
 
     // Modified by a patch. Do not touch.
+    @SuppressWarnings("unused")
     public static String TargetActivityClass() {
         return "";
     }
