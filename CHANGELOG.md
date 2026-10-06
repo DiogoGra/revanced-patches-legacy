@@ -1,7 +1,5 @@
 # [1.3.0](https://github.com/DiogoGra/revanced-patches-legacy/releases/tag/1.3.0) (2026-10-06)
 
-Changes accumulated from 1.2.1-dev.2 through 1.3.0. YouTube 19.16.39 remains the supported target.
-
 ### Features
 
 - Align with RVX [v4.3.1-dev.1](https://github.com/anddea/revanced-patches/releases/tag/v4.3.1-dev.1). (https://github.com/DiogoGra/revanced-patches-legacy/commit/75bb5c92bb4c6d1e457fa8824e56e48de5255f26)
