@@ -1,5 +1,5 @@
 {
-  "version": "1.2.0",
+  "version": "v1.3.0",
   "patches": [
     {
       "name": "Add missing resources",
@@ -49,10 +49,26 @@
       "options": []
     },
     {
+      "name": "App refresh rate",
+      "description": "Adds an option to change the app refresh rate.",
+      "use": true,
+      "dependencies": [
+        "BytecodePatch",
+        "ResourcePatch"
+      ],
+      "compatiblePackages": {
+        "com.google.android.youtube": [
+          "19.16.39"
+        ]
+      },
+      "options": []
+    },
+    {
       "name": "Bypass URL redirects",
       "description": "Adds an option to bypass URL redirects and open the original URL directly.",
       "use": true,
       "dependencies": [
+        "BytecodePatch",
         "ResourcePatch"
       ],
       "compatiblePackages": {
@@ -85,7 +101,9 @@
         "ResourcePatch",
         "BytecodePatch",
         "BytecodePatch",
-        "BytecodePatch"
+        "BytecodePatch",
+        "BytecodePatch",
+        "ResourcePatch"
       ],
       "compatiblePackages": {
         "com.google.android.youtube": [
@@ -109,6 +127,7 @@
       "description": "Adds an option to use text toggles instead of switch toggles within the additional settings menu.",
       "use": true,
       "dependencies": [
+        "ResourcePatch",
         "ResourcePatch"
       ],
       "compatiblePackages": {
@@ -161,7 +180,7 @@
           "title": "Version code",
           "description": "The version code to use. (1 ~ 2147483647)",
           "required": true,
-          "type": "kotlin.String",
+          "type": "java.lang.String (Kotlin reflection is not available)",
           "default": "2147483647",
           "values": {
             "Lowest": "1",
@@ -169,6 +188,20 @@
           }
         }
       ]
+    },
+    {
+      "name": "Custom DPI",
+      "description": "Forces a higher display density for this app only, so the whole UI scales up without changing system density.",
+      "use": true,
+      "dependencies": [
+        "ResourcePatch"
+      ],
+      "compatiblePackages": {
+        "com.google.android.youtube": [
+          "19.16.39"
+        ]
+      },
+      "options": []
     },
     {
       "name": "Custom Shorts action buttons",
@@ -189,7 +222,7 @@
           "title": "Shorts icon style ",
           "description": "The style of the icons for the action buttons in the Shorts player.",
           "required": true,
-          "type": "kotlin.String",
+          "type": "java.lang.String (Kotlin reflection is not available)",
           "default": "cairo",
           "values": {
             "Cairo": "cairo",
@@ -203,12 +236,13 @@
       ]
     },
     {
-      "name": "Custom branding icon for YouTube",
-      "description": "Changes the YouTube app icon to the icon specified in patch options.",
-      "use": false,
+      "name": "Custom branding for YouTube",
+      "description": "Adds in-app app-name, launcher-icon, header, splash, and settings-icon selection.",
+      "use": true,
       "dependencies": [
         "ResourcePatch",
-        "ResourcePatch"
+        "BytecodePatch",
+        "BytecodePatch"
       ],
       "compatiblePackages": {
         "com.google.android.youtube": [
@@ -217,13 +251,23 @@
       },
       "options": [
         {
+          "key": "customName",
+          "title": "App name",
+          "description": "Custom app name.",
+          "required": false,
+          "type": "java.lang.String (Kotlin reflection is not available)",
+          "default": null,
+          "values": null
+        },
+        {
           "key": "appIcon",
           "title": "App icon",
-          "description": "The icon to apply to the app.\n\nIf a path to a folder is provided, the folder must contain the following folders:\n\n- mipmap-xxxhdpi\n- mipmap-xxhdpi\n- mipmap-xhdpi\n- mipmap-hdpi\n- mipmap-mdpi\n\nEach of these folders must contain the following files:\n\n- adaptiveproduct_youtube_background_color_108.png\n- adaptiveproduct_youtube_foreground_color_108.png\n- ic_launcher.png\n- ic_launcher_round.png",
+          "description": "Icon used by Android and selected by default in the app. Choose Custom to use the Custom icon folder, or enter a resource folder path. All icons remain available in the app settings.",
           "required": true,
-          "type": "kotlin.String",
-          "default": "xisr_winter",
+          "type": "java.lang.String (Kotlin reflection is not available)",
+          "default": "original",
           "values": {
+            "Stock": "original",
             "AFN Blue": "afn_blue",
             "AFN Red": "afn_red",
             "MMT": "mmt",
@@ -245,55 +289,18 @@
             "Xisr Winter": "xisr_winter",
             "Xisr Yellow": "xisr_yellow",
             "YouTube": "youtube",
-            "YouTube Black": "youtube_black"
+            "YouTube Black": "youtube_black",
+            "Custom": "custom"
           }
         },
         {
-          "key": "changeSplashIcon",
-          "title": "Change splash icons",
-          "description": "Apply the custom branding icon to the splash screen. Supports from YouTube 19.05.36 to YouTube 19.16.39.",
-          "required": true,
-          "type": "kotlin.Boolean",
-          "default": true,
+          "key": "customIcon",
+          "title": "Custom icon",
+          "description": "Folder containing custom branding resources. The folder is scanned recursively, so Android\nresource folders can be placed at the root or grouped under folders such as 'launcher',\n'header', 'splash', 'monochrome', and 'settings'.\n\nEvery resource is optional. Icon resources accept XML or PNG files. \nA launcher icon is also used for the RVX settings entry when no dedicated settings icon \nis present. A complete 'drawable/avd_anim.xml' splash takes priority over static splash images.",
+          "required": false,
+          "type": "java.lang.String (Kotlin reflection is not available)",
+          "default": null,
           "values": null
-        },
-        {
-          "key": "restoreOldSplashAnimation",
-          "title": "Restore old splash animation",
-          "description": "Restore the old style splash animation.\n\nThis patch option is only supported on Android 12+, as splash animation was added to Android 12.\n\nIncluding this patch option on Android 8.0 - 11 may cause your app to crash.",
-          "required": true,
-          "type": "kotlin.Boolean",
-          "default": false,
-          "values": null
-        }
-      ]
-    },
-    {
-      "name": "Custom branding name for YouTube",
-      "description": "Changes the YouTube app name to the name specified in patch options.",
-      "use": false,
-      "dependencies": [
-        "ResourcePatch"
-      ],
-      "compatiblePackages": {
-        "com.google.android.youtube": [
-          "19.16.39"
-        ]
-      },
-      "options": [
-        {
-          "key": "appName",
-          "title": "App name",
-          "description": "The name of the app.",
-          "required": true,
-          "type": "kotlin.String",
-          "default": "YouTube RVX",
-          "values": {
-            "ReVanced Extended": "ReVanced Extended",
-            "RVX": "YouTube RVX",
-            "YouTube RVX": "YouTube RVX",
-            "YouTube": "YouTube"
-          }
         }
       ]
     },
@@ -315,35 +322,9 @@
           "title": "Double-tap to seek values",
           "description": "A list of custom Double-tap to seek lengths to be added, separated by commas.",
           "required": true,
-          "type": "kotlin.String",
+          "type": "java.lang.String (Kotlin reflection is not available)",
           "default": "3, 5, 10, 15, 20, 30, 60, 120, 180",
           "values": null
-        }
-      ]
-    },
-    {
-      "name": "Custom header for YouTube",
-      "description": "Applies a custom header in the top left corner within the app.",
-      "use": false,
-      "dependencies": [
-        "ResourcePatch"
-      ],
-      "compatiblePackages": {
-        "com.google.android.youtube": [
-          "19.16.39"
-        ]
-      },
-      "options": [
-        {
-          "key": "customHeader",
-          "title": "Custom header",
-          "description": "The header to apply to the app.\n\nPatch option 'Custom branding icon' applies only when:\n\n1. Patch 'Custom branding icon for YouTube' is included.\n2. Patch option for 'Custom branding icon for YouTube' is selected from the preset.\n\nIf a path to a folder is provided, the folder must contain one or more of the following folders, depending on the DPI of the device:\n\n- drawable-xxxhdpi\n- drawable-xxhdpi\n- drawable-xhdpi\n- drawable-hdpi\n- drawable-mdpi\n\nEach of the folders must contain all of the following files:\n\n[Generic header]\n\n- yt_wordmark_header_light.png\n- yt_wordmark_header_dark.png\n\nThe image dimensions must be as follows:\n\n- drawable-xxxhdpi: 488px x 192px\n- drawable-xxhdpi: 366px x 144px\n- drawable-xhdpi: 244px x 96px\n- drawable-hdpi: 184px x 72px\n- drawable-mdpi: 122px x 48px\n\n[Premium header]\n\n- yt_premium_wordmark_header_light.png\n- yt_premium_wordmark_header_dark.png\n\nThe image dimensions must be as follows:\n- drawable-xxxhdpi: 516px x 192px\n- drawable-xxhdpi: 387px x 144px\n- drawable-xhdpi: 258px x 96px\n- drawable-hdpi: 194px x 72px\n- drawable-mdpi: 129px x 48px",
-          "required": true,
-          "type": "kotlin.String",
-          "default": "custom_branding_icon",
-          "values": {
-            "Custom branding icon": "custom_branding_icon"
-          }
         }
       ]
     },
@@ -393,26 +374,12 @@
       "options": []
     },
     {
-      "name": "Disable forced auto audio tracks",
-      "description": "Adds an option to disable audio tracks from being automatically enabled.",
-      "use": true,
-      "dependencies": [
-        "ResourcePatch",
-        "ResourcePatch"
-      ],
-      "compatiblePackages": {
-        "com.google.android.youtube": [
-          "19.16.39"
-        ]
-      },
-      "options": []
-    },
-    {
       "name": "Disable forced auto captions",
       "description": "Adds an option to disable captions from being automatically enabled.",
       "use": true,
       "dependencies": [
         "BytecodePatch",
+        "ResourcePatch",
         "ResourcePatch"
       ],
       "compatiblePackages": {
@@ -429,6 +396,35 @@
       "dependencies": [
         "ResourcePatch",
         "BytecodePatch"
+      ],
+      "compatiblePackages": {
+        "com.google.android.youtube": [
+          "19.16.39"
+        ]
+      },
+      "options": []
+    },
+    {
+      "name": "Disable layout updates",
+      "description": "Adds an option to disable layout updates by server.",
+      "use": true,
+      "dependencies": [
+        "ResourcePatch"
+      ],
+      "compatiblePackages": {
+        "com.google.android.youtube": [
+          "19.16.39"
+        ]
+      },
+      "options": []
+    },
+    {
+      "name": "Disable playlist autoplay",
+      "description": "Adds an option to stop a playlist from automatically advancing to the next video.",
+      "use": true,
+      "dependencies": [
+        "BytecodePatch",
+        "ResourcePatch"
       ],
       "compatiblePackages": {
         "com.google.android.youtube": [
@@ -456,6 +452,23 @@
       "description": "Adds an option to disable the Shorts player from resuming on app startup when Shorts were last being watched.",
       "use": true,
       "dependencies": [
+        "BytecodePatch",
+        "ResourcePatch",
+        "ResourcePatch"
+      ],
+      "compatiblePackages": {
+        "com.google.android.youtube": [
+          "19.16.39"
+        ]
+      },
+      "options": []
+    },
+    {
+      "name": "Disable scrolling speed limit",
+      "description": "Adds an option to remove limits of how fast the home and subscription feed can be scrolled.",
+      "use": true,
+      "dependencies": [
+        "BytecodePatch",
         "ResourcePatch",
         "ResourcePatch"
       ],
@@ -471,22 +484,6 @@
       "description": "Adds an option to disable the popup asking to sign into a TV on the same local network.",
       "use": true,
       "dependencies": [
-        "ResourcePatch",
-        "ResourcePatch"
-      ],
-      "compatiblePackages": {
-        "com.google.android.youtube": [
-          "19.16.39"
-        ]
-      },
-      "options": []
-    },
-    {
-      "name": "Disable splash animation",
-      "description": "Adds an option to disable the splash animation on app startup.",
-      "use": true,
-      "dependencies": [
-        "ResourcePatch",
         "ResourcePatch",
         "ResourcePatch"
       ],
@@ -528,8 +525,24 @@
       "options": []
     },
     {
-      "name": "Force player buttons background",
-      "description": "Changes the dark background surrounding the video player controls at compile time.",
+      "name": "Force original audio",
+      "description": "Adds an option to disable audio tracks from being automatically enabled.",
+      "use": true,
+      "dependencies": [
+        "ResourcePatch",
+        "ResourcePatch",
+        "ResourcePatch"
+      ],
+      "compatiblePackages": {
+        "com.google.android.youtube": [
+          "19.16.39"
+        ]
+      },
+      "options": []
+    },
+    {
+      "name": "Freeze layout updates",
+      "description": "Adds an option to freeze YouTube layout update configuration.",
       "use": true,
       "dependencies": [
         "ResourcePatch"
@@ -539,30 +552,7 @@
           "19.16.39"
         ]
       },
-      "options": [
-        {
-          "key": "BackgroundColor",
-          "title": "Background color",
-          "description": "Specify a background color for player buttons using a hex color code. The first two symbols of the hex code represent the alpha channel, which is used to change the opacity.",
-          "required": false,
-          "type": "kotlin.String",
-          "default": "?ytOverlayBackgroundMediumLight",
-          "values": {
-            "Default": "?ytOverlayBackgroundMediumLight",
-            "Transparent": "@android:color/transparent",
-            "Opacity10": "#1a000000",
-            "Opacity20": "#33000000",
-            "Opacity30": "#4d000000",
-            "Opacity40": "#66000000",
-            "Opacity50": "#80000000",
-            "Opacity60": "#99000000",
-            "Opacity70": "#b3000000",
-            "Opacity80": "#cc000000",
-            "Opacity90": "#e6000000",
-            "Opacity100": "#ff000000"
-          }
-        }
-      ]
+      "options": []
     },
     {
       "name": "Fullscreen components",
@@ -570,6 +560,7 @@
       "use": true,
       "dependencies": [
         "ResourcePatch",
+        "BytecodePatch",
         "BytecodePatch",
         "BytecodePatch",
         "BytecodePatch",
@@ -587,11 +578,46 @@
       "options": []
     },
     {
+      "name": "Fullscreen video scale",
+      "description": "Adds options to stretch or zoom videos to fill the screen in fullscreen mode.",
+      "use": true,
+      "dependencies": [
+        "BytecodePatch",
+        "BytecodePatch",
+        "BytecodePatch",
+        "ResourcePatch"
+      ],
+      "compatiblePackages": {
+        "com.google.android.youtube": [
+          "19.16.39"
+        ]
+      },
+      "options": []
+    },
+    {
+      "name": "Gemini",
+      "description": "Adds options to use Gemini for video summaries, transcription, and settings search.",
+      "use": true,
+      "dependencies": [
+        "BytecodePatch",
+        "ResourcePatch",
+        "ResourcePatch",
+        "BytecodePatch"
+      ],
+      "compatiblePackages": {
+        "com.google.android.youtube": [
+          "19.16.39"
+        ]
+      },
+      "options": []
+    },
+    {
       "name": "GmsCore support",
       "description": "Allows the app to work without root by using a different package name when patched using a GmsCore instead of Google Play Services.",
       "use": true,
       "dependencies": [
         "ResourcePatch",
+        "BytecodePatch",
         "BytecodePatch"
       ],
       "compatiblePackages": {
@@ -605,7 +631,7 @@
           "title": "GmsCore vendor group ID",
           "description": "The vendor's group ID for GmsCore. Do not change this option, if you do not know what you are doing.",
           "required": true,
-          "type": "kotlin.String",
+          "type": "java.lang.String (Kotlin reflection is not available)",
           "default": "app.revanced",
           "values": {
             "ReVanced MicroG": "app.revanced",
@@ -618,7 +644,7 @@
           "title": "Check GmsCore",
           "description": "Check if GmsCore is installed on the device and has battery optimizations disabled when the app starts. \n\nIf GmsCore is not installed the app will not work, so disabling this is not recommended.",
           "required": true,
-          "type": "kotlin.Boolean",
+          "type": "boolean (Kotlin reflection is not available)",
           "default": true,
           "values": null
         },
@@ -627,7 +653,7 @@
           "title": "Disable Core Services",
           "description": "To reproduce the playback issue, several core services, including PoToken, are disabled.\n\nDo not enable this option unless you are testing at a low level.",
           "required": false,
-          "type": "kotlin.Boolean",
+          "type": "boolean (Kotlin reflection is not available)",
           "default": false,
           "values": null
         },
@@ -636,7 +662,7 @@
           "title": "Package name of YouTube",
           "description": "The name of the package to use in GmsCore support.",
           "required": true,
-          "type": "kotlin.String",
+          "type": "java.lang.String (Kotlin reflection is not available)",
           "default": "anddea.youtube",
           "values": {
             "Clone": "bill.youtube",
@@ -648,7 +674,7 @@
           "title": "Package name of YouTube Music",
           "description": "The name of the package to use in GmsCore support.",
           "required": true,
-          "type": "kotlin.String",
+          "type": "java.lang.String (Kotlin reflection is not available)",
           "default": "anddea.youtube.music",
           "values": {
             "Clone": "bill.youtube.music",
@@ -660,7 +686,7 @@
           "title": "Patch all manifest components",
           "description": "Patch all permissions, intents and content provider authorities supported by GmsCore.",
           "required": true,
-          "type": "kotlin.Boolean",
+          "type": "boolean (Kotlin reflection is not available)",
           "default": false,
           "values": null
         }
@@ -683,7 +709,7 @@
     {
       "name": "Hide accessibility controls dialog",
       "description": "Removes, at compile time, accessibility controls dialog 'Turn on accessibility controls for the video player?'.",
-      "use": true,
+      "use": false,
       "dependencies": [
         "ResourcePatch"
       ],
@@ -700,6 +726,7 @@
       "use": true,
       "dependencies": [
         "ResourcePatch",
+        "BytecodePatch",
         "BytecodePatch",
         "BytecodePatch",
         "BytecodePatch",
@@ -743,6 +770,7 @@
       "use": true,
       "dependencies": [
         "ResourcePatch",
+        "BytecodePatch",
         "BytecodePatch",
         "BytecodePatch",
         "BytecodePatch",
@@ -803,7 +831,6 @@
         "BytecodePatch",
         "ResourcePatch",
         "BytecodePatch",
-        "BytecodePatch",
         "ResourcePatch"
       ],
       "compatiblePackages": {
@@ -815,10 +842,9 @@
     },
     {
       "name": "Hide player buttons",
-      "description": "Adds options to hide buttons in the video player.",
+      "description": "Adds options to hide buttons in the video player, and to hide or change the opacity of the player control buttons background.",
       "use": true,
       "dependencies": [
-        "BytecodePatch",
         "BytecodePatch",
         "ResourcePatch",
         "ResourcePatch",
@@ -837,6 +863,8 @@
       "use": true,
       "dependencies": [
         "ResourcePatch",
+        "BytecodePatch",
+        "BytecodePatch",
         "BytecodePatch",
         "BytecodePatch",
         "BytecodePatch",
@@ -870,7 +898,7 @@
           "title": "Hide Explore",
           "description": "Hide Explore from shortcuts.",
           "required": true,
-          "type": "kotlin.Boolean",
+          "type": "boolean (Kotlin reflection is not available)",
           "default": false,
           "values": null
         },
@@ -879,7 +907,7 @@
           "title": "Hide Subscriptions",
           "description": "Hide Subscriptions from shortcuts.",
           "required": true,
-          "type": "kotlin.Boolean",
+          "type": "boolean (Kotlin reflection is not available)",
           "default": false,
           "values": null
         },
@@ -888,7 +916,7 @@
           "title": "Hide Search",
           "description": "Hide Search from shortcuts.",
           "required": true,
-          "type": "kotlin.Boolean",
+          "type": "boolean (Kotlin reflection is not available)",
           "default": false,
           "values": null
         },
@@ -897,48 +925,16 @@
           "title": "Hide Shorts",
           "description": "Hide Shorts from shortcuts.",
           "required": true,
-          "type": "kotlin.Boolean",
+          "type": "boolean (Kotlin reflection is not available)",
           "default": true,
           "values": null
         }
       ]
     },
     {
-      "name": "Hook YouTube Music actions",
-      "description": "Adds support for opening music in RVX Music using the in-app YouTube Music button.",
-      "use": true,
-      "dependencies": [
-        "ResourcePatch"
-      ],
-      "compatiblePackages": {
-        "com.google.android.youtube": [
-          "19.16.39"
-        ]
-      },
-      "options": []
-    },
-    {
       "name": "Hook download actions",
       "description": "Adds support to download videos with an external downloader app using the in-app download button.",
       "use": true,
-      "dependencies": [
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch",
-        "ResourcePatch",
-        "ResourcePatch"
-      ],
-      "compatiblePackages": {
-        "com.google.android.youtube": [
-          "19.16.39"
-        ]
-      },
-      "options": []
-    },
-    {
-      "name": "MaterialYou",
-      "description": "Applies the MaterialYou theme for Android 12+ devices.",
-      "use": false,
       "dependencies": [
         "ResourcePatch",
         "ResourcePatch"
@@ -976,7 +972,26 @@
         "ResourcePatch",
         "BytecodePatch",
         "BytecodePatch",
+        "BytecodePatch",
         "ResourcePatch"
+      ],
+      "compatiblePackages": {
+        "com.google.android.youtube": [
+          "19.16.39"
+        ]
+      },
+      "options": []
+    },
+    {
+      "name": "Open channel of live avatar",
+      "description": "Adds an option to prevent a channel's current live video from opening when tapping its avatar.",
+      "use": true,
+      "dependencies": [
+        "BytecodePatch",
+        "ResourcePatch",
+        "ResourcePatch",
+        "BytecodePatch",
+        "BytecodePatch"
       ],
       "compatiblePackages": {
         "com.google.android.youtube": [
@@ -1012,6 +1027,7 @@
         "BytecodePatch",
         "BytecodePatch",
         "BytecodePatch",
+        "BytecodePatch",
         "ResourcePatch",
         "ResourcePatch"
       ],
@@ -1026,7 +1042,7 @@
           "title": "Icon type",
           "description": "The icon type.",
           "required": true,
-          "type": "kotlin.String",
+          "type": "java.lang.String (Kotlin reflection is not available)",
           "default": "rounded",
           "values": {
             "Bold": "bold",
@@ -1039,7 +1055,7 @@
           "title": "Bottom margin",
           "description": "The bottom margin for the overlay buttons and timestamp.",
           "required": true,
-          "type": "kotlin.String",
+          "type": "java.lang.String (Kotlin reflection is not available)",
           "default": "2.5dip",
           "values": {
             "Default": "2.5dip",
@@ -1052,7 +1068,7 @@
           "title": "Wider between-buttons space",
           "description": "Prevent adjacent button presses by increasing the horizontal spacing between buttons.",
           "required": true,
-          "type": "kotlin.Boolean",
+          "type": "boolean (Kotlin reflection is not available)",
           "default": false,
           "values": null
         },
@@ -1061,11 +1077,26 @@
           "title": "Change top buttons",
           "description": "Change the icons at the top of the player.",
           "required": true,
-          "type": "kotlin.Boolean",
+          "type": "boolean (Kotlin reflection is not available)",
           "default": true,
           "values": null
         }
       ]
+    },
+    {
+      "name": "Override YouTube Music buttons",
+      "description": "Overrides YouTube Music buttons to open RVX Music or any compatible third-party client.",
+      "use": true,
+      "dependencies": [
+        "ResourcePatch",
+        "ResourcePatch"
+      ],
+      "compatiblePackages": {
+        "com.google.android.youtube": [
+          "19.16.39"
+        ]
+      },
+      "options": []
     },
     {
       "name": "Override certificate pinning",
@@ -1073,6 +1104,21 @@
       "use": false,
       "dependencies": [],
       "compatiblePackages": null,
+      "options": []
+    },
+    {
+      "name": "Playback in feeds",
+      "description": "Adds the 'Playback in feeds' setting of YouTube to the Morphe settings, where it is always available even if YouTube hides it.",
+      "use": true,
+      "dependencies": [
+        "BytecodePatch",
+        "ResourcePatch"
+      ],
+      "compatiblePackages": {
+        "com.google.android.youtube": [
+          "19.16.39"
+        ]
+      },
       "options": []
     },
     {
@@ -1089,9 +1135,26 @@
         "BytecodePatch",
         "BytecodePatch",
         "BytecodePatch",
+        "BytecodePatch",
         "ResourcePatch",
         "BytecodePatch",
         "BytecodePatch",
+        "ResourcePatch"
+      ],
+      "compatiblePackages": {
+        "com.google.android.youtube": [
+          "19.16.39"
+        ]
+      },
+      "options": []
+    },
+    {
+      "name": "PoToken provider",
+      "description": "Adds option to get PoToken using the built-in PoToken provider.",
+      "use": true,
+      "dependencies": [
+        "BytecodePatch",
+        "ResourcePatch",
         "ResourcePatch"
       ],
       "compatiblePackages": {
@@ -1118,11 +1181,29 @@
       "options": []
     },
     {
+      "name": "Remember livestream playback position",
+      "description": "Adds an option to remember the playback position of ongoing livestreams and resume from there when reopening a livestream.",
+      "use": true,
+      "dependencies": [
+        "BytecodePatch",
+        "ResourcePatch",
+        "BytecodePatch"
+      ],
+      "compatiblePackages": {
+        "com.google.android.youtube": [
+          "19.16.39"
+        ]
+      },
+      "options": []
+    },
+    {
       "name": "Remove background playback restrictions",
       "description": "Removes restrictions on background playback, including for music and kids videos.",
       "use": true,
       "dependencies": [
         "BytecodePatch",
+        "BytecodePatch",
+        "ResourcePatch",
         "ResourcePatch",
         "ResourcePatch"
       ],
@@ -1158,6 +1239,7 @@
         "BytecodePatch",
         "BytecodePatch",
         "BytecodePatch",
+        "BytecodePatch",
         "BytecodePatch"
       ],
       "compatiblePackages": {
@@ -1187,8 +1269,28 @@
       "description": "Adds an option to sanitize sharing links by removing tracking query parameters.",
       "use": true,
       "dependencies": [
-        "BytecodePatch",
         "ResourcePatch"
+      ],
+      "compatiblePackages": {
+        "com.google.android.youtube": [
+          "19.16.39"
+        ]
+      },
+      "options": []
+    },
+    {
+      "name": "Save to Watch later",
+      "description": "Adds options to save videos to Watch later from the video player or feed flyout menu.",
+      "use": true,
+      "dependencies": [
+        "ResourcePatch",
+        "BytecodePatch",
+        "BytecodePatch",
+        "BytecodePatch",
+        "BytecodePatch",
+        "BytecodePatch",
+        "BytecodePatch",
+        "BytecodePatch"
       ],
       "compatiblePackages": {
         "com.google.android.youtube": [
@@ -1208,7 +1310,9 @@
         "ResourcePatch",
         "ResourcePatch",
         "BytecodePatch",
-        "ResourcePatch"
+        "ResourcePatch",
+        "ResourcePatch",
+        "BytecodePatch"
       ],
       "compatiblePackages": {
         "com.google.android.youtube": [
@@ -1241,6 +1345,8 @@
         "BytecodePatch",
         "ResourcePatch",
         "BytecodePatch",
+        "BytecodePatch",
+        "BytecodePatch",
         "BytecodePatch"
       ],
       "compatiblePackages": {
@@ -1250,43 +1356,11 @@
       },
       "options": [
         {
-          "key": "insertPosition",
-          "title": "Insert position",
-          "description": "The settings menu name that the RVX settings menu should be above.",
-          "required": true,
-          "type": "kotlin.String",
-          "default": "@string/parent_tools_key",
-          "values": {
-            "Parent settings": "@string/parent_tools_key",
-            "General": "@string/general_key",
-            "Account": "@string/account_switcher_key",
-            "Data saving": "@string/data_saving_settings_key",
-            "Autoplay": "@string/auto_play_key",
-            "Video quality preferences": "@string/video_quality_settings_key",
-            "Background": "@string/offline_key",
-            "Watch on TV": "@string/pair_with_tv_key",
-            "Manage all history": "@string/history_key",
-            "Your data in YouTube": "@string/your_data_key",
-            "Privacy": "@string/privacy_key",
-            "History & privacy": "@string/privacy_key",
-            "Try experimental new features": "@string/premium_early_access_browse_page_key",
-            "Purchases and memberships": "@string/subscription_product_setting_key",
-            "Billing & payments": "@string/billing_and_payment_key",
-            "Billing and payments": "@string/billing_and_payment_key",
-            "Notifications": "@string/notification_key",
-            "Connected apps": "@string/connected_accounts_browse_page_key",
-            "Live chat": "@string/live_chat_key",
-            "Captions": "@string/captions_key",
-            "Accessibility": "@string/accessibility_settings_key",
-            "About": "@string/about_key"
-          }
-        },
-        {
           "key": "rvxSettingsLabel",
           "title": "RVX settings label",
           "description": "The name of the RVX settings menu.",
           "required": true,
-          "type": "kotlin.String",
+          "type": "java.lang.String (Kotlin reflection is not available)",
           "default": "RVX",
           "values": {
             "ReVanced Extended": "ReVanced Extended",
@@ -1302,6 +1376,7 @@
       "dependencies": [
         "ResourcePatch",
         "ResourcePatch",
+        "BytecodePatch",
         "BytecodePatch",
         "BytecodePatch",
         "BytecodePatch",
@@ -1346,7 +1421,7 @@
           "title": "Corner radius",
           "description": "Specify a corner radius for the snack bar.",
           "required": true,
-          "type": "kotlin.String",
+          "type": "java.lang.String (Kotlin reflection is not available)",
           "default": "8.0dip",
           "values": null
         },
@@ -1355,7 +1430,7 @@
           "title": "Apply corner radius to playlist bottom bar",
           "description": "Whether to apply the same corner radius to the bottom bar of the playlist as the snack bar.",
           "required": true,
-          "type": "kotlin.Boolean",
+          "type": "boolean (Kotlin reflection is not available)",
           "default": false,
           "values": null
         },
@@ -1364,11 +1439,17 @@
           "title": "Dark theme background color",
           "description": "Specify a background color for the snack bar. You can specify hex color (#AARRGGBB) or color resource reference.",
           "required": true,
-          "type": "kotlin.String",
+          "type": "java.lang.String (Kotlin reflection is not available)",
           "default": "@color/yt_black3",
           "values": {
             "YouTube Dark": "@color/yt_black3",
             "Amoled Black": "@android:color/black",
+            "Material You (Neutral)": "@android:color/system_neutral1_900",
+            "Material You - Primary": "@android:color/system_accent1_800",
+            "Material You - Secondary": "@android:color/system_accent2_800",
+            "Material You - Tertiary": "@android:color/system_accent3_800",
+            "Modern YouTube": "#FF0F0F0F",
+            "Classic (Old YouTube)": "#FF212121",
             "Catppuccin (Mocha)": "#FF181825",
             "Dark Pink": "#FF290025",
             "Dark Blue": "#FF001029",
@@ -1383,11 +1464,15 @@
           "title": "Light theme background color",
           "description": "Specify a background color for the snack bar. You can specify hex color (#AARRGGBB) or color resource reference.",
           "required": true,
-          "type": "kotlin.String",
+          "type": "java.lang.String (Kotlin reflection is not available)",
           "default": "@color/yt_white3",
           "values": {
             "YouTube Light": "@color/yt_white3",
             "White": "@android:color/white",
+            "Material You (Neutral)": "@android:color/system_neutral1_100",
+            "Material You - Primary": "@android:color/system_accent1_200",
+            "Material You - Secondary": "@android:color/system_accent2_200",
+            "Material You - Tertiary": "@android:color/system_accent3_200",
             "Catppuccin (Latte)": "#FFE6E9EF",
             "Light Pink": "#FFFCCFF3",
             "Light Blue": "#FFD1E0FF",
@@ -1401,8 +1486,8 @@
           "key": "strokeColor",
           "title": "Stroke color",
           "description": "Specify a stroke color for the snack bar. You can specify hex color.",
-          "required": true,
-          "type": "kotlin.String",
+          "required": false,
+          "type": "java.lang.String (Kotlin reflection is not available)",
           "default": "",
           "values": {
             "None": "",
@@ -1432,7 +1517,7 @@
           "title": "New segment alignment",
           "description": "Align new segment window.",
           "required": true,
-          "type": "kotlin.String",
+          "type": "java.lang.String (Kotlin reflection is not available)",
           "default": "right",
           "values": {
             "Right": "right",
@@ -1482,7 +1567,7 @@
           "title": "Package name",
           "description": "Package name.",
           "required": false,
-          "type": "kotlin.String",
+          "type": "java.lang.String (Kotlin reflection is not available)",
           "default": "",
           "values": null
         },
@@ -1491,11 +1576,32 @@
           "title": "Certificate data",
           "description": "Base64-encoded string of the certificate.",
           "required": false,
-          "type": "kotlin.String",
+          "type": "java.lang.String (Kotlin reflection is not available)",
           "default": "",
           "values": null
         }
       ]
+    },
+    {
+      "name": "Spoof video streams",
+      "description": "Adds options to spoof the client video streams to fix playback.",
+      "use": true,
+      "dependencies": [
+        "ResourcePatch",
+        "ResourcePatch",
+        "BytecodePatch",
+        "BytecodePatch",
+        "BytecodePatch",
+        "BytecodePatch",
+        "ResourcePatch",
+        "BytecodePatch"
+      ],
+      "compatiblePackages": {
+        "com.google.android.youtube": [
+          "19.16.39"
+        ]
+      },
+      "options": []
     },
     {
       "name": "Spoof watch history",
@@ -1533,11 +1639,16 @@
     },
     {
       "name": "Theme",
-      "description": "Changes the app's themes to the values specified in patch options.",
-      "use": false,
+      "description": "Adds options to change the app's themes and splash screen style.",
+      "use": true,
       "dependencies": [
         "ResourcePatch",
-        "ResourcePatch"
+        "ResourcePatch",
+        "ResourcePatch",
+        "BytecodePatch",
+        "BytecodePatch",
+        "BytecodePatch",
+        "BytecodePatch"
       ],
       "compatiblePackages": {
         "com.google.android.youtube": [
@@ -1546,16 +1657,22 @@
       },
       "options": [
         {
-          "key": "darkThemeBackgroundColor",
-          "title": "Dark theme background color",
-          "description": "Can be a hex color (#AARRGGBB) or a color resource reference.",
+          "key": "darkThemeColor",
+          "title": "Custom dark theme color",
+          "description": "Color for the in-app Patch option and its system splash theme. Can be a hex color (#AARRGGBB) or a color resource reference.",
           "required": true,
-          "type": "kotlin.String",
-          "default": "@android:color/black",
+          "type": "java.lang.String (Kotlin reflection is not available)",
+          "default": "#FF000000",
           "values": {
-            "Amoled Black": "@android:color/black",
-            "Classic (Old YouTube)": "#FF212121",
-            "Catppuccin (Mocha)": "#FF181825",
+            "Stock": "#FF0F0F0F",
+            "Amoled Black": "#FF000000",
+            "Material You Neutral": "@android:color/system_neutral1_900",
+            "Material You Primary": "@android:color/system_accent1_800",
+            "Material You Secondary": "@android:color/system_accent2_800",
+            "Material You Tertiary": "@android:color/system_accent3_800",
+            "Modern Youtube": "#FF0F0F0F",
+            "Classic Youtube": "#FF212121",
+            "Catppuccin Mocha": "#FF181825",
             "Dark Pink": "#FF290025",
             "Dark Blue": "#FF001029",
             "Dark Green": "#FF002905",
@@ -1565,15 +1682,19 @@
           }
         },
         {
-          "key": "lightThemeBackgroundColor",
-          "title": "Light theme background color",
-          "description": "Can be a hex color (#AARRGGBB) or a color resource reference.",
+          "key": "lightThemeColor",
+          "title": "Custom light theme color",
+          "description": "Color for the in-app Patch option and its system splash theme. Can be a hex color (#AARRGGBB) or a color resource reference.",
           "required": true,
-          "type": "kotlin.String",
-          "default": "@android:color/white",
+          "type": "java.lang.String (Kotlin reflection is not available)",
+          "default": "#FFFFFFFF",
           "values": {
-            "White": "@android:color/white",
-            "Catppuccin (Latte)": "#FFE6E9EF",
+            "White": "#FFFFFFFF",
+            "Material You Neutral": "@android:color/system_neutral1_100",
+            "Material You Primary": "@android:color/system_accent1_200",
+            "Material You Secondary": "@android:color/system_accent2_200",
+            "Material You Tertiary": "@android:color/system_accent3_200",
+            "Catppuccin Latte": "#FFE6E9EF",
             "Light Pink": "#FFFCCFF3",
             "Light Blue": "#FFD1E0FF",
             "Light Green": "#FFCCFFCC",
@@ -1584,6 +1705,15 @@
             "Pale Green": "#FFD1FFCC",
             "Pale Yellow": "#FFFFE9AA"
           }
+        },
+        {
+          "key": "precompileLegacyThemes",
+          "title": "Precompile legacy themes (Android 8–10)",
+          "description": "Precompile all 768 theme permutations into resources for Android 8–10 devices. Required for theme presets on Android 8–10. On Android 11+, leave this disabled to significantly speed up patching and reduce APK size.",
+          "required": false,
+          "type": "boolean (Kotlin reflection is not available)",
+          "default": false,
+          "values": null
         }
       ]
     },
@@ -1592,6 +1722,7 @@
       "description": "Adds options to hide or change components located on the toolbar, such as the search bar, header, and toolbar buttons.",
       "use": true,
       "dependencies": [
+        "BytecodePatch",
         "BytecodePatch",
         "ResourcePatch",
         "ResourcePatch",
@@ -1623,8 +1754,8 @@
           "key": "customTranslations",
           "title": "Custom translations",
           "description": "The path to the 'strings.xml' file.\nPlease note that applying the 'strings.xml' file will overwrite all existing translations.",
-          "required": true,
-          "type": "kotlin.String",
+          "required": false,
+          "type": "java.lang.String (Kotlin reflection is not available)",
           "default": "",
           "values": null
         },
@@ -1633,8 +1764,8 @@
           "title": "Translations to add",
           "description": "A list of translations to be added for the RVX settings, separated by commas.",
           "required": true,
-          "type": "kotlin.String",
-          "default": "ar, az-rAZ, be-rBY, bg-rBG, cs-rCZ, da-rDK, de-rDE, el-rGR, en-rGB, en-rUS, es-rES, es-rUS, fa-rIR, fil-rPH, fr-rFR, ga-rIE, hu-rHU, id-rID, in, it-rIT, iw-rIL, ja-rJP, ko-rKR, lo-rLA, my-rMM, nl-rNL, pa-rIN, pl-rPL, pt-rBR, ru-rRU, sk-rSK, sv-rSE, ta-rIN, tr-rTR, uk-rUA, ur-rPK, uz-rUZ, vi-rVN, zh-rCN, zh-rTW",
+          "type": "java.lang.String (Kotlin reflection is not available)",
+          "default": "ar, az-rAZ, bn, cs-rCZ, de-rDE, el-rGR, es-rES, fa-rIR, fr-rFR, hu-rHU, in, it-rIT, iw-rIL, ja-rJP, ko-rKR, pl-rPL, pt-rBR, ru-rRU, th-rTH, tr-rTR, uk-rUA, vi-rVN, zh-rCN, zh-rTW",
           "values": null
         },
         {
@@ -1642,7 +1773,7 @@
           "title": "String resources to keep",
           "description": "A list of string resources to be kept, separated by commas.\nString resources not in the list will be removed from the app.\n\nDefault string resource, English, is not removed.",
           "required": true,
-          "type": "kotlin.String",
+          "type": "java.lang.String (Kotlin reflection is not available)",
           "default": "af, am, ar, ar-rXB, as, az, b+es+419, b+sr+Latn, be, bg, bn, bs, ca, cs, da, de, el, en-rAU, en-rCA, en-rGB, en-rIN, en-rXA, en-rXC, es, es-rUS, et, eu, fa, fi, fil-rPH, fr, fr-rCA, gl, gu, hi, hr, hu, hy, id, in, is, it, iw, ja, ka, kk, km, kn, ko, ky, lo, lt, lv, mk, ml, mn, mr, ms, my, nb, ne, nl, no, or, pa, pl, pt, pt-rBR, pt-rPT, ro, ru, si, sk, sl, sq, sr, sv, sw, ta, te, th, tl, tr, uk, ur, uz, vi, zh, zh-rCN, zh-rHK, zh-rTW, zu",
           "values": null
         }
@@ -1667,6 +1798,8 @@
         "BytecodePatch",
         "BytecodePatch",
         "BytecodePatch",
+        "BytecodePatch",
+        "ResourcePatch",
         "BytecodePatch",
         "ResourcePatch"
       ],
@@ -1695,10 +1828,9 @@
           "title": "RVX settings menu icon",
           "description": "The icon for the RVX settings menu.",
           "required": true,
-          "type": "kotlin.String",
+          "type": "java.lang.String (Kotlin reflection is not available)",
           "default": "extension",
           "values": {
-            "Custom branding icon": "custom_branding_icon",
             "Extension": "extension",
             "Gear": "gear",
             "YT alt": "yt_alt",
@@ -1713,7 +1845,7 @@
           "title": "Apply to all settings menu",
           "description": "Whether to apply Visual preferences icons to all settings menus.\n\nIf true: icons are applied to the parent PreferenceScreen of YouTube settings, the parent PreferenceScreen of RVX settings and the RVX sub-settings (if supported).\n\nIf false: icons are applied only to the parent PreferenceScreen of YouTube settings and RVX settings.",
           "required": true,
-          "type": "kotlin.Boolean",
+          "type": "boolean (Kotlin reflection is not available)",
           "default": true,
           "values": null
         }
@@ -1728,6 +1860,25 @@
         "BytecodePatch",
         "BytecodePatch",
         "ResourcePatch"
+      ],
+      "compatiblePackages": {
+        "com.google.android.youtube": [
+          "19.16.39"
+        ]
+      },
+      "options": []
+    },
+    {
+      "name": "Wide search bar",
+      "description": "Adds a wide search bar to the top of the home and subscription feed.",
+      "use": true,
+      "dependencies": [
+        "BytecodePatch",
+        "ResourcePatch",
+        "ResourcePatch",
+        "ResourcePatch",
+        "ResourcePatch",
+        "BytecodePatch"
       ],
       "compatiblePackages": {
         "com.google.android.youtube": [
