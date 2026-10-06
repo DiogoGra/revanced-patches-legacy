@@ -29,6 +29,7 @@ import app.morphe.patches.youtube.misc.chapters.getTimelineMarkersArrayFingerpri
 import app.morphe.patches.youtube.misc.chapters.TimelineMarkerFingerprint
 import app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBILITY_YOUTUBE
 import app.morphe.patches.youtube.utils.extension.Constants.PLAYER_CLASS_DESCRIPTOR
+import app.morphe.patches.youtube.utils.extension.Constants.PATCH_STATUS_CLASS_DESCRIPTOR
 import app.morphe.patches.youtube.utils.extension.Constants.PLAYER_PATH
 import app.morphe.patches.youtube.utils.flyoutmenu.flyoutMenuHookPatch
 import app.morphe.patches.youtube.utils.mainactivity.mainActivityResolvePatch
@@ -44,7 +45,6 @@ import app.morphe.patches.youtube.utils.playservice.is_20_37_or_greater
 import app.morphe.patches.youtube.utils.playservice.is_21_04_or_greater
 import app.morphe.patches.youtube.utils.playservice.is_21_02_or_greater
 import app.morphe.patches.youtube.utils.playservice.is_21_12_or_greater
-import app.morphe.patches.youtube.utils.playservice.is_21_21_or_greater
 import app.morphe.patches.youtube.utils.playservice.versionCheckPatch
 import app.morphe.patches.youtube.utils.resourceid.inlineTimeBarColorizedBarPlayedColorDark
 import app.morphe.patches.youtube.utils.resourceid.inlineTimeBarPlayedNotHighlightedColor
@@ -64,6 +64,8 @@ import app.morphe.util.findFreeRegister
 import app.morphe.util.findMethodsOrThrow
 import app.morphe.util.fingerprint.matchOrThrow
 import app.morphe.util.fingerprint.methodOrThrow
+import app.morphe.util.fingerprint.injectLiteralInstructionBooleanCall
+import app.morphe.util.updatePatchStatus
 import app.morphe.util.getReference
 import app.morphe.util.getWalkerMethod
 import app.morphe.util.indexOfFirstInstructionOrThrow
@@ -656,78 +658,14 @@ val seekbarComponentsPatch = bytecodePatch(
 
         // endregion
 
-        // region patch for seekbar thumbnail preview
+        // region patch for native legacy seekbar thumbnails
 
-        val updatePointMethodRef = SeekbarUpdatePointFingerprint.instructionMatches[1]
-            .getInstruction<ReferenceInstruction>().getReference<MethodReference>()!!
-
-        // Keep both native seek paths on the same callback so they share thumbnail state.
-        SeekbarHandlerOnTouchFingerprint.method.addInstructions(
-            0,
-            """
-                new-instance v0, Landroid/graphics/Point;
-                invoke-direct { v0 }, Landroid/graphics/Point;-><init>()V
-                invoke-interface { p0, v0 }, $updatePointMethodRef
-                invoke-static { p0, p1, v0 }, Lapp/morphe/extension/youtube/patches/SeekbarThumbnailPreviewPatch;->updateThumbnailPreview(Landroid/view/View;Landroid/view/MotionEvent;Landroid/graphics/Point;)V
-            """
+        thumbnailPreviewConfigFingerprint.injectLiteralInstructionBooleanCall(
+            45398577L,
+            "$PLAYER_CLASS_DESCRIPTOR->restoreOldSeekbarThumbnails()Z"
         )
-
-        // To show the thumbnail during the use of slide to seek feature.
-        SlideSeekbarHandlerOnTouchFingerprint.method.apply {
-            fun getSeekbarReference(index: Int) = SlideSeekbarGetViewControllerFingerprint
-                .instructionMatches[index].getInstruction<ReferenceInstruction>().getReference<FieldReference>()!!
-
-            addInstructions(
-                0,
-                """
-                    iget-object v0, p0, ${getSeekbarReference(0)}
-                    iget-object v0, v0, ${getSeekbarReference(1)}
-                    iget-object v0, v0, ${getSeekbarReference(3)}
-                    new-instance v1, Landroid/graphics/Point;
-                    invoke-direct { v1 }, Landroid/graphics/Point;-><init>()V
-                    invoke-interface { v0, v1 }, $updatePointMethodRef
-                    invoke-static { p1, p2, v1 }, Lapp/morphe/extension/youtube/patches/SeekbarThumbnailPreviewPatch;->updateThumbnailPreview(Landroid/view/View;Landroid/view/MotionEvent;Landroid/graphics/Point;)V
-                """
-            )
-        }
-
-        SeekbarFineScrubbingBitmapFingerprint.method.addInstruction(
-            1,
-            "invoke-static { p1 }, Lapp/morphe/extension/youtube/patches/SeekbarThumbnailPreviewPatch;->" +
-                    "setFineScrubbingPreviewBitmap(Landroid/graphics/Bitmap;)V"
-        )
-
-        seekbarOnDrawFingerprint.methodOrThrow(seekbarFingerprint).addInstruction(
-            0,
-            "invoke-static/range { p0 .. p0 }, Lapp/morphe/extension/youtube/patches/SeekbarThumbnailPreviewPatch;->" +
-                    "setSeekbarRectangle(Landroid/view/View;)V"
-        )
-
-        if (is_21_12_or_greater) {
-            SeekbarBigBoardsUpdateFingerprint
-        } else {
-            SeekbarBigBoardsUpdateLegacyFingerprint
-        }.method.addInstructionsWithLabels(
-            0,
-            """
-                invoke-static { }, Lapp/morphe/extension/youtube/patches/SeekbarThumbnailPreviewPatch;->disableBigBoardUpdate()Z
-                move-result v0
-                if-eqz v0, :allow_big_board_update
-                const/4 v0, 0x0
-                return v0
-                :allow_big_board_update
-                nop
-            """
-        )
-
-        if (is_21_21_or_greater) {
-            ShortsDisableSeekbarThumbnailsFeatureFlagFingerprint.matchAll().forEach {
-                it.method.insertLiteralOverride(
-                    it.instructionMatches.first().index,
-                    "Lapp/morphe/extension/youtube/patches/SeekbarThumbnailPreviewPatch;->disableShortsSeekbarThumbnails(Z)Z"
-                )
-            }
-        }
+        settingArray += "SETTINGS: RESTORE_OLD_SEEKBAR_THUMBNAILS"
+        updatePatchStatus(PATCH_STATUS_CLASS_DESCRIPTOR, "OldSeekbarThumbnailsDefaultBoolean")
 
         // endregion
 

@@ -1261,6 +1261,10 @@ public class PlayerPatch {
         return Settings.HIDE_TIME_STAMP.get();
     }
 
+    public static boolean restoreOldSeekbarThumbnails() {
+        return !Settings.RESTORE_OLD_SEEKBAR_THUMBNAILS.get();
+    }
+
     // endregion
 
     public static int getQuickActionsTopMargin() {

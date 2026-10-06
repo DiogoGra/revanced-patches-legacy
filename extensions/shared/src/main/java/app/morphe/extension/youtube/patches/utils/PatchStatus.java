@@ -2,6 +2,7 @@ package app.morphe.extension.youtube.patches.utils;
 
 public class PatchStatus {
     public static final String SPOOF_APP_VERSION_TARGET_DEFAULT_VALUE = "20.05.46";
+    public static final String SPOOF_APP_VERSION_TARGET_MINIMUM_VALUE = "20.02.34";
 
     public static boolean ImageSearchButton() {
         // Replace this with true if the 'Hide image search buttons' patch succeeds
@@ -60,6 +61,11 @@ public class PatchStatus {
     }
 
     public static boolean AddMissingResources() {
+        return false;
+    }
+
+    // Modified by the native legacy thumbnail hook.
+    public static boolean OldSeekbarThumbnailsDefaultBoolean() {
         return false;
     }
 

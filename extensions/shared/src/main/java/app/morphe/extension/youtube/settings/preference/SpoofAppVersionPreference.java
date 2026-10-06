@@ -31,6 +31,7 @@ import java.util.function.Function;
 import app.morphe.extension.shared.settings.preference.CustomDialogListPreference;
 import app.morphe.extension.shared.ui.CustomDialog;
 import app.morphe.extension.shared.utils.Utils;
+import app.morphe.extension.youtube.patches.utils.PatchStatus;
 import app.morphe.extension.youtube.settings.Settings;
 import app.morphe.extension.youtube.utils.ThemeUtils;
 
@@ -313,7 +314,7 @@ public class SpoofAppVersionPreference extends CustomDialogListPreference {
      * @return If the app is not installed and a dialog was shown.
      */
     private boolean showToastIfAppVersionIsInvalid(String appVersion) {
-        if (appVersion.compareTo(Settings.SPOOF_APP_VERSION_TARGET.defaultValue) < 0) {
+        if (appVersion.compareTo(PatchStatus.SPOOF_APP_VERSION_TARGET_MINIMUM_VALUE) < 0) {
             Utils.showToastShort(str("revanced_spoof_app_version_target_invalid_toast", appVersion));
             Utils.showToastShort(str("revanced_reset_to_default_toast"));
             Settings.SPOOF_APP_VERSION_TARGET.resetToDefault();

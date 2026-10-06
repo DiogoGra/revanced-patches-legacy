@@ -483,7 +483,6 @@ val settingsPatch = resourcePatch(
             "PREFERENCE_SCREEN: GENERAL",
             "SETTINGS: THEME_SETTINGS",
             "PREFERENCE_CATEGORY: GENERAL_EXPERIMENTAL_FLAGS",
-            "SETTINGS: RESTORE_OLD_SETTINGS_MENUS",
         )
         if (is_20_31_or_greater && !is_21_12_or_greater) {
             generalExperimentalSettings += "SETTINGS: DISABLE_BOLD_ICONS"

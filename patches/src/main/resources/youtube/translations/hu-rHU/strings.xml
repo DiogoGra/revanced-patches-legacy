@@ -2371,7 +2371,7 @@ Korlátozás: A videó címe eltűnik, ha rákattint"</string>
     <string name="revanced_spoof_app_version_summary">A szervert tévedésbe vezeti, hogy egy régebbi alkalmazásverziót használ, ezzel helyreállítva a korábbi felhasználói felület funkcióit</string>
     <string name="revanced_spoof_app_version_summary_off">A verzió nincs hamisítva</string>
     <string name="revanced_spoof_app_version_summary_on">A verzió hamisítva</string>
-    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - Átirat funkció visszaállítása</string>
+    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - Ajánlott</string>
     <string name="revanced_spoof_app_version_target_entry_20_13_41">20.13.41 - Nem összecsukott videós műveletsáv visszaállítása</string>
     <string name="revanced_spoof_app_version_target_entry_21_11_484">21.11.48 - A régi felirat-viselkedés visszaállítása</string>
     <string name="revanced_spoof_app_version_target_entry_title">Hamis alkalmazásverzió</string>

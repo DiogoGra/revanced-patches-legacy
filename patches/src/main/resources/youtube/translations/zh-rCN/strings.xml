@@ -2372,7 +2372,7 @@ AI生成的回复可能包含不准确的信息。
     <string name="revanced_spoof_app_version_summary">欺骗服务器，使其认为您使用的是较旧的应用版本，以恢复遗留的 UI 功能</string>
     <string name="revanced_spoof_app_version_summary_off">客户端版本未伪装</string>
     <string name="revanced_spoof_app_version_summary_on">客户端版本已伪装</string>
-    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - 恢复转写文稿功能</string>
+    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - 推荐</string>
     <string name="revanced_spoof_app_version_target_entry_20_13_41">20.13.41 - 恢复未折叠的视频操作栏</string>
     <string name="revanced_spoof_app_version_target_entry_20_20_42">20.20.42 - 恢复旧版组件过滤器</string>
     <string name="revanced_spoof_app_version_target_entry_21_11_484">21.11.48 - 恢复旧版字幕行为</string>

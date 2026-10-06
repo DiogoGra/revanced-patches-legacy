@@ -2545,7 +2545,7 @@ Limitation: Video title disappears when clicked"</string>
 • If later turned off, the old UI may remain until clear the app data"</string>
     <string name="revanced_spoof_app_version_summary_off">Version not spoofed</string>
     <string name="revanced_spoof_app_version_summary_on">Version spoofed</string>
-    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - Restore Transcript functionality</string>
+    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - Recommended</string>
     <string name="revanced_spoof_app_version_target_entry_20_13_41">20.13.41 - Restore non collapsed video action bar</string>
     <string name="revanced_spoof_app_version_target_entry_20_20_42">20.20.42 - Restore old components filter</string>
     <string name="revanced_spoof_app_version_target_entry_21_11_484">21.11.48 - Restore old captions behavior</string>

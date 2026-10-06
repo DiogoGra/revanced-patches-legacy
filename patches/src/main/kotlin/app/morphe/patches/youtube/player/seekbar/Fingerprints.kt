@@ -9,7 +9,9 @@
 package app.morphe.patches.youtube.player.seekbar
 
 import app.morphe.patcher.Fingerprint
+import app.morphe.util.fingerprint.legacyFingerprint
 import app.morphe.patcher.InstructionLocation.MatchAfterImmediately
+
 import app.morphe.patcher.InstructionLocation.MatchAfterWithin
 import app.morphe.patcher.OpcodesFilter
 import app.morphe.patcher.anyInstruction
@@ -33,6 +35,13 @@ import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.Method
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
+
+internal val thumbnailPreviewConfigFingerprint = legacyFingerprint(
+    name = "thumbnailPreviewConfigFingerprint",
+    returnType = "Z",
+    parameters = emptyList(),
+    literals = listOf(45398577L),
+)
 
 internal object ShortsSeekbarColorFingerprint : Fingerprint(
     returnType = "V",

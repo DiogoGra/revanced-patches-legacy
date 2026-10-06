@@ -2562,7 +2562,7 @@ API Key를 발급받는 방법을 보려면 여기를 탭하세요"</string>
     <string name="revanced_spoof_app_version_summary">서버가 사용 중인 앱 버전을 더 오래된 버전으로 인식하도록 속여, 이전 레이아웃 기능을 다시 복원합니다</string>
     <string name="revanced_spoof_app_version_summary_off">앱 버전이 속여지지 않습니다</string>
     <string name="revanced_spoof_app_version_summary_on">앱 버전이 속여집니다</string>
-    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - 스크립트 기능을 복원합니다</string>
+    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - 권장</string>
     <string name="revanced_spoof_app_version_target_entry_20_13_41">20.13.41 - 접히지 않은 동영상 작업바를 복원합니다</string>
     <string name="revanced_spoof_app_version_target_entry_20_20_42">20.20.42 - 이전 구성요소 필터를 복원합니다</string>
     <string name="revanced_spoof_app_version_target_entry_21_11_484">21.11.48 - 이전 자막 동작을 복원합니다</string>

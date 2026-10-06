@@ -2531,7 +2531,7 @@ Limitação: Título do vídeo desaparece quando clicado"</string>
 • Se for desativada posteriormente, a interface antiga poderá permanecer até que os dados do aplicativo sejam apagados"</string>
     <string name="revanced_spoof_app_version_summary_off">Versão não falsificada</string>
     <string name="revanced_spoof_app_version_summary_on">Versão falsificada</string>
-    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - Restaurar funcionalidade de Transcrição</string>
+    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - Recomendado</string>
     <string name="revanced_spoof_app_version_target_entry_20_13_41">20.13.41 - Restaurar a barra de ação de vídeo não recolhida</string>
     <string name="revanced_spoof_app_version_target_entry_20_20_42">20.20.42 - Restaurar filtro de componentes antigo</string>
     <string name="revanced_spoof_app_version_target_entry_21_11_484">21.11.48 - Restaurar comportamento antigo de legendas</string>

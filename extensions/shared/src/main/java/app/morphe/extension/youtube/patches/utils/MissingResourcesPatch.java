@@ -112,9 +112,14 @@ public final class MissingResourcesPatch {
     }
 
     public static int getLegacyIconType(int iconType) {
-        return iconType == SETTINGS_CAIRO_ICON_TYPE
-                ? SETTINGS_ICON_TYPE
-                : iconType;
+        // Preserve the action's identity instead of using the generic overflow fallback.
+        return switch (iconType) {
+            case 1156 -> 355; // TAB_ACTIVITY_CAIRO -> TAB_ACTIVITY (toolbar bell)
+            case 1160 -> 60; // SEARCH_CAIRO -> SEARCH
+            case 1185 -> 264; // NOTIFICATIONS_CAIRO -> NOTIFICATIONS
+            case SETTINGS_CAIRO_ICON_TYPE -> SETTINGS_ICON_TYPE;
+            default -> iconType;
+        };
     }
 
     public static CharSequence getBottomSheetMenuItemTextFallback(Object host, Object iconMetadata, CharSequence text) {

@@ -140,8 +140,6 @@
         <PreferenceScreen android:title="@string/revanced_preference_screen_settings_menu_title" android:key="revanced_preference_screen_settings_menu" android:summary="@string/revanced_preference_screen_settings_menu_summary">
             <app.morphe.extension.shared.patches.SettingsMenuFilterPickerPreference android:title="@string/morphe_settings_menu_filter_screen_title" android:key="morphe_settings_menu_filter" android:summary="@string/morphe_settings_menu_filter_screen_summary" />SETTINGS: HIDE_SETTINGS_MENU_FILTER -->
 
-            <!-- SETTINGS: RESTORE_OLD_SETTINGS_MENUS
-            <SwitchPreference android:title="@string/revanced_restore_old_settings_menus_title" android:key="revanced_restore_old_settings_menus" />SETTINGS: RESTORE_OLD_SETTINGS_MENUS -->
 
             <!-- SETTINGS: HIDE_SETTINGS_MENU_FILTER
         </PreferenceScreen>SETTINGS: HIDE_SETTINGS_MENU_FILTER -->
@@ -734,7 +732,6 @@
             <!-- SETTINGS: SEEKBAR_COMPONENTS
             <SwitchPreference android:title="@string/morphe_fullscreen_large_seekbar_title" android:key="morphe_fullscreen_large_seekbar" />
             <SwitchPreference android:title="@string/revanced_enable_seekbar_tapping_title" android:key="revanced_enable_seekbar_tapping" android:summaryOn="@string/revanced_enable_seekbar_tapping_summary_on" android:summaryOff="@string/revanced_enable_seekbar_tapping_summary_off" />
-            <SwitchPreference android:title="@string/morphe_seekbar_thumbnail_preview_title" android:key="morphe_seekbar_thumbnail_preview" android:summary="@string/morphe_seekbar_thumbnail_preview_summary" />
             <SwitchPreference android:title="@string/revanced_hide_seekbar_chapter_label_title" android:key="revanced_hide_seekbar_chapter_label" android:summaryOn="@string/revanced_hide_seekbar_chapter_label_summary_on" android:summaryOff="@string/revanced_hide_seekbar_chapter_label_summary_off" />
             <SwitchPreference android:title="@string/revanced_hide_time_stamp_title" android:key="revanced_hide_time_stamp" android:summaryOn="@string/revanced_hide_time_stamp_summary_on" android:summaryOff="@string/revanced_hide_time_stamp_summary_off" />
             <SwitchPreference android:title="@string/revanced_hide_seekbar_title" android:key="revanced_hide_seekbar" android:summaryOn="@string/revanced_hide_seekbar_summary_on" android:summaryOff="@string/revanced_hide_seekbar_summary_off" />

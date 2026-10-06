@@ -1028,7 +1028,7 @@ public class GeneralPatch {
     }
 
     static int useLegacySettingsFragment(int original, IntSupplier legacyFragmentIdSupplier) {
-        if (Settings.RESTORE_OLD_SETTINGS_MENUS.get()
+        if (Settings.DISABLE_SETTINGS_LAYOUT_UPDATES.get()
                 || ExtendedUtils.isSpoofingToLessThan("19.35.36")) {
             final int legacyFragmentId = legacyFragmentIdSupplier.getAsInt();
             if (legacyFragmentId != 0) {

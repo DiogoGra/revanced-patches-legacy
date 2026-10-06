@@ -388,7 +388,6 @@ public class Settings extends SharedYouTubeSettings {
     public static final BooleanSetting FIX_SPOOF_APP_VERSION_SIDE_EFFECT = new BooleanSetting("revanced_fix_spoof_app_version_side_effect", FALSE, true, "revanced_fix_spoof_app_version_side_effect_user_dialog_message");
     public static final BooleanSetting TABLET_LAYOUT_IN_PLAYER = new BooleanSetting("morphe_tablet_layout_in_player", FALSE, true, new TabletLayoutInPlayerAvailability());
     public static final EnumSetting<StatusBarTranslucency> STATUS_BAR_TRANSLUCENCY = new EnumSetting<>("revanced_status_bar_translucency", StatusBarTranslucency.DEFAULT, true);
-    public static final BooleanSetting RESTORE_OLD_SETTINGS_MENUS = new BooleanSetting("revanced_restore_old_settings_menus", FALSE, true);
     public static final BooleanSetting DISABLE_TRANSLUCENT_STATUS_BAR = new BooleanSetting("revanced_disable_translucent_status_bar", FALSE, true);
     public static final BooleanSetting FIX_HYPE_BUTTON_ICON = new BooleanSetting("revanced_fix_hype_button_icon", FALSE, true, "revanced_fix_hype_button_icon_user_dialog_message");
     public static final BooleanSetting SPOOF_APP_VERSION = new BooleanSetting("revanced_spoof_app_version", FALSE, true, "revanced_spoof_app_version_user_dialog_message");
@@ -741,7 +740,8 @@ public class Settings extends SharedYouTubeSettings {
     public static final BooleanSetting HIDE_SEEKBAR_THUMBNAIL = new BooleanSetting("revanced_hide_seekbar_thumbnail", FALSE, true);
     public static final BooleanSetting FULLSCREEN_LARGE_SEEKBAR = new BooleanSetting("morphe_fullscreen_large_seekbar", FALSE);
     public static final BooleanSetting HIDE_TIME_STAMP = new BooleanSetting("revanced_hide_time_stamp", FALSE, true);
-    public static final BooleanSetting THUMBNAIL_PREVIEW = new BooleanSetting("morphe_seekbar_thumbnail_preview", TRUE);
+    public static final BooleanSetting RESTORE_OLD_SEEKBAR_THUMBNAILS = new BooleanSetting("revanced_restore_old_seekbar_thumbnails",
+            PatchStatus.OldSeekbarThumbnailsDefaultBoolean(), true);
 
     // PreferenceScreen: Player - Video description
     public static final BooleanSetting DISABLE_ROLLING_NUMBER_ANIMATIONS = new BooleanSetting("revanced_disable_rolling_number_animations", FALSE);
@@ -1207,7 +1207,7 @@ public class Settings extends SharedYouTubeSettings {
             SPOOF_APP_VERSION_TARGET.resetToDefault();
         }
         String spoofAppVersionTarget = SPOOF_APP_VERSION_TARGET.get();
-        if (spoofAppVersionIncluded && spoofAppVersionTarget.compareTo(SPOOF_APP_VERSION_TARGET.defaultValue) < 0) {
+        if (spoofAppVersionIncluded && spoofAppVersionTarget.compareTo(PatchStatus.SPOOF_APP_VERSION_TARGET_MINIMUM_VALUE) < 0) {
             Utils.showToastShort(str("revanced_spoof_app_version_target_invalid_toast", spoofAppVersionTarget));
             Utils.showToastShort(str("revanced_reset_to_default_toast"));
             Logger.printInfo(() -> "Resetting spoof app version target");

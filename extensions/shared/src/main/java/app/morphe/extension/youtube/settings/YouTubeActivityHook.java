@@ -33,7 +33,7 @@ public class YouTubeActivityHook extends BaseActivityHook {
      */
     public static final boolean USE_BOLD_ICONS = IS_20_31_OR_GREATER
             && !Settings.SETTINGS_DISABLE_BOLD_ICONS.get()
-            && !Settings.RESTORE_OLD_SETTINGS_MENUS.get()
+            && !Settings.DISABLE_SETTINGS_LAYOUT_UPDATES.get()
             && !isSpoofingToLessThan("20.31.00");
 
     private static int currentThemeValueOrdinal = -1; // Must initially be a non-valid enum ordinal value.
@@ -148,7 +148,7 @@ public class YouTubeActivityHook extends BaseActivityHook {
      */
     @SuppressWarnings("unused")
     public static boolean disableCairoSettingsFragment(boolean original) {
-        return !Settings.RESTORE_OLD_SETTINGS_MENUS.get() && original;
+        return !Settings.DISABLE_SETTINGS_LAYOUT_UPDATES.get() && original;
     }
 
     /**

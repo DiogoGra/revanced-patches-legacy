@@ -2397,7 +2397,7 @@ Sınırlama: Tıklandığında video başlığı kayboluyor"</string>
     <string name="revanced_spoof_app_version_summary">Sunucuya daha eski bir uygulama sürümü kullandığınızı düşündürerek eski arayüz özelliklerini geri yükler</string>
     <string name="revanced_spoof_app_version_summary_off">Sürüm taklit edilmiyor</string>
     <string name="revanced_spoof_app_version_summary_on">Sürüm taklit ediliyor</string>
-    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - Transkript işlevini geri yükle</string>
+    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - Önerilen</string>
     <string name="revanced_spoof_app_version_target_entry_20_13_41">20.13.41 - Daraltılmamış video eylem çubuğunu geri getir</string>
     <string name="revanced_spoof_app_version_target_entry_20_20_42">20.20.42 - Restore old components Filter</string>
     <string name="revanced_spoof_app_version_target_entry_21_11_484">21.11.48 - Eski altyazı davranışını geri yükle</string>

@@ -2544,7 +2544,7 @@
     <string name="revanced_spoof_app_version_summary">Змушує сервер думати, що ви використовуєте стару версію застосунку, щоб відновити застарілі функції інтерфейсу</string>
     <string name="revanced_spoof_app_version_summary_off">Версію не підмінено</string>
     <string name="revanced_spoof_app_version_summary_on">Версію підмінено</string>
-    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - Відновлення функції Транскрипція</string>
+    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - Рекомендовано</string>
     <string name="revanced_spoof_app_version_target_entry_20_13_41">20.13.41 - Відновлення не згорнутої панелі дій відео</string>
     <string name="revanced_spoof_app_version_target_entry_20_20_42">20.20.42 - Відновлення старого фільтра компонентів</string>
     <string name="revanced_spoof_app_version_target_entry_21_11_484">21.11.48 - Відновити стару поведінку субтитрів</string>

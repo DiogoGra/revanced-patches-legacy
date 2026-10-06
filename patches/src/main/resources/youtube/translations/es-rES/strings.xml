@@ -2533,7 +2533,7 @@ Limitación: el título de vídeo desaparece cuando se pulsa"</string>
     <string name="revanced_spoof_app_version_summary">Engaña al servidor para que crea que estás usando una versión anterior de la aplicación, restaurando así funciones de la interfaz antigua</string>
     <string name="revanced_spoof_app_version_summary_off">Versión no falseada</string>
     <string name="revanced_spoof_app_version_summary_on">Versión falseada</string>
-    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - Restaurar funcionalidad de transcripción</string>
+    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - Recomendado</string>
     <string name="revanced_spoof_app_version_target_entry_20_13_41">20.13.41 - Restaurar la barra de acción de vídeo no contraída</string>
     <string name="revanced_spoof_app_version_target_entry_20_20_42">20.20.42 - Restaurar filtro a una versión anterior</string>
     <string name="revanced_spoof_app_version_target_entry_21_11_484">21.11.48 - Restaurar comportamiento antiguo de los subtítulos</string>

@@ -29,7 +29,7 @@ import app.morphe.extension.youtube.settings.Settings;
 @SuppressWarnings({"deprecation", "unused"})
 public class FixPreferenceIconPatch {
     private static final boolean REMOVE_BROKEN_PREFERENCE_ICON =
-            Settings.RESTORE_OLD_SETTINGS_MENUS.get() || isSpoofingToLessThan("19.35.36");
+            Settings.DISABLE_SETTINGS_LAYOUT_UPDATES.get() || isSpoofingToLessThan("19.35.36");
 
     private static final String[][] PREFERENCE_ICONS = {
             {"parent_tools_key", "parent_tools_key_icon"},

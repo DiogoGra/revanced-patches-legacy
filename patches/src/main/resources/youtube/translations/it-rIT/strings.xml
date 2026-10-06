@@ -2536,7 +2536,7 @@ Nota: il titolo scompare quando lo si tocca"</string>
     <string name="revanced_spoof_app_version_summary">Inganna il server facendogli pensare di stare utilizzando una versione precedente dell\'app, per ripristinare le funzionalità dell\'interfaccia utente precedente</string>
     <string name="revanced_spoof_app_version_summary_off">La simulazione della versione dell\'app è disattivata</string>
     <string name="revanced_spoof_app_version_summary_on">La simulazione della versione dell\'app è attivata</string>
-    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - Ripristina la trascrizione</string>
+    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - Consigliata</string>
     <string name="revanced_spoof_app_version_target_entry_20_13_41">20.13.41 - Ripristina la barra delle azioni non compressa dei video</string>
     <string name="revanced_spoof_app_version_target_entry_20_20_42">20.20.42 - Ripristina i filtri dei vecchi componenti</string>
     <string name="revanced_spoof_app_version_target_entry_21_11_484">21.11.48 - Ripristina il vecchio comportamento dei sottotitoli</string>

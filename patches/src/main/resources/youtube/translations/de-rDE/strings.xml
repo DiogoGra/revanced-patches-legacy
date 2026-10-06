@@ -2315,7 +2315,7 @@ Einschränkung: Videotitel verschwindet beim Klicken auf den Bildschirm"</string
     <string name="revanced_spoof_app_version_summary">Täuscht dem Server eine ältere App-Version vor, um ältere UI-Funktionen wiederherzustellen</string>
     <string name="revanced_spoof_app_version_summary_off">Version nicht gefälscht</string>
     <string name="revanced_spoof_app_version_summary_on">Version gefälscht</string>
-    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - Transkript-Funktion wiederherstellen</string>
+    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - Empfohlen</string>
     <string name="revanced_spoof_app_version_target_entry_20_13_41">20.13.41 - Nicht eingeklappte Video-Aktionsleiste wiederherstellen</string>
     <string name="revanced_spoof_app_version_target_entry_21_11_484">21.11.48 - Altes Untertitelverhalten wiederherstellen</string>
     <string name="revanced_spoof_app_version_target_entry_title">Spoof App Versionsziel</string>

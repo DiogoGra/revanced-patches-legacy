@@ -2362,7 +2362,7 @@ Playlists
     <string name="revanced_spoof_app_version_summary">Εξαπατά τον διακομιστή ώστε να νομίζει ότι χρησιμοποιείτε μια παλαιότερη έκδοση εφαρμογής για να επαναφέρετε παλαιότερα στοιχεία διεπαφής χρήστη</string>
     <string name="revanced_spoof_app_version_summary_off">Η έκδοση δεν παραποιείται</string>
     <string name="revanced_spoof_app_version_summary_on">Η έκδοση παραποιείται</string>
-    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - Επαναφορά λειτουργικότητας μεταγραφής</string>
+    <string name="revanced_spoof_app_version_target_entry_20_05_46">20.05.46 - Συνιστάται</string>
     <string name="revanced_spoof_app_version_target_entry_20_13_41">20.13.41 - Επαναφορά μη καταρρέουσας γραμμής ενέργειας βίντεο</string>
     <string name="revanced_spoof_app_version_target_entry_21_11_484">21.11.48 - Επαναφορά παλιάς συμπεριφοράς λεζάντων</string>
     <string name="revanced_spoof_app_version_target_entry_title">Έκδοση παραποίησης της εφαρμογής</string>
