@@ -1,9 +1,11 @@
 # [1.3.0](https://github.com/DiogoGra/revanced-patches-legacy/releases/tag/1.3.0) (2026-10-06)
 
+> [!NOTE]
+> My Telegram account, @personimm, was hacked. After I recovered it, I realized I had been banned from the [Telegram group](https://t.me/AnddeaChat). I hope someone from the group sees this and can add me back. Thank you.
+
 ### Features
 
 - Align with RVX [v4.3.1-dev.1](https://github.com/anddea/revanced-patches/releases/tag/v4.3.1-dev.1). (https://github.com/DiogoGra/revanced-patches-legacy/commit/75bb5c92bb4c6d1e457fa8824e56e48de5255f26)
-- Align with RVX [v4.2.0](https://github.com/anddea/revanced-patches/releases/tag/v4.2.0), including Custom DPI, Playback in feeds, Force original audio, queue override, Explore filters, Gemini subtitle chunking, additional ad filters, and Settings language fixes. Newer-version-only settings remain gated; the Settings menu filter patch is excluded. (https://github.com/DiogoGra/revanced-patches-legacy/commit/77850ad1931052194cfa7084265773c173155d2e)
 - **YouTube - Settings**: Add Freeze layout updates setting, including Spanish translation. (https://github.com/DiogoGra/revanced-patches-legacy/commit/3bcd701117f208f669cf0265cc0d7c7dc802d10e)
 - **YouTube - Shorts components**: Add Yandex VOT to custom flyout actions. (https://github.com/DiogoGra/revanced-patches-legacy/commit/b1f42c1a92a5ff8281dfa0a5255e844492870a65)
 - **YouTube - Spoof video streams**: Add TV Simply and update default clients; remove obsolete Android Reel clients. (https://github.com/DiogoGra/revanced-patches-legacy/commit/c138aea6473dbc639030455241474b1df532dd80)
@@ -29,9 +31,6 @@
 - **YouTube - Settings**: Remove the duplicate Restore old YouTube settings screen setting and use Disable Settings layout updates consistently. (https://github.com/DiogoGra/revanced-patches-legacy/commit/88771873bc370de34f1e153145978ff9d9789194)
 - **YouTube - Seekbar components**: Restore native legacy seekbar thumbnails and remove the newer-version thumbnail renderer. (https://github.com/DiogoGra/revanced-patches-legacy/commit/88771873bc370de34f1e153145978ff9d9789194)
 - **YouTube - Spoof app version**: Mark 20.05.46 as Recommended and update the corresponding translations. (https://github.com/DiogoGra/revanced-patches-legacy/commit/88771873bc370de34f1e153145978ff9d9789194)
-
-> [!NOTE]
-> My Telegram account, @personimm, was hacked. After I recovered it, I realized I had been banned from the [Telegram group](https://t.me/AnddeaChat). I hope someone from the group sees this and can add me back. Thank you.
 
 # [1.2.1-dev.5](https://github.com/DiogoGra/revanced-patches-legacy/releases/tag/1.2.1-dev.5) (2026-06-26)
 
