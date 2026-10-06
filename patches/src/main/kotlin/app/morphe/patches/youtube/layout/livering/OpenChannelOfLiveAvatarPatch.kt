@@ -2,6 +2,7 @@ package app.morphe.patches.youtube.layout.livering
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
+import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patches.youtube.shorts.components.shortsComponentPatch
 import app.morphe.patches.youtube.utils.compatibility.Constants.COMPATIBILITY_YOUTUBE
@@ -13,11 +14,14 @@ import app.morphe.patches.youtube.utils.playservice.versionCheckPatch
 import app.morphe.patches.youtube.utils.settings.ResourceUtils.addPreference
 import app.morphe.patches.youtube.utils.settings.settingsPatch
 import app.morphe.patches.youtube.video.playbackstart.playbackStartDescriptorPatch
+import app.morphe.patches.youtube.video.playbackstart.PLAYBACK_START_DESCRIPTOR_CLASS_DESCRIPTOR
 import app.morphe.patches.youtube.video.playbackstart.playbackStartVideoIdReference
 import app.morphe.patches.youtube.video.playbackstart.shortsPlaybackStartIntentLegacyFingerprint
 import app.morphe.util.fingerprint.methodOrThrow
 import app.morphe.util.addInstructionsAtControlFlowLabel
 import app.morphe.util.getFreeRegisterProvider
+import app.morphe.util.getReference
+import app.morphe.util.indexOfFirstInstructionOrThrow
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 
@@ -103,9 +107,25 @@ val openChannelOfLiveAvatarPatch = bytecodePatch(
             is_21_20_or_greater -> ShortsPlaybackIntentFingerprint.method
             else -> ShortsPlaybackIntentFingerprintLegacy.method
         }
-        shortsPlaybackIntentMethod.addInstructionsWithLabels(
-            0,
-            patchLogic("p2", "p1", "v0", "v1")
-        )
+        if (!is_19_25_or_greater) {
+            shortsPlaybackIntentMethod.apply {
+                // Legacy p1 is a proto. Use the descriptor returned by its conversion.
+                val conversionIndex = indexOfFirstInstructionOrThrow {
+                    getReference<MethodReference>()?.returnType == PLAYBACK_START_DESCRIPTOR_CLASS_DESCRIPTOR
+                }
+                val descriptorRegister = getInstruction<OneRegisterInstruction>(conversionIndex + 1).registerA
+                val insertIndex = conversionIndex + 2
+                val registers = getFreeRegisterProvider(insertIndex, 2, descriptorRegister)
+                addInstructionsAtControlFlowLabel(
+                    insertIndex,
+                    patchLogic("p2", "v$descriptorRegister", "v${registers.getFreeRegister()}", "v${registers.getFreeRegister()}")
+                )
+            }
+        } else {
+            shortsPlaybackIntentMethod.addInstructionsWithLabels(
+                0,
+                patchLogic("p2", "p1", "v0", "v1")
+            )
+        }
     }
 }

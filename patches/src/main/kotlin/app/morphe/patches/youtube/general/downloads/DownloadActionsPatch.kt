@@ -292,12 +292,17 @@ val downloadActionsPatch = bytecodePatch(
                 val enumMethod =
                     it.instructionMatches[8].instruction.getReference<MethodReference>()!!
 
-                addInstructions(
+                addInstructionsWithLabels(
                     textIndex,
                     """
+                        if-eqz v$enumRegister, :missing_queue_icon
                         iget v$freeRegister, v$enumRegister, $enumIntField
                         invoke-static {v$freeRegister}, $enumMethod
                         move-result-object v$freeRegister
+                        goto :queue_icon_resolved
+                        :missing_queue_icon
+                        const/4 v$freeRegister, 0x0
+                        :queue_icon_resolved
                         invoke-static {v$freeRegister, v$textRegister}, $EXTENSION_CLASS_DESCRIPTOR->setCurrentFlyoutButton(Ljava/lang/Enum;Ljava/lang/CharSequence;)V
                     """,
                 )
@@ -326,17 +331,21 @@ val downloadActionsPatch = bytecodePatch(
         }
 
         if (!is_21_05_or_greater) {
-            FeedFlyoutButtonsInitializerOnItemClickFingerprint.method.addInstructionsWithLabels(
-                0,
-                """
-                    invoke-static {p3}, $EXTENSION_CLASS_DESCRIPTOR->replaceQueueOnItemClick(I)Z
-                    move-result p2
-                    if-eqz p2, :original_click
-                    return-void
-                    :original_click
-                    nop
-                """,
-            )
+            FeedFlyoutButtonsInitializerOnItemClickFingerprint.method.apply {
+                // The Shorts click hook also reads p2; keep its View intact.
+                val freeRegister = findFreeRegister(0)
+                addInstructionsWithLabels(
+                    0,
+                    """
+                        invoke-static {p3}, $EXTENSION_CLASS_DESCRIPTOR->replaceQueueOnItemClick(I)Z
+                        move-result v$freeRegister
+                        if-eqz v$freeRegister, :original_click
+                        return-void
+                        :original_click
+                        nop
+                    """,
+                )
+            }
         }
 
         val feedBottomSheetFlyoutFingerprint =

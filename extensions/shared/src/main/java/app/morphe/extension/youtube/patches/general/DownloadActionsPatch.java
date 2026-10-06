@@ -327,6 +327,7 @@ public final class DownloadActionsPatch {
     public static void setCurrentFlyoutButton(@Nullable Enum<?> buttonEnum,
                                               @Nullable CharSequence buttonText) {
         if (buttonEnum == null || buttonText == null || buttonText.toString().isEmpty()) {
+            currentFlyoutButtonName = "";
             return;
         }
 

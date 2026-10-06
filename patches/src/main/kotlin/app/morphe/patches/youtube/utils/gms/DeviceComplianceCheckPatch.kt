@@ -20,8 +20,10 @@ internal val deviceComplianceCheckPatch = bytecodePatch {
         // UncertifiedDeviceActivity. A failed check already emits false, so do the same.
         GmsDeviceComplianceCheckFingerprint.let {
             val emitterReference = it.instructionMatches.last().getMethodCalled()
+            // R8 shares this callback with player/network requests on 19.16.39.
+            // Enter after its dispatch, only in the device-compliance branch.
             it.method.addInstructions(
-                0,
+                it.instructionMatches.first().index,
                 """
                     sget-object v0, Ljava/lang/Boolean;->FALSE:Ljava/lang/Boolean;
                     invoke-virtual { p1, v0 }, $emitterReference

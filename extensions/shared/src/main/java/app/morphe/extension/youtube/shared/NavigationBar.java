@@ -126,6 +126,8 @@ public final class NavigationBar {
             new WeakHashMap<>();
     private static final Map<ImageView, Drawable> restoredNavigationIconDrawables =
             new WeakHashMap<>();
+    private static final Map<ImageView, Integer> restoredNavigationIconColors =
+            new WeakHashMap<>();
 
 
     /**
@@ -603,8 +605,10 @@ public final class NavigationBar {
         }
 
         Drawable currentDrawable = imageView.getDrawable();
+        int iconColor = getLegacyNavigationIconColor(group);
         Integer restoredDrawableId = restoredNavigationIconIds.get(imageView);
         Drawable restoredDrawable = restoredNavigationIconDrawables.get(imageView);
+        Integer restoredColor = restoredNavigationIconColors.get(imageView);
         boolean alreadyRestored = restoredDrawableId != null
                 && restoredDrawableId == drawableId
                 && restoredDrawable == currentDrawable
@@ -612,6 +616,7 @@ public final class NavigationBar {
                 && !(currentDrawable instanceof ColorDrawable)
                 && imageView.getImageAlpha() == 255
                 && imageView.getColorFilter() != null
+                && restoredColor != null && restoredColor == iconColor
                 && imageView.getVisibility() == View.VISIBLE;
 
         if (alreadyRestored) {
@@ -621,10 +626,11 @@ public final class NavigationBar {
         imageView.setImageResource(drawableId);
         imageView.setImageAlpha(255);
         imageView.setAlpha(1.0f);
-        imageView.setColorFilter(getLegacyNavigationIconColor(group), PorterDuff.Mode.SRC_IN);
+        imageView.setColorFilter(iconColor, PorterDuff.Mode.SRC_IN);
         imageView.setVisibility(View.VISIBLE);
         restoredNavigationIconIds.put(imageView, drawableId);
         restoredNavigationIconDrawables.put(imageView, imageView.getDrawable());
+        restoredNavigationIconColors.put(imageView, iconColor);
         return 1;
     }
 
@@ -831,10 +837,33 @@ public final class NavigationBar {
     }
 
     private static int getLegacyNavigationIconColor(View view) {
+        // Shorts can use a dark bottom bar while the rest of the app uses light mode.
+        TextView label = findNonEmptyNavigationLabel(view);
+        if (label != null) {
+            return label.getCurrentTextColor();
+        }
         int uiMode = view.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
         return uiMode == Configuration.UI_MODE_NIGHT_YES
                 ? Color.WHITE
                 : Color.BLACK;
+    }
+
+    @Nullable
+    private static TextView findNonEmptyNavigationLabel(View view) {
+        if (view instanceof TextView) {
+            CharSequence text = ((TextView) view).getText();
+            return text != null && text.length() > 0 ? (TextView) view : null;
+        }
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                TextView label = findNonEmptyNavigationLabel(group.getChildAt(i));
+                if (label != null) {
+                    return label;
+                }
+            }
+        }
+        return null;
     }
 
     private static void logNavigationTabDiagnostic(String reason, NavigationButton button, View view) {
