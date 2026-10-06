@@ -5,7 +5,7 @@
 ## 🧩 ReVanced Extended Patches
 [![Static Badge](https://img.shields.io/badge/RVX_Wiki-gray?logo=github)](https://github.com/anddea/revanced-patches/wiki)   [![Static Badge](https://img.shields.io/badge/Translations-gray?logo=crowdin)](https://rvxtranslate.netlify.app/)
 <br>
-[![Static Badge](https://img.shields.io/badge/Telegram-Community-gray?logo=telegram&color=%2326A5E4)](https://t.me/AnddeaChat)   [![Static Badge](https://img.shields.io/badge/Reddit-RVX-gray?logo=reddit&color=red)](https://reddit.com/r/revancedextended)   [![Static Badge](https://img.shields.io/badge/Reddit-YTAdvanced-gray?logo=reddit&color=yellow)](https://www.reddit.com/r/YTadvanced)
+[![Static Badge](https://img.shields.io/badge/Telegram-Community-gray?logo=telegram&color=%2326A5E4)](https://t.me/AnddeaChat)   [![Static Badge](https://img.shields.io/badge/Reddit-RVXLegacy-gray?logo=reddit&color=red)](https://www.reddit.com/r/rvxlegacy)
 </div>
 
 ## Documentation
@@ -13,8 +13,6 @@
 Check the [wiki](https://github.com/anddea/revanced-patches/wiki) for resources on patching, customization, and debugging.
 
 Report issues [here](https://github.com/DiogoGra/revanced-patches-legacy/issues).
-
-[Credits](https://github.com/anddea/revanced-patches/wiki/Credits)
 
 ## 📋 List of patches in this repository
 
@@ -38,9 +36,10 @@ Example:
 ]
 ```
 
-## Credits
+## Credits 🤝
 
-Thanks to [anddea](https://github.com/anddea/revanced-patches),
-[Morphe](https://github.com/MorpheApp/morphe-patches), and
 [kitadai31](https://github.com/kitadai31/revanced-patches-android6-7)
-for making this project possible.
+
+[anddea](https://github.com/anddea/revanced-patches)
+
+[MorpheApp](https://github.com/MorpheApp/morphe-patches)
