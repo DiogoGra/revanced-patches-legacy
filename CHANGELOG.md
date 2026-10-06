@@ -21,7 +21,6 @@
 - **Morphe Manager**: Show this fork's version details instead of Anddea's. (https://github.com/DiogoGra/revanced-patches-legacy/commit/405140be2890f7b3bad25a2eca508b5038c7b8e0)
 - **Morphe Manager**: Correct bundle changelog metadata and remove the JSON BOM. (https://github.com/DiogoGra/revanced-patches-legacy/commit/b35f0861acccedad25b1fd1afd75bf8519777983) (https://github.com/DiogoGra/revanced-patches-legacy/commit/f9e96a91d47bb79a991d31aa3e5c8e4d88b61d2f)
 - **Morphe Manager**: Exclude the bundled Kotlin runtime and refresh Android bundle metadata to prevent sources showing zero patches. (https://github.com/DiogoGra/revanced-patches-legacy/commit/31dc72effd4f25fd055a5a5dd9e0299a8024e9f6) (https://github.com/DiogoGra/revanced-patches-legacy/commit/588126907456b51184b12a5e36bca641925d91cb)
-
 - **YouTube - GmsCore support**: Preserve shared callback dispatch when bypassing device compliance checks. (https://github.com/DiogoGra/revanced-patches-legacy/commit/2a6318153a54202b0d774c02262f0bc6ab952eeb)
 - **YouTube - Spoof app version**: Keep the 20.02.34 preset valid across restarts. (https://github.com/DiogoGra/revanced-patches-legacy/commit/88771873bc370de34f1e153145978ff9d9789194)
 - **YouTube - Open channel of live avatar**: Hook the converted playback descriptor on 19.16.39 to prevent Shorts verification errors. (https://github.com/DiogoGra/revanced-patches-legacy/commit/2a6318153a54202b0d774c02262f0bc6ab952eeb)
