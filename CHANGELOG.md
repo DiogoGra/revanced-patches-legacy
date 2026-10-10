@@ -1,3 +1,9 @@
+# [1.3.1](https://github.com/DiogoGra/revanced-patches-legacy/compare/1.3.0...1.3.1) (2026-10-10)
+
+### Bug Fixes
+
+- **YouTube - Add missing resources**: Restore missing Create button icon. (https://github.com/DiogoGra/revanced-patches-legacy/commit/195398229f95a0e472d2fcbb2731e2807392bd5c)
+
 # [1.3.0](https://github.com/DiogoGra/revanced-patches-legacy/releases/tag/1.3.0) (2026-10-06)
 
 > [!NOTE]
