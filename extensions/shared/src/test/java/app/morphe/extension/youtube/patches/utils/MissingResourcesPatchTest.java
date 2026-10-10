@@ -16,6 +16,11 @@ public class MissingResourcesPatchTest {
     }
 
     @Test
+    public void cairoCreateUsesLegacyAddCircle() {
+        assertEquals(734, MissingResourcesPatch.getLegacyIconType(1161));
+    }
+
+    @Test
     public void cairoNotificationsUseLegacyBell() {
         assertEquals(264, MissingResourcesPatch.getLegacyIconType(1185));
     }
@@ -27,7 +32,7 @@ public class MissingResourcesPatchTest {
 
     @Test
     public void legacyAndShortsIconsKeepTheirIdentity() {
-        for (int type : new int[]{44, 60, 264, 1045, 1114}) {
+        for (int type : new int[]{44, 60, 264, 405, 650, 670, 730, 732, 734, 1045, 1114}) {
             assertEquals(type, MissingResourcesPatch.getLegacyIconType(type));
         }
     }
