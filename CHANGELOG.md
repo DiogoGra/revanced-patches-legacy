@@ -1,3 +1,9 @@
+## [1.3.2](https://github.com/DiogoGra/revanced-patches-legacy/compare/1.3.1...1.3.2) (2026-10-25)
+
+### Bug Fixes
+
+* **YouTube - Add missing resources:** Restore missing captions menu item in Shorts ([83451d6](https://github.com/DiogoGra/revanced-patches-legacy/commit/83451d6c27f1989daa3981290ff9844f9d60249e))
+
 ## [1.3.1](https://github.com/DiogoGra/revanced-patches-legacy/compare/1.3.0...1.3.1) (2026-10-10)
 
 ### Bug Fixes
