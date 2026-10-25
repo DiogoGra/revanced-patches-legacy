@@ -1,8 +1,13 @@
-## [1.3.2](https://github.com/DiogoGra/revanced-patches-legacy/compare/1.3.1...1.3.2) (2026-10-25)
+# [1.3.2](https://github.com/DiogoGra/revanced-patches-legacy/compare/1.3.1...1.3.2) (2026-10-25)
 
 ### Bug Fixes
 
+* **YouTube:** Restore patching on Android 14 and earlier ([d00c307](https://github.com/DiogoGra/revanced-patches-legacy/commit/d00c307e2ffb67e45ff778998f439389f389b2f9))
+
 * **YouTube - Add missing resources:** Restore missing captions menu item in Shorts ([83451d6](https://github.com/DiogoGra/revanced-patches-legacy/commit/83451d6c27f1989daa3981290ff9844f9d60249e))
+
+> [!NOTE]
+> The 1.3.2 patch bundle was updated with a hotfix for patching on Android 14 and earlier. Download the MPP again if you previously downloaded this version.
 
 ## [1.3.1](https://github.com/DiogoGra/revanced-patches-legacy/compare/1.3.0...1.3.1) (2026-10-10)
 
