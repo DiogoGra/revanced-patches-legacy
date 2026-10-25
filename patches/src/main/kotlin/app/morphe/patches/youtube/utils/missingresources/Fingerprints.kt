@@ -13,3 +13,22 @@ internal val contextGetDrawableFingerprint = legacyFingerprint(
         methodDef.name == "a"
     }
 )
+
+internal val legacyCaptionsControllerFingerprint = legacyFingerprint(
+    name = "legacyCaptionsControllerFingerprint",
+    returnType = "V",
+    parameters = listOf("Z"),
+    strings = listOf("menu_item_captions"),
+    customFingerprint = { method, classDef ->
+        classDef.type == "Lkkt;" && method.name == "g"
+    },
+)
+
+internal val legacyCaptionsMenuClickFingerprint = legacyFingerprint(
+    name = "legacyCaptionsMenuClickFingerprint",
+    returnType = "V",
+    parameters = listOf("Ltpl;"),
+    customFingerprint = { method, classDef ->
+        classDef.type == "Lahqa;" && method.name == "aM"
+    },
+)

@@ -6,6 +6,7 @@ import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.patch.resourcePatch
 import app.morphe.patcher.util.smali.ExternalLabel
+import app.morphe.patcher.util.proxy.mutableTypes.MutableClass
 import app.morphe.patches.all.misc.transformation.IMethodCall
 import app.morphe.patches.all.misc.transformation.filterMapInstruction35c
 import app.morphe.patches.all.misc.transformation.transformInstructionsPatch
@@ -20,16 +21,42 @@ import app.morphe.util.ResourceGroup
 import app.morphe.util.copyResources
 import app.morphe.util.fingerprint.methodOrThrow
 import app.morphe.util.fingerprint.legacyFingerprint
+import app.morphe.util.findMutableClassOrThrow
 import app.morphe.util.getReference
 import app.morphe.util.indexOfFirstInstructionOrThrow
 import app.morphe.util.updatePatchStatus
+import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod.Companion.toMutable
 import app.morphe.util.Utils.printInfo
 import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.AccessFlags
+import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
+import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
+import com.android.tools.smali.dexlib2.immutable.ImmutableMethodParameter
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 import com.android.tools.smali.dexlib2.iface.reference.TypeReference
 
 private const val EXTENSION_CLASS_DESCRIPTOR = "$UTILS_PATH/MissingResourcesPatch;"
+private const val CAPTIONS_CLASS_DESCRIPTOR = "$UTILS_PATH/ShortsCaptionsPatch;"
+
+private fun MutableClass.addCaptionsBridge(
+    name: String,
+    returnType: String,
+    parameters: List<String> = emptyList(),
+    registers: Int = parameters.size + 1,
+    instructions: String,
+) {
+    check(methods.none { it.name == name }) { "Captions bridge already exists: $name" }
+    methods.add(
+        ImmutableMethod(
+            type, name,
+            parameters.map { ImmutableMethodParameter(it, null, null) },
+            returnType,
+            AccessFlags.PUBLIC.value or AccessFlags.FINAL.value,
+            null, null, MutableMethodImplementation(registers),
+        ).toMutable().apply { addInstructions(0, instructions) }
+    )
+}
 
 private val legacyShortsMenuItemFingerprint = legacyFingerprint(
     name = "legacyShortsMenuItemFingerprint",
@@ -205,9 +232,89 @@ private val addMissingResourcesBytecodePatch = bytecodePatch(
 
             addInstructionsWithLabels(
                 0,
-                "goto :legacy_menu_item_builder",
+                """
+                    iget v0, p1, Lasna;->b:I
+                    and-int/lit16 v0, v0, 0x1000
+                    if-eqz v0, :legacy_menu_item_builder
+                    iget-object v0, p1, Lasna;->o:Lapjb;
+                    if-eqz v0, :legacy_menu_item_builder
+                    invoke-virtual {v0}, Lapjb;->toByteArray()[B
+                    move-result-object v0
+                    invoke-static {p0, v0}, $CAPTIONS_CLASS_DESCRIPTOR->getMenuItem(Ljava/lang/Object;[B)Ljava/lang/Object;
+                    move-result-object v0
+                    if-eqz v0, :legacy_menu_item_builder
+                    invoke-static {v0}, Lakid;->k(Ljava/lang/Object;)Lakid;
+                    move-result-object v0
+                    return-object v0
+                """,
                 ExternalLabel("legacy_menu_item_builder", getInstruction(legacyMenuPathIndex)),
             )
+        }
+
+        val captionsControllerMethod = legacyCaptionsControllerFingerprint.methodOrThrow()
+        val captionsControllerClass = findMutableClassOrThrow(captionsControllerMethod.definingClass)
+        with(captionsControllerClass) {
+            check(fields.any { it.name == "c" && it.type == "Lcd;" })
+            check(fields.any { it.name == "g" && it.type == "Z" })
+            check(fields.any { it.name == "j" && it.type == "Lkke;" })
+            check(methods.any { it.name == "a" && it.returnType == "Lkke;" && it.parameters.isEmpty() })
+            interfaces.add("$UTILS_PATH/ShortsCaptionsPatch\$NativeController;")
+            addCaptionsBridge("rvxCaptionsActivity", "Ljava/lang/Object;", instructions = """
+                iget-object p0, p0, Lkkt;->c:Lcd;
+                return-object p0
+            """)
+            addCaptionsBridge("rvxCaptionsAvailable", "Z", instructions = """
+                iget-boolean p0, p0, Lkkt;->g:Z
+                return p0
+            """)
+            addCaptionsBridge("rvxCaptionsRow", "Ljava/lang/Object;", instructions = """
+                invoke-virtual {p0}, Lkkt;->a()Lkke;
+                move-result-object p0
+                return-object p0
+            """)
+            addCaptionsBridge("rvxCaptionsCurrentRow", "Z", listOf("Ljava/lang/Object;"), 3, """
+                iget-object v0, p0, Lkkt;->j:Lkke;
+                if-ne v0, p1, :different
+                const/4 v0, 0x1
+                return v0
+                :different
+                const/4 v0, 0x0
+                return v0
+            """)
+            methods.single { it.name == "pZ" && it.parameters.isEmpty() }.addInstructions(0, """
+                invoke-static {p0}, $CAPTIONS_CLASS_DESCRIPTOR->onControllerReset(Ljava/lang/Object;)V
+            """)
+        }
+        captionsControllerMethod.addInstructions(0, """
+            invoke-static {p0}, $CAPTIONS_CLASS_DESCRIPTOR->onControllerAvailable(Ljava/lang/Object;)V
+        """)
+        findMutableClassOrThrow("Lkke;").apply {
+            check(methods.any { it.name == "a" && it.returnType == "V" && it.parameters.isEmpty() })
+            interfaces.add("$UTILS_PATH/ShortsCaptionsPatch\$NativeRow;")
+            addCaptionsBridge("rvxClickCaptions", "V", instructions = """
+                invoke-virtual {p0}, Lkke;->a()V
+                return-void
+            """)
+        }
+        findMutableClassOrThrow("Lahqa;").apply {
+            interfaces.add("$UTILS_PATH/ShortsCaptionsPatch\$NativeMenu;")
+            addCaptionsBridge("rvxCaptionsActivity", "Ljava/lang/Object;", instructions = """
+                invoke-virtual {p0}, Lca;->G()Lcd;
+                move-result-object p0
+                return-object p0
+            """)
+            addCaptionsBridge("rvxDismissCaptionsMenu", "V", instructions = """
+                invoke-virtual {p0}, Lahql;->bg()V
+                return-void
+            """)
+        }
+        legacyCaptionsMenuClickFingerprint.methodOrThrow().apply {
+            addInstructionsWithLabels(0, """
+                invoke-static {p0, p1}, $CAPTIONS_CLASS_DESCRIPTOR->onMenuItemClick(Ljava/lang/Object;Ljava/lang/Object;)Z
+                move-result v0
+                if-eqz v0, :original_caption_click
+                return-void
+            """, ExternalLabel("original_caption_click", getInstruction(0)))
         }
 
         legacyIconEnumConverterFingerprint.methodOrThrow().apply {
