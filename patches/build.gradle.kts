@@ -16,6 +16,7 @@ dependencies {
     // Used by JsonGenerator.
     implementation(libs.gson)
     testImplementation(libs.junit)
+    testImplementation("org.ow2.asm:asm:9.9")
 }
 
 configurations.named("runtimeClasspath") {
@@ -65,6 +66,7 @@ tasks {
 
 kotlin {
     compilerOptions {
-        freeCompilerArgs = listOf("-Xcontext-parameters")
+        // Patch code also runs inside Android Managers, not only on the build JDK.
+        freeCompilerArgs = listOf("-Xcontext-parameters", "-Xjdk-release=11")
     }
 }
