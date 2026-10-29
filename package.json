@@ -1,10 +1,20 @@
 {
+  "name": "revanced-patches",
+  "private": true,
+  "scripts": {
+    "patch-dependencies": "patch-package --patch-dir scripts/dependency-patches --error-on-fail",
+    "pretest": "npm run patch-dependencies",
+    "test": "node --test scripts/*.test.cjs",
+    "prerelease": "npm run patch-dependencies",
+    "release": "node scripts/release.mjs"
+  },
   "devDependencies": {
     "@cleyrop-org/semantic-release-backmerge": "^5.2.4",
     "@MorpheApp/changelog": "git+https://github.com/MorpheApp/changelog.git#bundle",
-    "@semantic-release/exec": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
-    "gradle-semantic-release-plugin": "^1.10.3",
-    "semantic-release": "^25.0.3"
+    "adm-zip": "^0.6.1",
+    "patch-package": "8.0.1",
+    "semantic-release": "25.0.3",
+    "yaml": "^2.9.1"
   }
 }

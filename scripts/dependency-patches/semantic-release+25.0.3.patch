@@ -1,0 +1,13 @@
+diff --git a/node_modules/semantic-release/lib/branches/get-tags.js b/node_modules/semantic-release/lib/branches/get-tags.js
+index 4e62f53..7a9974c 100644
+--- a/node_modules/semantic-release/lib/branches/get-tags.js
++++ b/node_modules/semantic-release/lib/branches/get-tags.js
+@@ -23,7 +23,7 @@ export default async ({ cwd, env, options: { tagFormat } }, branches) => {
+         async (branchTags, tag) => {
+           const [, version] = tag.match(tagRegexp) || [];
+           const channels = tagsNotesMap.has(tag) ? tagsNotesMap.get(tag).channels : [null];
+-          return version && semver.valid(semver.clean(version))
++          return version && version === semver.valid(version)
+             ? [...branchTags, { gitTag: tag, version, channels }]
+             : branchTags;
+         },
