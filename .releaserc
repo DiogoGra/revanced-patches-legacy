@@ -1,4 +1,6 @@
 {
+  "repositoryUrl": "https://github.com/DiogoGra/revanced-patches-legacy.git",
+  "tagFormat": "${version}",
   "branches": [
     "main",
     {
@@ -18,19 +20,11 @@
     [
       "@MorpheApp/changelog", {
         "releaseJson": {
-          "path": "patches-bundle.json",
-          "downloadUrlTemplate": "https://github.com/${owner}/${repo}/releases/download/v${version}/patches-${version}.mpp",
-          "signatureUrlTemplate": "https://github.com/${owner}/${repo}/releases/download/v${version}/patches-${version}.mpp.asc"
+          "enabled": false
         }
       }
     ],
-    "gradle-semantic-release-plugin",
-    [
-      "@semantic-release/exec",
-      {
-        "prepareCmd": "jq '.version=\"${nextRelease.version}\"' patches-list.json > patches-list.json.tmp && mv patches-list.json.tmp patches-list.json"
-      }
-    ],
+    "./scripts/release-plugin.cjs",
     [
       "@semantic-release/git",
       {
@@ -41,7 +35,7 @@
           "patches-bundle.json",
           "patches-list.json"
         ],
-        "message": "chore: Release v${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+        "message": "chore: Release ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
       }
     ],
     [
@@ -49,16 +43,22 @@
       {
         "assets": [
           {
-            "path": "patches/build/libs/patches-!(*sources*|*javadoc*).mpp?(.asc)"
+            "path": "build/release/patches.mpp",
+            "name": "patches-<%= nextRelease.version %>.mpp"
           }
         ],
-        "successComment": false
+        "successComment": false,
+        "failComment": false,
+        "failTitle": false,
+        "releasedLabels": false
       }
     ],
     [
       "@cleyrop-org/semantic-release-backmerge",
       {
         "backmergeBranches": [{"from": "main", "to": "dev"}],
+        "backmergeStrategy": "merge",
+        "forcePush": false,
         "clearWorkspace": true
       }
     ]

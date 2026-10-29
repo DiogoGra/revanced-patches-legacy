@@ -16,6 +16,8 @@ Check the [wiki](https://github.com/anddea/revanced-patches/wiki) for resources 
 
 Report issues [here](https://github.com/DiogoGra/revanced-patches-legacy/issues).
 
+[Credits](https://github.com/anddea/revanced-patches/wiki/Credits)
+
 ## 📋 List of patches in this repository
 
 {{ table }}

@@ -2,24 +2,45 @@ name: Release
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-      - dev
+    inputs:
+      mode:
+        description: Preview the next release or publish it
+        type: choice
+        default: preview
+        options:
+          - preview
+          - publish
+      expected_version:
+        description: Expected version, without v (required for publish)
+        type: string
+        required: false
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   release:
     name: Release
-    if: github.repository_owner == 'anddea'
+    if: github.repository == 'DiogoGra/revanced-patches-legacy' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
     permissions:
       contents: write
-      issues: write
-      pull-requests: write
-      packages: write
+      packages: read
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      RELEASE_MODE: ${{ inputs.mode }}
+      EXPECTED_VERSION: ${{ inputs.expected_version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
 
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -30,29 +51,32 @@ jobs:
       - name: Cache Gradle
         uses: burrunan/gradle-cache-action@v3
 
-      - name: Build
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # To update `README.md` and `patches.json`, the command `./gradlew generatePatchesFiles clean` should be used instead of the command `./gradlew build clean`
-        run: ./gradlew :patches:buildAndroid generatePatchesList clean
-
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: "lts/*"
-          cache: 'npm'
+          node-version: "24"
+          cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci --ignore-scripts --no-audit --no-fund
 
-      - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@v6
-        with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.GPG_PASSPHRASE }}
-          fingerprint: ${{ env.GPG_FINGERPRINT }}
+      - name: Test release tooling
+        run: npm test
+
+      - name: Build and test Android bundle
+        run: ./gradlew :patches:buildAndroid :patches:test :extensions:shared:test --no-daemon
 
       - name: Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm exec semantic-release
+        run: npm run release
+
+      - name: Upload validation results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.ref_name }}-${{ inputs.mode }}
+          path: |
+            build/release/
+            patches/build/reports/tests/
+            extensions/shared/build/reports/tests/
+          if-no-files-found: warn
+          retention-days: 14
