@@ -19,6 +19,7 @@ import app.morphe.patches.youtube.utils.cairoFragmentConfigFingerprint
 import app.morphe.patches.youtube.utils.compatibility.Constants.YOUTUBE_PACKAGE_NAME
 import app.morphe.patches.youtube.utils.extension.Constants.GENERAL_CLASS_DESCRIPTOR
 import app.morphe.patches.youtube.utils.extension.Constants.PATCH_STATUS_CLASS_DESCRIPTOR
+import app.morphe.patches.youtube.utils.engagement.legacyEngagementPanelPatch
 import app.morphe.patches.youtube.utils.indexOfGetDrawableInstruction
 import app.morphe.patches.youtube.utils.patch.PatchList.SPOOF_APP_VERSION
 import app.morphe.patches.youtube.utils.playservice.is_19_26_or_greater
@@ -186,6 +187,7 @@ private val spoofAppVersionBytecodePatch = bytecodePatch(
         settingsPatch,
         versionCheckPatch,
         buildRequestPatch,
+        legacyEngagementPanelPatch,
     )
 
     execute {
