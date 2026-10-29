@@ -1,3 +1,11 @@
+## [1.3.3](https://github.com/DiogoGra/revanced-patches-legacy/compare/1.3.2...1.3.3) (2026-10-29)
+
+
+### Bug Fixes
+
+* **YouTube - Spoof app version:** Restore chapters and transcript panels ([caab52f](https://github.com/DiogoGra/revanced-patches-legacy/commit/caab52fc6be9356afa3b6154b340ffac2ff47d16))
+* **YouTube:** Restore patching on Android 14 and earlier ([d00c307](https://github.com/DiogoGra/revanced-patches-legacy/commit/d00c307e2ffb67e45ff778998f439389f389b2f9))
+
 # [1.3.2](https://github.com/DiogoGra/revanced-patches-legacy/compare/1.3.1...1.3.2) (2026-10-25)
 
 ### Bug Fixes
